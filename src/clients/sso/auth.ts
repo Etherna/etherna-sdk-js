@@ -34,6 +34,8 @@ export class SSOAuth {
         },
       )
 
+      this.instance.accessToken = accessToken
+
       return { accessToken }
     } catch (error) {
       throwSdkError(error)
