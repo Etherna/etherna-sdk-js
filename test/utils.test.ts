@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { makePrivateKeySigner } from "../src/clients/bee/utils/signer"
+import { makePrivateKeySigner } from "@/utils"
 
 describe("signer", () => {
   const privateKey = "f6379d2f0229ca418812cf65cc5e26e727c968912442721139b74455dd7a0095"

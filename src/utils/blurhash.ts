@@ -27,7 +27,7 @@ export function blurHashToDataURL(hash: string | null | undefined): string {
  * @param imageHeight Output image height
  * @returns Blurhash string
  */
-export async function imageToBlurhash(image: ArrayBuffer, imageWidth: number, imageHeight: number) {
+export async function imageToBlurhash(image: Uint8Array, imageWidth: number, imageHeight: number) {
   const data = await getImageData(image, imageWidth, imageHeight)
   return encode(data, imageWidth, imageHeight, 4, 4)
 }
@@ -189,7 +189,7 @@ function generatePng(width: number, height: number, rgbaString: string) {
   return pngString
 }
 
-async function getImageData(imageData: ArrayBuffer, width: number, height: number) {
+async function getImageData(imageData: Uint8Array, width: number, height: number) {
   const canvas = document.createElement("canvas")
   canvas.width = width
   canvas.height = height
@@ -200,7 +200,7 @@ async function getImageData(imageData: ArrayBuffer, width: number, height: numbe
   return ctx.getImageData(0, 0, width, height).data
 }
 
-async function loadImage(data: ArrayBuffer) {
+async function loadImage(data: Uint8Array) {
   return new Promise<HTMLImageElement | null>((resolve, reject) => {
     const img = new Image()
     img.onload = () => resolve(img)

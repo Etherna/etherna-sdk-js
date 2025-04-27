@@ -46,7 +46,7 @@ const handleFFmpegPromise = (exec: Promise<number>) => {
       }
     })
     .catch((error) => {
-      throw new EthernaSdkError("ENCODING_ERROR", "Video conversion failed", error)
+      throw new EthernaSdkError("ENCODING_ERROR", "Video conversion failed", error as Error)
     })
 }
 

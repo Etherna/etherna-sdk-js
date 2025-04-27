@@ -114,7 +114,7 @@ export function getImageTypeFromData(data: Uint8Array | ArrayBuffer) {
     svg: [0x3c, 0x73, 0x76, 0x67],
   } as const
 
-  const header = new Uint8Array(data, 0, 8)
+  const header = new Uint8Array(data instanceof ArrayBuffer ? data : data.buffer, 0, 8)
   const headerArray = Array.from(header)
 
   for (const [format, magic] of Object.entries(formats)) {

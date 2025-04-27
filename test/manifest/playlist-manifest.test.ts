@@ -1,9 +1,9 @@
-import { EmptyAddress } from "dist"
 import { anyReference } from "test/utils/test-consts"
 import uuid from "uuid-random"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import { BeeClient } from "@/clients"
+import { EmptyAddress } from "@/consts"
 import { PlaylistManifest } from "@/manifest"
 
 import type { Video } from "@/manifest"

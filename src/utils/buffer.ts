@@ -51,7 +51,7 @@ export function fileToDataURL(file: File) {
  * @param contentType Mime type of the array buffer
  * @returns The file object
  */
-export function bufferToFile(buffer: ArrayBuffer, contentType?: string) {
+export function bufferToFile(buffer: ArrayBuffer | Uint8Array, contentType?: string) {
   return new Blob([buffer], { type: contentType }) as File
 }
 
@@ -61,7 +61,7 @@ export function bufferToFile(buffer: ArrayBuffer, contentType?: string) {
  * @param buffer Buffer to convert
  * @returns The base64 data URL
  */
-export function bufferToDataURL(buffer: ArrayBuffer) {
+export function bufferToDataURL(buffer: ArrayBuffer | Uint8Array) {
   return fileToDataURL(bufferToFile(buffer))
 }
 
