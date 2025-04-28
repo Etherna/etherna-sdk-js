@@ -31,9 +31,11 @@ export const fetchEnsFromAddress = async (address: EthAddress): Promise<EnsAddre
     transport: http(),
   })
 
-  const ens = (await publicClient.getEnsName({
-    address,
-  })) as EnsAddress | null
+  const ens = (await publicClient
+    .getEnsName({
+      address,
+    })
+    .catch(() => null)) as EnsAddress | null
 
   return ens
 }

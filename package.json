@@ -1,6 +1,6 @@
 {
   "name": "@etherna/sdk-js",
-  "version": "1.7.1",
+  "version": "1.7.2",
   "description": "Etherna SDKs for operations on the network",
   "author": "Mattia Dalzocchio",
   "license": "Apache-2.0",
