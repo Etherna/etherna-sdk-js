@@ -60,8 +60,10 @@ export class BeeClient extends BaseClient {
   ) {
     super(url, opts)
 
-    this.signer =
-      typeof opts?.signer === "string" ? makePrivateKeySigner(opts.signer) : opts?.signer
+    if (opts?.signer) {
+      this.updateSigner(opts.signer)
+    }
+
     this.type = opts?.type ?? "bee"
     this.chain = {
       name: opts?.chain?.name ?? "gnosis",
