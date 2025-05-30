@@ -14,7 +14,8 @@ import { Stamps } from "./stamps"
 import { System } from "./system"
 import { Tags } from "./tags"
 import { User } from "./user"
-import { makePrivateKeySigner } from "@/utils"
+import { EthAddress } from "@/types"
+import { isEthAddress, makeInjectedWalletSigner, makePrivateKeySigner } from "@/utils"
 
 import type { BaseClientOptions } from "../base-client"
 import type { Signer } from "@/types/signer"
@@ -82,7 +83,12 @@ export class BeeClient extends BaseClient {
     this.system = new System(this)
   }
 
-  updateSigner(signer: Signer | string) {
-    this.signer = typeof signer === "string" ? makePrivateKeySigner(signer) : signer
+  updateSigner(signer: Signer | EthAddress | string) {
+    this.signer =
+      typeof signer === "string"
+        ? isEthAddress(signer)
+          ? makeInjectedWalletSigner(signer)
+          : makePrivateKeySigner(signer)
+        : signer
   }
 }

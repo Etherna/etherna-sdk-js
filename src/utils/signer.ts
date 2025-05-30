@@ -1,6 +1,7 @@
 import { bytesToHex } from "@noble/hashes/utils"
 import { etc, getPublicKey, signAsync, Signature } from "@noble/secp256k1"
 
+import { signMessage } from "./ethereum"
 import { hexToBytes, keccak256Hash, makeHexString } from "./hex"
 
 import type { EthAddress } from "@/types/eth"
@@ -20,6 +21,24 @@ export function makePrivateKeySigner(privateKey: string): Signer {
   return {
     sign: (digest) => defaultSign(digest, hexToBytes(privateKey)),
     address,
+  }
+}
+
+export function makeInjectedWalletSigner(address: EthAddress): Signer {
+  return {
+    address,
+    sign: async (digest) => {
+      try {
+        return await signMessage(digest, address)
+      } catch (err) {
+        const error = err as { code: number; message: string }
+        if (error.code === -32602) {
+          return await signMessage(digest, address)
+        } else {
+          throw error
+        }
+      }
+    },
   }
 }
 
