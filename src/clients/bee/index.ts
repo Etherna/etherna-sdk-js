@@ -83,7 +83,7 @@ export class BeeClient extends BaseClient {
     this.system = new System(this)
   }
 
-  updateSigner(signer: Signer | EthAddress | string) {
+  updateSigner(signer: Signer | EthAddress | string | undefined) {
     this.signer =
       typeof signer === "string"
         ? isEthAddress(signer)

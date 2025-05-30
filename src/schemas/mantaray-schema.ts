@@ -1,12 +1,12 @@
-import { z } from "zod"
+import { z } from "zod/v4"
 
 export const MantarayNodeSchema: z.ZodSchema<MantarayNode> = z.lazy(() =>
   z.object({
     type: z.number(),
     entry: z.string().optional(),
     contentAddress: z.string().optional(),
-    metadata: z.record(z.string()).optional(),
-    forks: z.record(MantarayForkSchema),
+    metadata: z.record(z.string(), z.string()).optional(),
+    forks: z.record(z.string(), MantarayForkSchema),
   }),
 )
 

@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "zod/v4"
 
 import { dateToTimestamp, timestampToDate } from "../utils"
 import { EmptyReference } from "@/consts"
@@ -15,21 +15,9 @@ export const BirthdaySchema = z
     (val) => {
       const [day, month, year] = val.split("-")
       return (
-        z.coerce
-          .number()
-          .min(1)
-          .max(31)
-          .parse(day, { path: ["birthday", "day"] }) &&
-        z.coerce
-          .number()
-          .min(1)
-          .max(12)
-          .parse(month, { path: ["birthday", "month"] }) &&
-        z.coerce
-          .number()
-          .min(1900)
-          .optional()
-          .parse(year, { path: ["birthday", "year"] })
+        z.coerce.number().min(1).max(31).parse(day) &&
+        z.coerce.number().min(1).max(12).parse(month) &&
+        z.coerce.number().min(1900).optional().parse(year)
       )
     },
     {
@@ -77,12 +65,15 @@ export const BeeSafeReferenceSchema = z
     return result.success ? result.data : EmptyReference
   })
 
-export const NonEmptyRecordSchema = <Keys extends z.ZodTypeAny, Values extends z.ZodTypeAny>(
+export const NonEmptyRecordSchema = <
+  Keys extends z.core.$ZodRecordKey,
+  Values extends z.core.$ZodType,
+>(
   key: Keys,
   value: Values,
-): z.ZodEffects<z.ZodRecord<Keys, Values>> =>
+): z.ZodRecord<Keys, Values> =>
   z.record(key, value).refine((val) => Object.keys(val).length > 0, {
-    message: "must not be empty",
+    error: "must not be empty",
   })
 
 export const TimestampSchema = z
@@ -96,6 +87,5 @@ export const TimestampSchema = z
       return dateToTimestamp(new Date(val))
     }),
   )
-
 // Types
 export type SchemaVersion = z.infer<typeof SchemaVersionSchema>

@@ -1,6 +1,6 @@
 {
   "name": "@etherna/sdk-js",
-  "version": "2.0.0-beta2",
+  "version": "2.0.0-beta3",
   "description": "Etherna SDKs for operations on the network",
   "author": "Mattia Dalzocchio",
   "license": "LGPL-3.0-or-later",
@@ -32,8 +32,8 @@
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "dev": "pnpm tsup src/index.ts --format esm --dts-resolve --clean --dts --watch",
-    "build": "pnpm tsup src/index.ts --format esm --dts-resolve --minify --clean --sourcemap --dts",
+    "dev": "pnpm tsup --watch",
+    "build": "pnpm tsup  --minify --clean --sourcemap",
     "test": "pnpm vitest",
     "test-ui": "pnpm vitest --ui",
     "lint": "pnpm eslint --ext .ts --fix .",
@@ -43,7 +43,8 @@
   "peerDependencies": {
     "@ffmpeg/ffmpeg": ">=0.12",
     "@ffmpeg/util": ">=0.12",
-    "axios": ">=1.7"
+    "axios": ">=1.9",
+    "zod": ">=3.25"
   },
   "dependencies": {
     "@fairdatasociety/bmt-js": "2.1.0",
@@ -56,28 +57,27 @@
     "crypto-ts": "1.0.2",
     "js-sha3": "0.9.3",
     "uuid-random": "1.3.2",
-    "viem": "2.28.0",
-    "zod": "3.24.3"
+    "viem": "2.30.5",
+    "zod": "3.25.42"
   },
   "devDependencies": {
-    "@eslint/js": "9.25.1",
-    "@ianvs/prettier-plugin-sort-imports": "4.4.1",
+    "@eslint/js": "9.27.0",
+    "@ianvs/prettier-plugin-sort-imports": "4.4.2",
     "@total-typescript/ts-reset": "0.6.1",
-    "@types/node": "22.15.2",
-    "eslint": "9.25.1",
-    "eslint-config-prettier": "10.1.2",
-    "eslint-plugin-prettier": "5.2.6",
-    "globals": "16.0.0",
+    "@types/node": "22.15.27",
+    "eslint": "9.27.0",
+    "eslint-config-prettier": "10.1.5",
+    "eslint-plugin-prettier": "5.4.1",
+    "globals": "16.2.0",
     "prettier": "3.5.3",
-    "tsup": "8.4.0",
+    "tsup": "8.5.0",
     "typescript": "5.8.3",
-    "typescript-eslint": "8.31.0",
-    "vite": "6.3.3",
-    "vitest": "3.1.2"
+    "typescript-eslint": "8.33.0",
+    "vite": "6.3.5",
+    "vitest": "3.1.4"
   },
   "optionalDependencies": {
-    "@vitest/ui": "1.5.0",
-    "chokidar": "3.6.0"
+    "@vitest/ui": "3.1.4"
   },
   "pnpm": {
     "peerDependencyRules": {
