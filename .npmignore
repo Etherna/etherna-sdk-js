@@ -8,6 +8,9 @@ test
 .gitignore
 .npmignore
 .prettier*
+eslint.config.js
+prettier.config.js
+env.d.ts
 
 pnpm-lock.yaml
 tsconfig.json
