@@ -13,7 +13,7 @@ export class IndexComments {
    */
   async deleteComment(id: string, opts?: RequestOptions) {
     try {
-      await this.instance.request.delete(`/comments/${id}`, {
+      await this.instance.apiRequest.delete(`/comments/${id}`, {
         ...this.instance.prepareAxiosConfig(opts),
       })
 

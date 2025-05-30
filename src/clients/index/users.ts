@@ -15,7 +15,7 @@ export class IndexUsers {
    */
   async fetchUsers(page = 0, take = 25, opts?: RequestOptions) {
     try {
-      const resp = await this.instance.request.get<PaginatedResult<IndexUser>>("/users/list2", {
+      const resp = await this.instance.apiRequest.get<PaginatedResult<IndexUser>>("/users/list2", {
         ...this.instance.prepareAxiosConfig(opts),
         params: { page, take },
       })
@@ -33,7 +33,7 @@ export class IndexUsers {
    */
   async fetchUser(address: string, opts?: RequestOptions) {
     try {
-      const resp = await this.instance.request.get<IndexUser>(`/users/${address}`, {
+      const resp = await this.instance.apiRequest.get<IndexUser>(`/users/${address}`, {
         ...this.instance.prepareAxiosConfig(opts),
       })
 
@@ -52,7 +52,7 @@ export class IndexUsers {
    */
   async fetchVideos(address: string, page = 0, take = 25, opts?: RequestOptions) {
     try {
-      const resp = await this.instance.request.get<PaginatedResult<IndexVideo>>(
+      const resp = await this.instance.apiRequest.get<PaginatedResult<IndexVideo>>(
         `/users/${address}/videos3`,
         {
           ...this.instance.prepareAxiosConfig(opts),
@@ -72,7 +72,7 @@ export class IndexUsers {
    */
   async fetchCurrentUser(opts?: RequestOptions) {
     try {
-      const resp = await this.instance.request.get<IndexCurrentUser>(`/users/current`, {
+      const resp = await this.instance.apiRequest.get<IndexCurrentUser>(`/users/current`, {
         ...this.instance.prepareAxiosConfig(opts),
       })
 

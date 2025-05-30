@@ -27,7 +27,7 @@ export class IndexVideos {
    */
   async createVideo(hash: string, encryptionKey?: string, opts?: RequestOptions) {
     try {
-      const resp = await this.instance.request.post<string>(
+      const resp = await this.instance.apiRequest.post<string>(
         `/videos`,
         {
           manifestHash: hash,
@@ -54,7 +54,7 @@ export class IndexVideos {
    */
   async fetchVideoFromId(id: string, opts?: RequestOptions) {
     try {
-      const resp = await this.instance.request.get<IndexVideo>(`/videos/${id}/find2`, {
+      const resp = await this.instance.apiRequest.get<IndexVideo>(`/videos/${id}/find2`, {
         ...this.instance.prepareAxiosConfig(opts),
       })
 
@@ -73,7 +73,7 @@ export class IndexVideos {
    */
   async fetchVideoFromHash(hash: string, opts?: RequestOptions) {
     try {
-      const resp = await this.instance.request.get<IndexVideo>(`/videos/manifest2/${hash}`, {
+      const resp = await this.instance.apiRequest.get<IndexVideo>(`/videos/manifest2/${hash}`, {
         ...this.instance.prepareAxiosConfig(opts),
       })
 
@@ -93,7 +93,7 @@ export class IndexVideos {
    */
   async fetchLatestVideos(page = 0, take = 25, opts?: RequestOptions) {
     try {
-      const resp = await this.instance.request.get<PaginatedResult<IndexVideoPreview>>(
+      const resp = await this.instance.apiRequest.get<PaginatedResult<IndexVideoPreview>>(
         `/videos/latest3`,
         {
           ...this.instance.prepareAxiosConfig(opts),
@@ -116,7 +116,7 @@ export class IndexVideos {
    */
   async fetchValidations(id: string, opts?: RequestOptions) {
     try {
-      const resp = await this.instance.request.get<IndexVideoValidation[]>(
+      const resp = await this.instance.apiRequest.get<IndexVideoValidation[]>(
         `/videos/${id}/validation2`,
         {
           ...this.instance.prepareAxiosConfig(opts),
@@ -138,7 +138,7 @@ export class IndexVideos {
    */
   async fetchHashValidation(hash: string, opts?: RequestOptions) {
     try {
-      const resp = await this.instance.request.get<IndexVideoValidation>(
+      const resp = await this.instance.apiRequest.get<IndexVideoValidation>(
         `/videos/manifest/${hash}/validation`,
         {
           ...this.instance.prepareAxiosConfig(opts),
@@ -160,7 +160,7 @@ export class IndexVideos {
    */
   async fetchBulkValidation(hashes: string[], opts?: RequestOptions) {
     try {
-      const resp = await this.instance.request.put<IndexVideoValidation[]>(
+      const resp = await this.instance.apiRequest.put<IndexVideoValidation[]>(
         `/videos/manifest/bulkvalidation`,
         hashes,
         {
@@ -184,7 +184,7 @@ export class IndexVideos {
    */
   async updateVideo(id: string, newHash: string, opts?: RequestOptions) {
     try {
-      const resp = await this.instance.request.put<IndexVideoManifest>(
+      const resp = await this.instance.apiRequest.put<IndexVideoManifest>(
         `/videos/${id}/update2`,
         null,
         {
@@ -208,7 +208,7 @@ export class IndexVideos {
    */
   async deleteVideo(id: string, opts?: RequestOptions) {
     try {
-      await this.instance.request.delete(`/videos/${id}`, {
+      await this.instance.apiRequest.delete(`/videos/${id}`, {
         ...this.instance.prepareAxiosConfig(opts),
       })
 
@@ -229,10 +229,13 @@ export class IndexVideos {
    */
   async fetchComments(id: string, page = 0, take = 25, opts?: RequestOptions) {
     try {
-      const resp = await this.instance.request.get<IndexVideoComment[]>(`/videos/${id}/comments`, {
-        ...this.instance.prepareAxiosConfig(opts),
-        params: { page, take },
-      })
+      const resp = await this.instance.apiRequest.get<IndexVideoComment[]>(
+        `/videos/${id}/comments`,
+        {
+          ...this.instance.prepareAxiosConfig(opts),
+          params: { page, take },
+        },
+      )
 
       return resp.data
     } catch (error) {
@@ -250,7 +253,7 @@ export class IndexVideos {
    */
   async postComment(id: string, message: string, opts?: RequestOptions) {
     try {
-      const resp = await this.instance.request.post<IndexVideoComment>(
+      const resp = await this.instance.apiRequest.post<IndexVideoComment>(
         `/videos/${id}/comments`,
         `"${message}"`,
         {
@@ -278,7 +281,7 @@ export class IndexVideos {
    */
   async vote(id: string, vote: VoteValue, opts?: RequestOptions) {
     try {
-      const resp = await this.instance.request.post<IndexVideoComment>(
+      const resp = await this.instance.apiRequest.post<IndexVideoComment>(
         `/videos/${id}/votes`,
         null,
         {
@@ -303,7 +306,7 @@ export class IndexVideos {
    */
   async reportVideo(id: string, manifestReference: string, code: string, opts?: RequestOptions) {
     try {
-      const resp = await this.instance.request.post(
+      const resp = await this.instance.apiRequest.post(
         `/videos/${id}/manifest/${manifestReference}/reports`,
         null,
         {

@@ -11,7 +11,7 @@ export class SSOIdentity {
    */
   async fetchCurrentIdentity() {
     try {
-      const resp = await this.instance.request.get<Identity>(`/identity`, {
+      const resp = await this.instance.apiRequest.get<Identity>(`/identity`, {
         ...this.instance.prepareAxiosConfig(),
       })
 

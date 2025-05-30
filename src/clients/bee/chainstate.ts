@@ -27,7 +27,7 @@ export class ChainState {
           return price
         }
         case "etherna": {
-          const resp = await this.instance.request.get<EthernaGatewayChainState>(
+          const resp = await this.instance.apiRequest.get<EthernaGatewayChainState>(
             `/system/chainstate`,
             {
               ...this.instance.prepareAxiosConfig(options),

@@ -58,9 +58,12 @@ export class Pins {
           return resp.data
         }
         case "etherna": {
-          const resp = await this.instance.request.get<string[]>(`/users/current/pinnedResources`, {
-            ...this.instance.prepareAxiosConfig(options),
-          })
+          const resp = await this.instance.apiRequest.get<string[]>(
+            `/users/current/pinnedResources`,
+            {
+              ...this.instance.prepareAxiosConfig(options),
+            },
+          )
 
           return {
             references: resp.data as Reference[],

@@ -21,7 +21,7 @@ export class User {
           )
         }
         case "etherna": {
-          const resp = await this.instance.request.get<EthernaGatewayCurrentUser>(
+          const resp = await this.instance.apiRequest.get<EthernaGatewayCurrentUser>(
             `/users/current`,
             {
               ...this.instance.prepareAxiosConfig(opts),
@@ -51,7 +51,7 @@ export class User {
           )
         }
         case "etherna": {
-          const resp = await this.instance.request.get<EthernaGatewayCredit>(
+          const resp = await this.instance.apiRequest.get<EthernaGatewayCredit>(
             `/users/current/credit`,
             {
               ...this.instance.prepareAxiosConfig(opts),

@@ -13,7 +13,7 @@ export class IndexModeration {
    */
   async deleteComment(id: string, opts?: RequestOptions) {
     try {
-      await this.instance.request.delete(`/moderation/comments/${id}`, {
+      await this.instance.apiRequest.delete(`/moderation/comments/${id}`, {
         ...this.instance.prepareAxiosConfig(opts),
       })
 
@@ -30,7 +30,7 @@ export class IndexModeration {
    */
   async deleteVideo(id: string, opts?: RequestOptions) {
     try {
-      await this.instance.request.delete(`/moderation/videos/${id}`, {
+      await this.instance.apiRequest.delete(`/moderation/videos/${id}`, {
         ...this.instance.prepareAxiosConfig(opts),
       })
 

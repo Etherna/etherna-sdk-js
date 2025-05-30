@@ -16,7 +16,7 @@ export class IndexSearch {
    */
   async fetchVideos(query: string, page = 0, take = 25, opts?: RequestOptions) {
     try {
-      const resp = await this.instance.request.get<PaginatedResult<IndexVideoPreview>>(
+      const resp = await this.instance.apiRequest.get<PaginatedResult<IndexVideoPreview>>(
         "/search/query2",
         {
           ...this.instance.prepareAxiosConfig(opts),

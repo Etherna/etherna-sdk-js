@@ -13,7 +13,7 @@ export class IndexSystem {
    */
   async fetchParameters(opts?: RequestOptions) {
     try {
-      const resp = await this.instance.request.get<IndexParameters>("/system/parameters", {
+      const resp = await this.instance.apiRequest.get<IndexParameters>("/system/parameters", {
         ...this.instance.prepareAxiosConfig(opts),
       })
 
