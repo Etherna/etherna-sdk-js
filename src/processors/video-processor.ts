@@ -62,7 +62,11 @@ export class VideoProcessor extends BaseProcessor {
 
     await ffmpeg.writeFile(
       INPUT_FILENAME,
-      new Uint8Array(this.input instanceof File ? await fileToBuffer(this.input) : this.input),
+      new Uint8Array(
+        this.input instanceof File || this.input instanceof Blob
+          ? await fileToBuffer(this.input)
+          : this.input,
+      ),
       { signal: options.signal },
     )
 
