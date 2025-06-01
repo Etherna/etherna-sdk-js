@@ -25,7 +25,7 @@ export class BaseProcessor {
   protected _isFullyUploaded = false
   protected _stampCalculator = new StampCalculator()
 
-  constructor(input: File | ArrayBuffer | Uint8Array) {
+  constructor(input: File | Blob | ArrayBuffer | Uint8Array) {
     this.input = input
   }
 
