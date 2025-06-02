@@ -14,20 +14,13 @@ import { Stamps } from "./stamps"
 import { System } from "./system"
 import { Tags } from "./tags"
 import { User } from "./user"
+import { CHAIN_BLOCK_TIME } from "@/consts"
 import { EthAddress } from "@/types"
 import { isEthAddress, makeInjectedWalletSigner, makePrivateKeySigner } from "@/utils"
 
 import type { BaseClientOptions } from "../base-client"
+import type { BeeChain } from "@/consts"
 import type { Signer } from "@/types/signer"
-
-export type BeeChain = { name: "custom" | "gnosis" | "sepolia" | "goerli"; blockTime: number }
-
-const ChainBlockTime: Record<BeeChain["name"], number> = {
-  custom: 2,
-  gnosis: 5,
-  sepolia: 2,
-  goerli: 15,
-}
 
 export interface BeeClientOptions extends BaseClientOptions {
   type?: "bee" | "etherna"
@@ -67,7 +60,7 @@ export class BeeClient extends BaseClient {
     this.type = opts?.type ?? "bee"
     this.chain = {
       name: opts?.chain?.name ?? "gnosis",
-      blockTime: opts?.chain?.blockTime ?? ChainBlockTime[opts?.chain?.name ?? "gnosis"],
+      blockTime: opts?.chain?.blockTime ?? CHAIN_BLOCK_TIME[opts?.chain?.name ?? "gnosis"],
     }
 
     this.auth = new Auth(this)

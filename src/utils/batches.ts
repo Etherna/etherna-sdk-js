@@ -1,4 +1,4 @@
-import { STAMPS_DEPTH_MAX, STAMPS_DEPTH_MIN } from "@/consts"
+import { CHAIN_BLOCK_TIME, STAMPS_DEPTH_MAX, STAMPS_DEPTH_MIN } from "@/consts"
 
 import type { PostageBatch } from "@/types/swarm"
 
@@ -107,19 +107,25 @@ export const ttlToAmount = (ttl: number, price: number, blockTime: number): bigi
  * @param amount Batch amount
  * @returns Price in BZZ
  */
-export const calcBatchPrice = (depth: number, amount: bigint | string): string => {
-  const hasInvalidInput = BigInt(amount) <= BigInt(0) || isNaN(depth) || depth < 17 || depth > 255
+export const calcBatchPrice = (depth: number, amount: bigint | string) => {
+  const hasInvalidInput =
+    BigInt(amount) <= BigInt(0) ||
+    isNaN(depth) ||
+    depth < STAMPS_DEPTH_MIN ||
+    depth > STAMPS_DEPTH_MAX
 
   if (hasInvalidInput) {
-    return "-"
+    return null
   }
 
   const tokenDecimals = 16
   const price = BigInt(amount) * BigInt(2 ** depth)
 
-  const readablePrice = price / BigInt(10) ** BigInt(tokenDecimals)
+  const readablePrice = (price.toString() as unknown as number) / 10 ** tokenDecimals
 
-  return `${readablePrice} BZZ`
+  return {
+    bzz: readablePrice,
+  }
 }
 
 /**
@@ -136,4 +142,55 @@ export const calcDilutedTTL = (
   newDepth: number,
 ): number => {
   return Math.ceil(currentTTL / 2 ** (newDepth - currentDepth))
+}
+
+interface ExpandAmountOpts {
+  price: number
+  blockTime: number
+}
+
+/**
+ * Calculate the amount needed to expand a postage batch (same TTL as the current one)
+ * @param batch Batch data
+ * @param newDepth New batch depth
+ * @param opts Options object with price and blockTime
+ * @returns Amount in BZZ needed to expand the batch
+ */
+export function calcExpandAmount(
+  batch: PostageBatch,
+  newDepth: number,
+  opts: ExpandAmountOpts,
+): bigint
+/**
+ * Calculate the amount needed to expand a postage batch (dilute and/or increase TTL)
+ * @param batch Postage batch data
+ * @param newDepth New batch depth
+ * @param desiredTTL Desired TTL in seconds (must be greater than current batch TTL)
+ * @param opts Options object with price and blockTime
+ * @returns Amount in BZZ needed to expand the batch
+ */
+export function calcExpandAmount(
+  batch: PostageBatch,
+  newDepth: number,
+  desiredTTL: number,
+  opts: ExpandAmountOpts,
+): bigint
+export function calcExpandAmount(
+  batch: PostageBatch,
+  newDepth: number,
+  desiredTTLOrOpts: number | ExpandAmountOpts,
+  opts?: ExpandAmountOpts,
+): bigint {
+  const desiredTTL =
+    typeof desiredTTLOrOpts === "number" && desiredTTLOrOpts > batch.batchTTL
+      ? desiredTTLOrOpts
+      : batch.batchTTL
+  const price = opts?.price ?? (typeof desiredTTLOrOpts === "object" ? desiredTTLOrOpts.price : 1)
+  const blockTime =
+    opts?.blockTime ??
+    (typeof desiredTTLOrOpts === "object" ? desiredTTLOrOpts.blockTime : CHAIN_BLOCK_TIME.gnosis)
+  const dilutedTTL = calcDilutedTTL(batch.batchTTL, batch.depth, newDepth)
+  const ttl = Math.abs(desiredTTL - dilutedTTL)
+  const amount = BigInt(ttlToAmount(ttl, price, blockTime))
+  return amount
 }

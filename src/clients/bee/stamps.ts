@@ -1,6 +1,6 @@
 import { EthernaSdkError, getSdkError, StampCalculator, throwSdkError } from "@/classes"
 import { ETHERNA_MAX_BATCH_DEPTH, ETHERNA_WELCOME_BATCH_DEPTH, STAMPS_DEPTH_MIN } from "@/consts"
-import { calcDilutedTTL, getBatchPercentUtilization, ttlToAmount } from "@/utils"
+import { calcDilutedTTL, calcExpandAmount, getBatchPercentUtilization, ttlToAmount } from "@/utils"
 
 import type { BeeClient } from "."
 import type {
@@ -454,13 +454,10 @@ export class Stamps {
       this.instance.chainstate.getCurrentPrice(),
     ])
 
-    console.log("A", batch.batchTTL, batch.depth, options.depth, price)
-
-    const newTTL = calcDilutedTTL(batch.batchTTL, batch.depth, options.depth)
-    const ttl = Math.abs(batch.batchTTL - newTTL)
-    const amount = ttlToAmount(ttl, price, this.instance.chain.blockTime).toString()
-
-    console.log("B", newTTL, ttl, amount)
+    const amount = calcExpandAmount(batch, options.depth, {
+      price,
+      blockTime: this.instance.chain.blockTime,
+    })
 
     // topup batch (before dilute to avoid possible expiration)
     if (BigInt(amount) > BigInt(0)) {
@@ -473,8 +470,6 @@ export class Stamps {
         waitUntilUpdated: true,
       })
     }
-
-    console.log("C")
 
     // dilute batch
     await this.dilute(batchId, options)

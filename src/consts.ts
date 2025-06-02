@@ -1,6 +1,15 @@
 import type { EthAddress } from "./types/eth"
 import type { BytesReference, Reference } from "./types/swarm"
 
+export type BeeChain = { name: "custom" | "gnosis" | "sepolia" | "goerli"; blockTime: number }
+
+export const CHAIN_BLOCK_TIME = {
+  custom: 2,
+  gnosis: 5,
+  sepolia: 2,
+  goerli: 15,
+} as const satisfies Record<BeeChain["name"], number>
+
 export const ETHERNA_MAX_BATCH_DEPTH = 20
 export const ETHERNA_WELCOME_BATCH_DEPTH = 20
 
