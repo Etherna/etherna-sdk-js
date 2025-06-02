@@ -1,5 +1,5 @@
 import { EthernaSdkError, getSdkError, StampCalculator, throwSdkError } from "@/classes"
-import { ETHERNA_MIN_BATCH_DEPTH, ETHERNA_WELCOME_BATCH_DEPTH, STAMPS_DEPTH_MIN } from "@/consts"
+import { ETHERNA_MAX_BATCH_DEPTH, ETHERNA_WELCOME_BATCH_DEPTH, STAMPS_DEPTH_MIN } from "@/consts"
 import { calcDilutedTTL, getBatchPercentUtilization, ttlToAmount } from "@/utils"
 
 import type { BeeClient } from "."
@@ -68,10 +68,10 @@ export class Stamps {
   ): Promise<PostageBatch> {
     const { label, useWelcomeIfPossible, onStatusChange, ...opts } = options ?? {}
 
-    if (this.instance.type === "etherna" && depth < ETHERNA_MIN_BATCH_DEPTH) {
+    if (this.instance.type === "etherna" && depth > ETHERNA_MAX_BATCH_DEPTH) {
       throw new EthernaSdkError(
         "INVALID_ARGUMENT",
-        `Minimum depth for an Etherna batch is ${ETHERNA_MIN_BATCH_DEPTH}`,
+        `Maximum depth for an Etherna batch is ${ETHERNA_MAX_BATCH_DEPTH}`,
       )
     }
 
@@ -266,25 +266,25 @@ export class Stamps {
   }
 
   /**
-   * Find best usable batchId to use.
+   * Find best usable batch to use.
    * Use the option:
    * - `minDepth` to filter batches with a minimum depth
    * - `labelQuery` to filter batches by label
    * - `stampCalculator` to provide the bucket collision to upload (best to find the batch with most buckets available)
    *
    * @param options
-   * @returns The best batchId to use or null if no batch is found
+   * @returns The best batch to use or null if no batch is found
    */
-  async fetchBestBatchId(
+  async fetchBestBatch(
     options?: FetchBestBatchIdOptions,
-  ): Promise<(BatchId & { collisions?: BucketCollisions }) | null> {
+  ): Promise<(PostageBatch & { collisions?: BucketCollisions }) | null> {
     try {
       const batches = await this.downloadAll(options?.labelQuery, options)
       const minBatchDepth = options?.minDepth ?? STAMPS_DEPTH_MIN
 
       for (const batch of batches) {
         if (options?.collisions) {
-          const batchId = "batchID" in batch ? batch.batchID : batch.batchId
+          const batchId = "ownerNodeId" in batch ? batch.batchId : batch.batchID
           const { isUsable, batchCollisions } = await this.fetchIsFillableBatch(
             batchId,
             options.collisions,
@@ -294,10 +294,15 @@ export class Stamps {
             continue
           }
 
-          const augmentedBatchId = batchId as BatchId & { collisions?: BucketCollisions }
-          Object.assign(augmentedBatchId, { collisions: batchCollisions })
+          const fullPostageBatch =
+            "ownerNodeId" in batch ? await this.download(batchId, options) : batch
 
-          return augmentedBatchId
+          const augmentedBatch = fullPostageBatch as PostageBatch & {
+            collisions?: BucketCollisions
+          }
+          Object.assign(augmentedBatch, { collisions: batchCollisions })
+
+          return augmentedBatch
         }
 
         const postageBatch = "utilization" in batch ? batch : await this.download(batch.batchId)
@@ -311,7 +316,7 @@ export class Stamps {
         }
 
         if (getBatchPercentUtilization(postageBatch) < 1) {
-          return postageBatch.batchID
+          return postageBatch
         }
       }
 
@@ -319,6 +324,30 @@ export class Stamps {
     } catch (error) {
       throwSdkError(error)
     }
+  }
+
+  /**
+   * Find best usable batchId to use.
+   * Use the option:
+   * - `minDepth` to filter batches with a minimum depth
+   * - `labelQuery` to filter batches by label
+   * - `stampCalculator` to provide the bucket collision to upload (best to find the batch with most buckets available)
+   *
+   * @param options
+   * @returns The best batchId to use or null if no batch is found
+   */
+  async fetchBestBatchId(
+    options?: FetchBestBatchIdOptions,
+  ): Promise<(BatchId & { collisions?: BucketCollisions }) | null> {
+    const batch = await this.fetchBestBatch(options)
+    if (batch) {
+      const augmentedBatchId = batch.batchID as BatchId & { collisions?: BucketCollisions }
+      Object.assign(augmentedBatchId, { collisions: batch.collisions })
+
+      return augmentedBatchId
+    }
+
+    return null
   }
 
   /**

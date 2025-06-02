@@ -1,7 +1,7 @@
 import type { EthAddress } from "./types/eth"
 import type { BytesReference, Reference } from "./types/swarm"
 
-export const ETHERNA_MIN_BATCH_DEPTH = 20
+export const ETHERNA_MAX_BATCH_DEPTH = 20
 export const ETHERNA_WELCOME_BATCH_DEPTH = 20
 
 export const EmptyAddress = ("0x" + "0".repeat(40)) as EthAddress

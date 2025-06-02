@@ -1,3 +1,5 @@
+import { STAMPS_DEPTH_MAX, STAMPS_DEPTH_MIN } from "@/consts"
+
 import type { PostageBatch } from "@/types/swarm"
 
 /**
@@ -22,12 +24,38 @@ export const getBatchSpace = (batch: PostageBatch) => {
 }
 
 /**
+ * Calculate the minimum depth required to upload some data
+ * @param bytesToUpload Amount of bytes to upload
+ * @param currentDepth Current batch depth
+ * @param availableSpace Available space in the current batch (leave blank if fully available)
+ * @returns Minimum batch depth required to upload the specified amount of bytes
+ */
+export function calcBatchMinDepth(
+  bytesToUpload: number,
+  currentDepth = STAMPS_DEPTH_MIN,
+  availableSpace?: number,
+) {
+  let currentAvailableSpace = availableSpace ?? getBatchCapacity(currentDepth)
+  let depth = currentDepth
+
+  while (currentAvailableSpace < bytesToUpload && depth <= STAMPS_DEPTH_MAX) {
+    depth++
+    currentAvailableSpace += getBatchCapacity(depth) - getBatchCapacity(depth - 1)
+  }
+
+  return depth
+}
+
+/**
  * Get batch capacity
  *
  * @param batchOrDepth Batch data or depth
  * @returns Batch total capcity in bytes
  */
-export const getBatchCapacity = (batchOrDepth: PostageBatch | number) => {
+
+export function getBatchCapacity(batch: PostageBatch): number
+export function getBatchCapacity(depth: number): number
+export function getBatchCapacity(batchOrDepth: PostageBatch | number): number {
   const depth = typeof batchOrDepth === "number" ? batchOrDepth : batchOrDepth.depth
   return 2 ** depth * 4096
 }
@@ -89,7 +117,7 @@ export const calcBatchPrice = (depth: number, amount: bigint | string): string =
   const tokenDecimals = 16
   const price = BigInt(amount) * BigInt(2 ** depth)
 
-  const readablePrice = +price.toString() / 10 ** tokenDecimals
+  const readablePrice = price / BigInt(10) ** BigInt(tokenDecimals)
 
   return `${readablePrice} BZZ`
 }
