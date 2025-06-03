@@ -94,20 +94,20 @@ export const getBatchExpiration = (batch: PostageBatch): "unlimited" | Date => {
  * @param ttl TTL in seconds
  * @param price Token price
  * @param blockTime Chain blocktime
- * @returns Batch amount
+ * @returns Batch amount (PLUR / block / chunk)
  */
 export const ttlToAmount = (ttl: number, price: number, blockTime: number): bigint => {
   return (BigInt(ttl) * BigInt(price)) / BigInt(blockTime)
 }
 
 /**
- * Calc batch price from depth & amount
+ * Calc transaction price from depth & amount
  *
  * @param depth Batch depth
  * @param amount Batch amount
  * @returns Price in BZZ
  */
-export const calcBatchPrice = (depth: number, amount: bigint | string) => {
+export const calcAmountPrice = (depth: number, amount: bigint | string) => {
   const hasInvalidInput =
     BigInt(amount) <= BigInt(0) ||
     isNaN(depth) ||

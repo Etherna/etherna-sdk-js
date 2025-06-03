@@ -48,6 +48,10 @@ interface DiluteBatchOptions extends RequestOptions {
   waitUntilUpdated?: boolean
 }
 
+interface ExpandBatchOptions extends DiluteBatchOptions {
+  ttl?: number
+}
+
 export class Stamps {
   constructor(private instance: BeeClient) {}
 
@@ -448,13 +452,20 @@ export class Stamps {
    * @param batchId Id of batch to extend
    * @param options Dilute options
    */
-  async expand(batchId: BatchId, options: DiluteBatchOptions) {
+  async expand(batchId: BatchId, options: ExpandBatchOptions) {
     const [batch, price] = await Promise.all([
       this.download(batchId),
       this.instance.chainstate.getCurrentPrice(),
     ])
 
-    const amount = calcExpandAmount(batch, options.depth, {
+    if (options.ttl && options.ttl <= batch.batchTTL) {
+      throw new EthernaSdkError(
+        "INVALID_ARGUMENT",
+        `The new TTL must be greater than the current batch TTL (${batch.batchTTL})`,
+      )
+    }
+
+    const amount = calcExpandAmount(batch, options.depth, options.ttl ?? batch.batchTTL, {
       price,
       blockTime: this.instance.chain.blockTime,
     })
