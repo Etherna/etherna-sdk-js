@@ -360,14 +360,15 @@ export class Stamps {
    * @param batchId Id of the swarm batch
    * @param byAmount Amount to add to the batch
    */
-  async topup(batchId: BatchId, options: TopupBatchOptions): Promise<boolean> {
+  async topup(batchId: BatchId, options: TopupBatchOptions): Promise<PostageBatch> {
     const { by, waitUntilUpdated, ...opts } = options
     const price = await this.instance.chainstate.getCurrentPrice(opts)
     const amount =
       by.type === "amount"
         ? by.amount
         : ttlToAmount(by.seconds, price, this.instance.chain.blockTime)
-    const initialAmount = options.initialAmount ?? (await this.download(batchId)).amount
+    const postage = await this.download(batchId)
+    const initialAmount = options.initialAmount ?? postage.amount
 
     try {
       switch (this.instance.type) {
@@ -394,10 +395,10 @@ export class Stamps {
       }
 
       if (waitUntilUpdated) {
-        await this.waitBatchValid(batchId, (batch) => batch.amount > initialAmount, opts)
+        return await this.waitBatchValid(batchId, (batch) => batch.amount > initialAmount, opts)
       }
 
-      return true
+      return postage
     } catch (error) {
       throwSdkError(error)
     }
@@ -409,7 +410,7 @@ export class Stamps {
    * @param batchId Id of the swarm batch
    * @param options Dilute options
    */
-  async dilute(batchId: BatchId, options: DiluteBatchOptions): Promise<boolean> {
+  async dilute(batchId: BatchId, options: DiluteBatchOptions): Promise<PostageBatch> {
     const { depth, waitUntilUpdated, ...opts } = options
 
     try {
@@ -437,10 +438,10 @@ export class Stamps {
       }
 
       if (waitUntilUpdated) {
-        await this.waitBatchValid(batchId, (batch) => batch.depth === depth, opts)
+        return await this.waitBatchValid(batchId, (batch) => batch.depth === depth, opts)
       }
 
-      return true
+      return this.download(batchId)
     } catch (error) {
       throwSdkError(error)
     }
@@ -452,7 +453,7 @@ export class Stamps {
    * @param batchId Id of batch to extend
    * @param options Dilute options
    */
-  async expand(batchId: BatchId, options: ExpandBatchOptions) {
+  async expand(batchId: BatchId, options: ExpandBatchOptions): Promise<PostageBatch> {
     const [batch, price] = await Promise.all([
       this.download(batchId),
       this.instance.chainstate.getCurrentPrice(),
@@ -483,9 +484,7 @@ export class Stamps {
     }
 
     // dilute batch
-    await this.dilute(batchId, options)
-
-    return true
+    return await this.dilute(batchId, options)
   }
 
   // Utils methods
