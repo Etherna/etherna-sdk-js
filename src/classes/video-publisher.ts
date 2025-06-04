@@ -101,7 +101,7 @@ export class VideoPublisher {
               signal: options.signal,
             })
           } else {
-            await indexClient.videos.createVideo(this.video.reference, undefined, {
+            await indexClient.videos.createVideo(this.video.reference, {
               signal: options.signal,
             })
           }

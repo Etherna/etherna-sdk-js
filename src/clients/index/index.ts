@@ -1,16 +1,25 @@
 import { BaseClient } from "../base-client"
-import { IndexComments } from "./comments"
-import { IndexModeration } from "./moderation"
-import { IndexSearch } from "./search"
-import { IndexSystem } from "./system"
-import { IndexUsers } from "./users"
-import { IndexVideos } from "./videos"
+import { IIndexCommentsInterface, IndexComments } from "./comments"
+import { IIndexModerationInterface, IndexModeration } from "./moderation"
+import { IIndexSearchInterface, IndexSearch } from "./search"
+import { IIndexSystemInterface, IndexSystem } from "./system"
+import { IIndexUsersInterface, IndexUsers } from "./users"
+import { IIndexVideosInterface, IndexVideos } from "./videos"
 
 import type { BaseClientOptions } from "../base-client"
 
 export interface IndexClientOptions extends BaseClientOptions {}
 
-export class EthernaIndexClient extends BaseClient {
+export interface IIndexClientInterface {
+  comments: IIndexCommentsInterface
+  moderation: IIndexModerationInterface
+  search: IIndexSearchInterface
+  system: IIndexSystemInterface
+  videos: IIndexVideosInterface
+  users: IIndexUsersInterface
+}
+
+export class EthernaIndexClient extends BaseClient implements IIndexClientInterface {
   comments: IndexComments
   moderation: IndexModeration
   search: IndexSearch

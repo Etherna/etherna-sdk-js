@@ -12,7 +12,42 @@ import type {
 } from "./types"
 import type { RequestOptions } from "@/types/clients"
 
-export class IndexVideos {
+export interface IIndexVideosInterface {
+  createVideo(
+    hash: string,
+    opts?: RequestOptions & {
+      encryptionKey?: string
+    },
+  ): Promise<string>
+  fetchVideoFromId(id: string, opts?: RequestOptions): Promise<IndexVideo>
+  fetchVideoFromHash(hash: string, opts?: RequestOptions): Promise<IndexVideo>
+  fetchLatestVideos(
+    page?: number,
+    take?: number,
+    opts?: RequestOptions,
+  ): Promise<PaginatedResult<IndexVideoPreview>>
+  fetchValidations(id: string, opts?: RequestOptions): Promise<IndexVideoValidation[]>
+  fetchHashValidation(hash: string, opts?: RequestOptions): Promise<IndexVideoValidation>
+  fetchBulkValidation(hashes: string[], opts?: RequestOptions): Promise<IndexVideoValidation[]>
+  updateVideo(id: string, newHash: string, opts?: RequestOptions): Promise<IndexVideoManifest>
+  deleteVideo(id: string, opts?: RequestOptions): Promise<boolean>
+  fetchComments(
+    id: string,
+    page?: number,
+    take?: number,
+    opts?: RequestOptions,
+  ): Promise<PaginatedResult<IndexVideoComment>>
+  postComment(id: string, message: string, opts?: RequestOptions): Promise<IndexVideoComment>
+  vote(id: string, vote: VoteValue, opts?: RequestOptions): Promise<IndexVideoComment>
+  reportVideo(
+    id: string,
+    manifestReference: string,
+    code: string,
+    opts?: RequestOptions,
+  ): Promise<void>
+}
+
+export class IndexVideos implements IIndexVideosInterface {
   abortController?: AbortController
 
   constructor(private instance: EthernaIndexClient) {}
@@ -25,14 +60,19 @@ export class IndexVideos {
    * @param opts Request options
    * @returns Video id
    */
-  async createVideo(hash: string, encryptionKey?: string, opts?: RequestOptions) {
+  async createVideo(
+    hash: string,
+    opts?: RequestOptions & {
+      encryptionKey?: string
+    },
+  ) {
     try {
       const resp = await this.instance.apiRequest.post<string>(
         `/videos`,
         {
           manifestHash: hash,
-          encryptionKey,
-          encryptionType: encryptionKey ? "AES256" : "Plain",
+          encryptionKey: opts?.encryptionKey,
+          encryptionType: opts?.encryptionKey ? "AES256" : "Plain",
         },
         {
           ...this.instance.prepareAxiosConfig(opts),
@@ -229,7 +269,7 @@ export class IndexVideos {
    */
   async fetchComments(id: string, page = 0, take = 25, opts?: RequestOptions) {
     try {
-      const resp = await this.instance.apiRequest.get<IndexVideoComment[]>(
+      const resp = await this.instance.apiRequest.get<PaginatedResult<IndexVideoComment>>(
         `/videos/${id}/comments`,
         {
           ...this.instance.prepareAxiosConfig(opts),
@@ -301,17 +341,22 @@ export class IndexVideos {
    *
    * @param id Id of the video
    * @param manifestReference Reference of the manifest to report
-   * @param code Report code
+   * @param description Report description
    * @param opts Request options
    */
-  async reportVideo(id: string, manifestReference: string, code: string, opts?: RequestOptions) {
+  async reportVideo(
+    id: string,
+    manifestReference: string,
+    description: string,
+    opts?: RequestOptions,
+  ) {
     try {
       const resp = await this.instance.apiRequest.post(
         `/videos/${id}/manifest/${manifestReference}/reports`,
         null,
         {
           ...this.instance.prepareAxiosConfig(opts),
-          params: { description: code },
+          params: { description },
         },
       )
 

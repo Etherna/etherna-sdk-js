@@ -4,7 +4,16 @@ import type { EthernaIndexClient } from "."
 import type { IndexVideoPreview, PaginatedResult } from "./types"
 import type { RequestOptions } from "@/types/clients"
 
-export class IndexSearch {
+export interface IIndexSearchInterface {
+  fetchVideos(
+    query: string,
+    page?: number,
+    take?: number,
+    opts?: RequestOptions,
+  ): Promise<PaginatedResult<IndexVideoPreview>>
+}
+
+export class IndexSearch implements IIndexSearchInterface {
   constructor(private instance: EthernaIndexClient) {}
 
   /**

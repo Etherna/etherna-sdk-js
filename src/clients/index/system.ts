@@ -4,7 +4,11 @@ import type { EthernaIndexClient } from "."
 import type { IndexParameters } from "./types"
 import type { RequestOptions } from "@/types/clients"
 
-export class IndexSystem {
+export interface IIndexSystemInterface {
+  fetchParameters(opts?: RequestOptions): Promise<IndexParameters>
+}
+
+export class IndexSystem implements IIndexSystemInterface {
   constructor(private instance: EthernaIndexClient) {}
 
   /**

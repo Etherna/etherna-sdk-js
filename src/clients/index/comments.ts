@@ -3,7 +3,11 @@ import { throwSdkError } from "@/classes"
 import type { EthernaIndexClient } from "."
 import type { RequestOptions } from "@/types/clients"
 
-export class IndexComments {
+export interface IIndexCommentsInterface {
+  deleteComment(id: string, opts?: RequestOptions): Promise<boolean>
+}
+
+export class IndexComments implements IIndexCommentsInterface {
   constructor(private instance: EthernaIndexClient) {}
 
   /**

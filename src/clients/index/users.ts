@@ -4,7 +4,23 @@ import type { EthernaIndexClient } from "."
 import type { IndexCurrentUser, IndexUser, IndexVideo, PaginatedResult } from "./types"
 import type { RequestOptions } from "@/types/clients"
 
-export class IndexUsers {
+export interface IIndexUsersInterface {
+  fetchUsers(
+    page?: number,
+    take?: number,
+    opts?: RequestOptions,
+  ): Promise<PaginatedResult<IndexUser>>
+  fetchUser(address: string, opts?: RequestOptions): Promise<IndexUser>
+  fetchVideos(
+    address: string,
+    page?: number,
+    take?: number,
+    opts?: RequestOptions,
+  ): Promise<PaginatedResult<IndexVideo>>
+  fetchCurrentUser(opts?: RequestOptions): Promise<IndexCurrentUser>
+}
+
+export class IndexUsers implements IIndexUsersInterface {
   constructor(private instance: EthernaIndexClient) {}
 
   /**

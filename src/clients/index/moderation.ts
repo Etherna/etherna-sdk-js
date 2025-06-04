@@ -3,7 +3,12 @@ import { throwSdkError } from "@/classes"
 import type { EthernaIndexClient } from "."
 import type { RequestOptions } from "@/types/clients"
 
-export class IndexModeration {
+export interface IIndexModerationInterface {
+  deleteComment(id: string, opts?: RequestOptions): Promise<boolean>
+  deleteVideo(id: string, opts?: RequestOptions): Promise<boolean>
+}
+
+export class IndexModeration implements IIndexModerationInterface {
   constructor(private instance: EthernaIndexClient) {}
 
   /**
