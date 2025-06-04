@@ -1,6 +1,11 @@
 import { EthernaSdkError, getSdkError, StampCalculator, throwSdkError } from "@/classes"
-import { ETHERNA_MAX_BATCH_DEPTH, ETHERNA_WELCOME_BATCH_DEPTH, STAMPS_DEPTH_MIN } from "@/consts"
-import { calcDilutedTTL, calcExpandAmount, getBatchPercentUtilization, ttlToAmount } from "@/utils"
+import {
+  ETHERNA_MAX_BATCH_DEPTH,
+  ETHERNA_WELCOME_BATCH_DEPTH,
+  ETHERNA_WELCOME_POSTAGE_LABEL,
+  STAMPS_DEPTH_MIN,
+} from "@/consts"
+import { calcExpandAmount, getBatchPercentUtilization, ttlToAmount } from "@/utils"
 
 import type { BeeClient } from "."
 import type {
@@ -487,20 +492,36 @@ export class Stamps {
     return await this.dilute(batchId, options)
   }
 
+  async isWelcomeConsumed(opts?: RequestOptions) {
+    try {
+      switch (this.instance.type) {
+        case "bee": {
+          throw new EthernaSdkError("NOT_IMPLEMENTED", "This method is not implemented for Bee")
+        }
+        case "etherna": {
+          const resp = await this.instance.apiRequest.get<EthernaGatewayWelcomeStatus>(
+            "/users/current/welcome",
+            {
+              ...this.instance.prepareAxiosConfig(opts),
+            },
+          )
+          return resp.data.isFreePostageBatchConsumed
+        }
+      }
+    } catch (error) {
+      throwSdkError(error)
+    }
+  }
+
   // Utils methods
 
   private async createWelcomeBatch(options?: CreatePostageBatchOptions): Promise<PostageBatch> {
     const { onStatusChange, ...opts } = options ?? {}
 
     try {
-      const welcomeResp = await this.instance.apiRequest.get<EthernaGatewayWelcomeStatus>(
-        `/users/current/welcome`,
-        {
-          ...this.instance.prepareAxiosConfig(opts),
-        },
-      )
+      const isFreePostageBatchConsumed = await this.isWelcomeConsumed(opts)
 
-      if (!welcomeResp.data.isFreePostageBatchConsumed) {
+      if (!isFreePostageBatchConsumed) {
         await this.instance.apiRequest.post(`/users/current/welcome`, null, {
           ...this.instance.prepareAxiosConfig(opts),
         })
@@ -531,13 +552,13 @@ export class Stamps {
         }
 
         timeout = setTimeout(() => {
-          this.downloadAll().then((batches) => {
-            const firstBatch = batches[0]
-            if (firstBatch) {
-              if ("amount" in firstBatch) {
-                resolver(firstBatch)
+          this.downloadAll(ETHERNA_WELCOME_POSTAGE_LABEL).then((batches) => {
+            const welcomeBatch = batches[0]
+            if (welcomeBatch) {
+              if ("amount" in welcomeBatch) {
+                resolver(welcomeBatch)
               } else {
-                this.download(firstBatch.batchId).then(resolver)
+                this.download(welcomeBatch.batchId).then(resolver)
               }
             } else {
               waitBatch()

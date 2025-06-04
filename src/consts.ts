@@ -12,6 +12,7 @@ export const CHAIN_BLOCK_TIME = {
 
 export const ETHERNA_MAX_BATCH_DEPTH = 20
 export const ETHERNA_WELCOME_BATCH_DEPTH = 20
+export const ETHERNA_WELCOME_POSTAGE_LABEL = "default" as const
 
 export const EmptyAddress = ("0x" + "0".repeat(40)) as EthAddress
 export const EmptyReference = "0".repeat(64) as Reference
