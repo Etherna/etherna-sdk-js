@@ -101,12 +101,17 @@ export class BaseManifest {
     }
 
     if (this.batchId && !this.batchIdCollision) {
-      const buckets = await this.beeClient.stamps.downloadBuckets(this.batchId)
-      const batchStampCalculator = new StampCalculator(buckets.buckets)
+      const buckets = await this.beeClient.stamps.downloadBuckets(this.batchId).catch((err) => {
+        if (err instanceof EthernaSdkError && err.code === "NOT_IMPLEMENTED") {
+          return null
+        }
+        throw err
+      })
+      const batchStampCalculator = new StampCalculator(buckets?.buckets)
 
       const calculator = StampCalculator.merge(batchStampCalculator, this.manifestBucketCalculator)
 
-      if (calculator.minDepth > buckets.depth) {
+      if (buckets && calculator.minDepth > buckets.depth) {
         throw new EthernaSdkError(
           "BUCKET_FILLED",
           "Postage batch can't be used. All buckets are filled.",
