@@ -125,8 +125,8 @@ export class PlaylistManifest extends BaseMantarayManifest {
       }
 
       if (init) {
-        if (opts.beeClient.signer.address !== init.preview.owner) {
-          throw new EthernaSdkError("PERMISSION_DENIED", "You can't update other user's profile")
+        if (opts.beeClient.signer.address.toLowerCase() !== init.preview.owner.toLowerCase()) {
+          throw new EthernaSdkError("PERMISSION_DENIED", "You can't update other user's playlist")
         }
 
         this._preview = init.preview
@@ -200,7 +200,7 @@ export class PlaylistManifest extends BaseMantarayManifest {
   }
 
   public get name() {
-    return this.hasLoadedDetails ? this._details.name ?? this._preview.name : this._preview.name
+    return this.hasLoadedDetails ? (this._details.name ?? this._preview.name) : this._preview.name
   }
   public set name(value: string) {
     if (this.isEncryptableType) {
@@ -315,7 +315,7 @@ export class PlaylistManifest extends BaseMantarayManifest {
   }
 
   public override async upload(options?: PlaylistManifestUploadOptions): Promise<Playlist> {
-    if (this.owner !== this.beeClient.signer?.address) {
+    if (this.owner.toLowerCase() !== this.beeClient.signer?.address.toLowerCase()) {
       throw new EthernaSdkError("PERMISSION_DENIED", "You can't update other user's playlist")
     }
 

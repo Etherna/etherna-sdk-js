@@ -96,8 +96,10 @@ export class VideoManifest extends BaseMantarayManifest {
       }
 
       if (init) {
-        if (opts.beeClient.signer.address !== init.preview.ownerAddress) {
-          throw new EthernaSdkError("PERMISSION_DENIED", "You can't update other user's profile")
+        if (
+          opts.beeClient.signer.address.toLowerCase() !== init.preview.ownerAddress.toLowerCase()
+        ) {
+          throw new EthernaSdkError("PERMISSION_DENIED", "You can't update other user's videos")
         }
 
         this._reference = init.reference
@@ -239,7 +241,7 @@ export class VideoManifest extends BaseMantarayManifest {
   }
 
   public override async upload(options?: BaseManifestUploadOptions): Promise<Video> {
-    if (this.ownerAddress !== this.beeClient.signer?.address) {
+    if (this.ownerAddress.toLowerCase() !== this.beeClient.signer?.address.toLowerCase()) {
       throw new EthernaSdkError("PERMISSION_DENIED", "You can't update other user's videos")
     }
 

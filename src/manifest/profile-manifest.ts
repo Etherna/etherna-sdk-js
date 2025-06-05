@@ -86,7 +86,7 @@ export class ProfileManifest extends BaseMantarayManifest {
       }
 
       if (init) {
-        if (opts.beeClient.signer.address !== init.address) {
+        if (opts.beeClient.signer.address.toLowerCase() !== init.address.toLowerCase()) {
           throw new EthernaSdkError("PERMISSION_DENIED", "You can't update other user's profile")
         }
 
@@ -240,7 +240,7 @@ export class ProfileManifest extends BaseMantarayManifest {
   }
 
   public override async upload(options?: BaseManifestUploadOptions): Promise<Profile> {
-    if (this.address !== this.beeClient.signer?.address) {
+    if (this.address.toLowerCase() !== this.beeClient.signer?.address.toLowerCase()) {
       throw new EthernaSdkError("PERMISSION_DENIED", "You can't update other user's profile")
     }
 
