@@ -21,7 +21,7 @@ export function fileToBuffer(file: File | Blob) {
  * @param file File to convert
  * @returns The array buffer data
  */
-export async function fileToUint8Array(file: File) {
+export async function fileToUint8Array(file: File | Blob) {
   const buffer = await fileToBuffer(file)
   return new Uint8Array(buffer)
 }
@@ -32,7 +32,7 @@ export async function fileToUint8Array(file: File) {
  * @param file File to convert
  * @returns The base64 data URL
  */
-export function fileToDataURL(file: File) {
+export function fileToDataURL(file: File | Blob) {
   return new Promise<string>((resolve, reject) => {
     const fr = new FileReader()
     fr.onload = () => {

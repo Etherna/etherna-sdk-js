@@ -3,8 +3,10 @@ import { makeChunkedFile } from "@fairdatasociety/bmt-js"
 import { BaseProcessor } from "./base-processor"
 import { ImageTypeSchema } from "@/schemas/image-schema"
 import {
+  bufferToDataURL,
   bytesReferenceToReference,
   fileToBuffer,
+  fileToDataURL,
   getImageMeta,
   getReferenceFromData,
   imageToBlurhash,
@@ -37,6 +39,19 @@ export const THUMBNAIL_PATH_FORMAT = "thumb/$size.$type"
 
 export class ImageProcessor extends BaseProcessor {
   private _image: Image | null = null
+  public previewDataURL: string | null = null
+
+  constructor(input: File | Blob | ArrayBuffer | Uint8Array) {
+    super(input)
+
+    const promise =
+      input instanceof File || input instanceof Blob ? fileToDataURL(input) : bufferToDataURL(input)
+    promise
+      .then((dataURL) => {
+        this.previewDataURL = dataURL
+      })
+      .catch(console.error)
+  }
 
   public get image() {
     return this._image

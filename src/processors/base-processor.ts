@@ -17,7 +17,7 @@ export interface ProcessorOutput {
 }
 
 export class BaseProcessor {
-  protected input: File | Blob | ArrayBuffer | Uint8Array
+  public input: File | Blob | ArrayBuffer | Uint8Array
   protected uploadOptions?: BaseProcessorUploadOptions
   protected _uploader?: ChunksUploader
   protected _processorOutputs: ProcessorOutput[] = []
