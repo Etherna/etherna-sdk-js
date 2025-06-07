@@ -50,10 +50,12 @@ const rawSourceBaseTransform = <T extends z.infer<typeof ImageSourceBaseSchema>>
 export const ImageSourceSchema = ImageSourceBaseSchema.transform(rawSourceBaseTransform)
 
 export const ImageSourcesSchema = z.array(
-  ImageSourceSchema.superRefine((data, ctx) => {
-    if (!data.reference && !data.path) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+  ImageSourceSchema.check((ctx) => {
+    if (!ctx.value.reference && !ctx.value.path) {
+      ctx.issues.push({
+        code: "custom",
+        input: ctx.value.path,
+        path: ["path"],
         message: "Either reference or path must be defined",
       })
     }

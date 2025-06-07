@@ -311,6 +311,14 @@ export class ProfileManifest extends BaseMantarayManifest {
     }
   }
 
+  public movePlaylist(playlistRootManifest: Reference, newIndex: number) {
+    const index = this._details.playlists.indexOf(playlistRootManifest)
+    if (index >= 0) {
+      this._details.playlists.splice(index, 1)
+      this._details.playlists.splice(newIndex, 0, playlistRootManifest)
+    }
+  }
+
   public addAvatar(imageProcessor: ImageProcessor) {
     this.importImageProcessor(imageProcessor)
     this._preview.avatar = imageProcessor.image

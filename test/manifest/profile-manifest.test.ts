@@ -5,7 +5,7 @@ import { mockedAvatarProcessor, mockedCoverProcessor } from "../utils/processor-
 import { BeeClient } from "@/clients"
 import { ProfileManifest } from "@/manifest"
 
-import type { BatchId, EthAddress } from "@/types"
+import type { BatchId, EthAddress, Reference } from "@/types"
 
 describe("profile manifest read", () => {
   const beeClient = new BeeClient("http://localhost:1633", {
@@ -156,5 +156,23 @@ describe("profile manifest write", () => {
     await profileRead.download({ mode: "full" })
 
     expect(profileRead.serialized).toStrictEqual(profileEdit.serialized)
+  })
+
+  it("should move a playlist", async () => {
+    const profile = new ProfileManifest(owner, { beeClient })
+    const playlistA = anyReference as Reference
+    const playlistB = "b".repeat(64) as Reference
+    const playlistC = "c".repeat(64) as Reference
+    profile.addPlaylist(playlistA)
+    profile.addPlaylist(playlistB)
+    profile.addPlaylist(playlistC)
+    // Initial order: [playlistA, playlistB, playlistC]
+    expect(profile.playlists).toStrictEqual([playlistA, playlistB, playlistC])
+    // Move playlistB to the end
+    profile.movePlaylist(playlistB, 2)
+    expect(profile.playlists).toStrictEqual([playlistA, playlistC, playlistB])
+    // Move playlistB to the start
+    profile.movePlaylist(playlistB, 0)
+    expect(profile.playlists).toStrictEqual([playlistB, playlistA, playlistC])
   })
 })

@@ -1,5 +1,6 @@
 export * from "./base-manifest"
 export * from "./playlist-manifest"
 export * from "./profile-manifest"
+export * from "./user-followings-manifest"
 export * from "./user-playlists-manifest"
 export * from "./video-manifest"
