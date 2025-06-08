@@ -34,6 +34,7 @@ interface CreatePostageBatchOptions extends RequestOptions {
 
 interface DownloadPostageBatchOptions extends RequestOptions {
   waitUntilUsable?: boolean
+  waitUntil?: (batch: PostageBatch) => boolean
 }
 
 interface FetchBestBatchIdOptions extends RequestOptions {
@@ -205,11 +206,11 @@ export class Stamps {
         }
       }
 
-      if (!waitUntilUsable) {
+      if (!waitUntilUsable && !opts.waitUntil) {
         return await fetchBatch()
       }
 
-      return await this.waitBatchValid(batchId, (batch) => batch.usable, opts)
+      return await this.waitBatchValid(batchId, opts.waitUntil ?? ((batch) => batch.usable), opts)
     } catch (error) {
       throwSdkError(error)
     }

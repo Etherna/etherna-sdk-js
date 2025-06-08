@@ -1,6 +1,6 @@
 {
   "name": "@etherna/sdk-js",
-  "version": "2.0.0-beta17",
+  "version": "2.0.0-beta18",
   "description": "Etherna SDKs for operations on the network",
   "author": "Mattia Dalzocchio",
   "license": "LGPL-3.0-or-later",
