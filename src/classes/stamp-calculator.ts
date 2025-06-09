@@ -7,6 +7,7 @@ export type BucketCollisions = Map<BucketId, number>
 
 export class StampCalculator {
   bucketCollisions = new Map<BucketId, number>()
+  dirtyCollisions = new Map<BucketId, number>()
   maxBucketCount = 0
   /** Whether the bucket calculator has been seeded with collisions */
   private _isFresh = true
@@ -55,12 +56,20 @@ export class StampCalculator {
    * @param collisionsMap
    */
   seed(collisionsMap: Record<BucketId, number> | PostageBatchBucket[]) {
-    Object.entries(collisionsMap).forEach(([id, count]) => {
-      const bucketId = Number(id) as BucketId
-      this.bucketCollisions.set(bucketId, (this.bucketCollisions.get(bucketId) ?? 0) + count)
-    })
+    if (Array.isArray(collisionsMap)) {
+      // collision from postage are not dirty
+      collisionsMap.forEach((bucket) => {
+        this.bucketCollisions.set(bucket.bucketID, bucket.collisions)
+      })
+    } else {
+      Object.entries(collisionsMap).forEach(([id, count]) => {
+        const bucketId = Number(id) as BucketId
+        this.bucketCollisions.set(bucketId, (this.bucketCollisions.get(bucketId) ?? 0) + count)
+        this.dirtyCollisions.set(bucketId, (this.dirtyCollisions.get(bucketId) ?? 0) + count)
+      })
 
-    this._isFresh = false
+      this._isFresh = false
+    }
   }
 
   /**
@@ -72,6 +81,9 @@ export class StampCalculator {
     calculator.bucketCollisions.forEach((value, key) => {
       this.bucketCollisions.set(key, (this.bucketCollisions.get(key) ?? 0) + value)
     })
+    calculator.dirtyCollisions.forEach((value, key) => {
+      this.dirtyCollisions.set(key, (this.dirtyCollisions.get(key) ?? 0) + value)
+    })
   }
 
   add(reference: Reference) {
@@ -80,6 +92,7 @@ export class StampCalculator {
     const currentCollisions = this.bucketCollisions.get(bucketId) || 0
 
     this.bucketCollisions.set(bucketId, currentCollisions + 1)
+    this.dirtyCollisions.set(bucketId, (this.dirtyCollisions.get(bucketId) ?? 0) + 1)
 
     if (currentCollisions > this.maxBucketCount) {
       this.maxBucketCount = currentCollisions
