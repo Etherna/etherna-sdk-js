@@ -55,7 +55,7 @@ export class StampCalculator {
    *
    * @param collisionsMap
    */
-  seed(collisionsMap: Record<BucketId, number> | PostageBatchBucket[]) {
+  seed(collisionsMap: Record<BucketId, number> | Map<number, number> | PostageBatchBucket[]) {
     if (Array.isArray(collisionsMap)) {
       // collision from postage are not dirty
       collisionsMap.forEach((bucket) => {
