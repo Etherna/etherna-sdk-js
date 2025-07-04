@@ -76,7 +76,7 @@ export const VideoPreviewSchema = z.object({
   /** Video creation timestamp */
   createdAt: TimestampSchema,
   /** Video creation timestamp */
-  updatedAt: TimestampSchema.optional().nullable(),
+  updatedAt: TimestampSchema.nullish(),
   /** Address of the owner of the video */
   ownerAddress: EthAddressSchema,
   /** Duration of the video in seconds */

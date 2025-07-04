@@ -1,4 +1,4 @@
-import { makeChunkedFile } from "@fairdatasociety/bmt-js"
+import { ChunkedFile, makeChunkedFile } from "@fairdatasociety/bmt-js"
 
 import {
   ChunksUploader,
@@ -58,7 +58,7 @@ export class BaseManifest {
 
   protected beeClient: BeeClient
   protected batchIdCollision?: BucketCollisions
-  protected manifestBucketCalculator = new StampCalculator()
+  public manifestBucketCalculator = new StampCalculator()
 
   constructor(init: unknown, options: BaseManifestOptions) {
     this.beeClient = options.beeClient
@@ -83,6 +83,11 @@ export class BaseManifest {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public upload(options?: BaseManifestUploadOptions): Promise<unknown> {
+    return Promise.resolve()
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public resume(options?: BaseManifestUploadOptions): Promise<unknown> {
     return Promise.resolve()
   }
 
@@ -156,16 +161,19 @@ export class BaseMantarayManifest extends BaseManifest {
   protected _details: Record<string, unknown> = {}
   protected _hasLoadedPreview = false
   protected _hasLoadedDetails = false
-  protected queue = new Queue({ drainMode: "manual" })
+  protected chunksUploader: ChunksUploader
 
   constructor(init: unknown, options: BaseManifestOptions) {
     super(init, options)
 
     this._node = new MantarayNode()
+    this.chunksUploader = new ChunksUploader({
+      beeClient: options.beeClient,
+    })
   }
 
   public get serialized(): unknown {
-    return Object.freeze({
+    return Object.seal({
       reference: this.reference,
       preview: this._preview,
       details: this._details,
@@ -192,7 +200,12 @@ export class BaseMantarayManifest extends BaseManifest {
     return Promise.resolve()
   }
 
-  public async loadNode(): Promise<void> {
+  public async loadNode(cachedNode?: MantarayNode): Promise<void> {
+    if (cachedNode) {
+      this._node = cachedNode
+      return
+    }
+
     if (isZeroBytesReference(this.reference)) {
       throw new EthernaSdkError(
         "MISSING_REFERENCE",
@@ -267,19 +280,12 @@ export class BaseMantarayManifest extends BaseManifest {
     })
   }
 
-  protected enqueueData(data: Uint8Array, options?: BaseManifestUploadOptions): BytesReference
-  protected enqueueData(
-    data: Uint8Array,
-    key?: string,
-    options?: BaseManifestUploadOptions,
-  ): BytesReference
-  protected enqueueData(
-    data: Uint8Array,
-    keyOrOptions?: string | BaseManifestUploadOptions,
-    opts?: BaseManifestUploadOptions,
-  ): BytesReference {
+  protected enqueueData(data: Uint8Array, key?: string): BytesReference {
     const chunkedFile = makeChunkedFile(data)
+    return this.enqueueChunkedFile(chunkedFile, key)
+  }
 
+  protected enqueueChunkedFile(chunkedFile: ChunkedFile<4096, 8>, key?: string): BytesReference {
     // add collisions to the stamp calculator
     chunkedFile
       .bmt()
@@ -288,28 +294,16 @@ export class BaseMantarayManifest extends BaseManifest {
         this.manifestBucketCalculator.add(bytesReferenceToReference(chunk.address())),
       )
 
-    const key = typeof keyOrOptions === "string" ? keyOrOptions : undefined
-    const options = typeof keyOrOptions === "object" ? keyOrOptions : opts
+    this.chunksUploader.append(chunkedFile, key)
 
-    this.queue.enqueue(async () => {
-      if (!this.batchId) {
-        throw new EthernaSdkError(
-          "MISSING_BATCH_ID",
-          "No usable postage batch found. Run prepareForUpload() first.",
-        )
-      }
-      const chunksUploader = new ChunksUploader({
-        beeClient: this.beeClient,
-      })
-      chunksUploader.append(chunkedFile)
-      chunksUploader.resume({
-        batchId: this.batchId,
-        signal: options?.signal,
-        timeout: options?.timeout,
-      })
-      await chunksUploader.drain()
-    }, key)
     return chunkedFile.address() as BytesReference
+  }
+
+  protected dequeueData(key: string) {
+    const removedChunks = this.chunksUploader.pop(key)
+    removedChunks.forEach((chunk) =>
+      this.manifestBucketCalculator.remove(bytesReferenceToReference(chunk.address())),
+    )
   }
 
   protected importImageProcessor(imageProcessor: ImageProcessor, key = "image") {
@@ -336,29 +330,13 @@ export class BaseMantarayManifest extends BaseManifest {
     })
   }
 
-  protected enqueueProcessor(
-    processor: BaseProcessor,
-    key?: string,
-    options?: BaseManifestUploadOptions,
-  ) {
+  protected enqueueProcessor(processor: BaseProcessor, key?: string) {
     // merge collisions
     this.manifestBucketCalculator.merge(processor.stampCalculator)
 
-    if (!processor.isFullyUploaded) {
-      this.queue.enqueue(async () => {
-        if (!this.batchId) {
-          throw new EthernaSdkError(
-            "MISSING_BATCH_ID",
-            "No usable postage batch found. Run prepareForUpload() first.",
-          )
-        }
-
-        await processor.upload({
-          beeClient: this.beeClient,
-          batchId: this.batchId,
-          ...options,
-        })
-      }, key)
-    }
+    // enqueue chunks
+    processor.chunkedFiles.forEach((chunkedFile) => {
+      this.enqueueChunkedFile(chunkedFile, key)
+    })
   }
 }

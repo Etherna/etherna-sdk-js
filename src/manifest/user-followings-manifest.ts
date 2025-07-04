@@ -133,6 +133,13 @@ export class UserFollowingsManifest extends BaseManifest {
     }
   }
 
+  public override async resume(options?: BaseManifestUploadOptions): Promise<UserFollowings> {
+    throw new EthernaSdkError(
+      "NOT_IMPLEMENTED",
+      ".resume() is not implemented for data manifests with little data",
+    )
+  }
+
   public addFollowing(address: EthAddress) {
     if (this._followings.includes(address)) {
       throw new EthernaSdkError("DUPLICATE", "You are already following this user")

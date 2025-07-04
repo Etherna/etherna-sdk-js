@@ -3,7 +3,11 @@
     "target": "esnext",
     "module": "esnext",
     "moduleResolution": "bundler",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "declaration": true,
     "declarationMap": true,
     "resolveJsonModule": true,
@@ -19,9 +23,19 @@
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": [
+        "src/*"
+      ]
     }
   },
-  "include": ["src", "test", "test*.*", "env.d.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src",
+    "test",
+    "test*.*",
+    "env.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

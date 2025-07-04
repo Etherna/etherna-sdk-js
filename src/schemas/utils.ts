@@ -4,7 +4,7 @@ import { dateToTimestamp, timestampToDate } from "../utils"
 import { EmptyReference } from "@/consts"
 
 import type { EnsAddress, EthAddress } from "@/types/eth"
-import type { Reference } from "@/types/swarm"
+import type { BatchId, Reference } from "@/types/swarm"
 
 export const SchemaVersionSchema = z.literal(`${z.string()}.${z.string()}`)
 
@@ -64,6 +64,13 @@ export const BeeSafeReferenceSchema = z
     const result = BeeReferenceSchema.safeParse(v)
     return result.success ? result.data : EmptyReference
   })
+
+export const BatchIdSchema = z
+  .string()
+  .regex(/^[a-fA-F0-9]{64}$/, {
+    message: "must be a valid batch id",
+  })
+  .transform((v) => v as BatchId)
 
 export const NonEmptyRecordSchema = <
   Keys extends z.core.$ZodRecordKey,

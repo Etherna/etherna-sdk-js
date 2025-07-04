@@ -181,7 +181,7 @@ export class Stamps {
 
   async download(batchId: BatchId, options?: DownloadPostageBatchOptions): Promise<PostageBatch> {
     try {
-      const { waitUntilUsable, ...opts } = options ?? {}
+      const { waitUntilUsable, waitUntil, ...opts } = options ?? {}
 
       const fetchBatch = async () => {
         switch (this.instance.type) {
@@ -206,11 +206,11 @@ export class Stamps {
         }
       }
 
-      if (!waitUntilUsable && !opts.waitUntil) {
+      if (!waitUntilUsable && !waitUntil) {
         return await fetchBatch()
       }
 
-      return await this.waitBatchValid(batchId, opts.waitUntil ?? ((batch) => batch.usable), opts)
+      return await this.waitBatchValid(batchId, waitUntil ?? ((batch) => batch.usable), opts)
     } catch (error) {
       throwSdkError(error)
     }
@@ -229,9 +229,12 @@ export class Stamps {
               ...this.instance.prepareAxiosConfig(options),
             },
           )
-          return postageResp.data.stamps.filter(
-            (batch) => !labelQuery || batch.label.toLowerCase().includes(labelQuery.toLowerCase()),
-          )
+          return postageResp.data.stamps
+            .filter(
+              (batch) =>
+                !labelQuery || batch.label.toLowerCase().includes(labelQuery.toLowerCase()),
+            )
+            .toReversed()
         }
         case "etherna": {
           const resp = await this.instance.apiRequest.get<EthernaGatewayBatchPreview[]>(
@@ -243,7 +246,7 @@ export class Stamps {
               },
             },
           )
-          return resp.data
+          return resp.data.toReversed()
         }
       }
     } catch (error) {

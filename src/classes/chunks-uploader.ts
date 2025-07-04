@@ -17,8 +17,12 @@ interface ChunksUploadOptions extends RequestUploadOptions {
   deferred?: boolean
 }
 
+interface ChunkWithKey extends Chunk<4096, 8> {
+  key: string
+}
+
 export class ChunksUploader {
-  private chunks: Chunk<4096, 8>[] = []
+  private chunks: ChunkWithKey[] = []
   private chunksCount = 0
   private beeClient: BeeClient
   private concurrentChunks: number
@@ -82,19 +86,32 @@ export class ChunksUploader {
     return this
   }
 
-  append(chunkedFile: ChunkedFile<4096, 8>): Reference
-  append(data: Uint8Array): Reference
-  append(input: ChunkedFile<4096, 8> | Uint8Array): Reference {
+  append(chunkedFile: ChunkedFile<4096, 8>, key?: string): Reference
+  append(data: Uint8Array, key?: string): Reference
+  append(input: ChunkedFile<4096, 8> | Uint8Array, key?: string): Reference {
     const chunkedFile = "payload" in input ? input : makeChunkedFile(input)
-    const chunks = chunkedFile.bmt().flat()
+    const chunks = chunkedFile.bmt().flat() as ChunkWithKey[]
+
+    key ??= ""
+
+    chunks.forEach((chunk) => {
+      chunk.key = key
+    })
 
     this.chunks.push(...chunks)
-    this.chunksCount += chunks.length
+    this.chunksCount = this.chunks.length
 
     const reference = bytesReferenceToReference(chunkedFile.address() as BytesReference)
     this.tagReference = reference
 
     return reference
+  }
+
+  pop(key: string) {
+    const removedChunks = this.chunks.filter((chunk) => chunk.key === key)
+    this.chunks = this.chunks.filter((chunk) => chunk.key !== key)
+    this.chunksCount = this.chunks.length
+    return removedChunks
   }
 
   resume(options: ChunksUploadOptions) {
@@ -118,7 +135,9 @@ export class ChunksUploader {
       .then((tag) => {
         this.tag = tag
 
-        while (this.activeTasks < this.concurrentChunks && this.chunks.length > 0) {
+        let stop = false
+
+        while (this.activeTasks < this.concurrentChunks && this.chunks.length > 0 && !stop) {
           const chunk = this.chunks.shift()
           if (chunk) {
             this.activeTasks++
@@ -132,6 +151,10 @@ export class ChunksUploader {
                 this.progressListeners.forEach((l) => l(progress))
               })
               .catch((err) => {
+                stop = true
+
+                this.chunks.unshift(chunk)
+
                 const error = getSdkError(err)
                 this.errorListeners.forEach((l) => l(error))
                 this.drainPromiseRejecter?.(error)

@@ -8,16 +8,19 @@ import {
   checkBytesReference,
   commonBytes,
   decodePath,
+  encodePath,
   encryptDecrypt,
   findIndexOfArray,
   flattenBytesArray,
   fromBigEndian,
+  fromHexString,
   getNodesWithPrefix as getNodesWithPrefixString,
   serializeReferenceLength,
   serializeVersion,
   toHexString,
 } from "@/utils"
 
+import type { ReadableMantarayNode } from "@/schemas/mantaray-schema"
 import type { BytesReference } from "@/types/swarm"
 import type { Bytes } from "@/types/utils"
 
@@ -161,7 +164,7 @@ export class MantarayNode {
     this.makeDirty()
   }
 
-  public get readable(): object {
+  public get readable(): ReadableMantarayNode {
     return {
       type: this._type,
       entry: this._entry ? toHexString(this._entry) : undefined,
@@ -175,12 +178,43 @@ export class MantarayNode {
         return {
           ...acc,
           [nextKey]: {
-            prefix: new TextDecoder().decode(fork.prefix),
+            prefix: decodePath(fork.prefix),
             node: fork.node.readable,
           },
         }
       }, {}),
     }
+  }
+
+  public static fromReadable(readable: ReadableMantarayNode): MantarayNode {
+    const node = new MantarayNode()
+    if (readable.type != null) {
+      node._type = readable.type
+    }
+    if (readable.entry) {
+      node._entry = fromHexString(readable.entry) as BytesReference
+    }
+    if (readable.contentAddress) {
+      node._contentAddress = fromHexString(readable.contentAddress) as BytesReference
+    }
+    if (readable.metadata) {
+      node._metadata = readable.metadata
+    }
+    if (readable.forks) {
+      node.forks = Object.keys(readable.forks).reduce((acc, key) => {
+        const nextKey = new TextEncoder().encode(key)[0]
+        const fork = readable.forks[key]
+        if (!fork || !nextKey) {
+          return acc
+        }
+        const forkNode = MantarayNode.fromReadable(fork.node)
+        return {
+          ...acc,
+          [nextKey]: new MantarayFork(encodePath(fork.prefix), forkNode),
+        }
+      }, {})
+    }
+    return node
   }
 
   /// Node type related functions

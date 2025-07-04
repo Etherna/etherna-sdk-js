@@ -30,6 +30,8 @@ export interface Profile {
 }
 
 export const PROFILE_TOPIC = "EthernaUserProfile"
+const AVATAR_QUEUE_KEY = "avatar"
+const COVER_QUEUE_KEY = "cover"
 
 /**
  * This class is used to fetch any user profile data or update the current user profile
@@ -105,7 +107,7 @@ export class ProfileManifest extends BaseMantarayManifest {
   }
 
   public override get serialized(): Profile {
-    return Object.freeze({
+    return Object.seal({
       reference: this.reference,
       address: this.address,
       ensName: this.ensName,
@@ -173,7 +175,6 @@ export class ProfileManifest extends BaseMantarayManifest {
     try {
       if (this.address === EmptyAddress && this.ensName) {
         this._address = (await fetchAddressFromEns(this.ensName)) ?? EmptyAddress
-        this._preview.address = this.address
       }
 
       if (this.address === EmptyAddress) {
@@ -244,6 +245,8 @@ export class ProfileManifest extends BaseMantarayManifest {
       throw new EthernaSdkError("PERMISSION_DENIED", "You can't update other user's profile")
     }
 
+    this._preview.address = this.address
+
     try {
       await this.prepareForUpload(options?.batchId, options?.batchLabelQuery)
 
@@ -256,25 +259,21 @@ export class ProfileManifest extends BaseMantarayManifest {
 
       // update data
       this.updateNodeDefaultEntries()
-      this.enqueueData(new TextEncoder().encode(JSON.stringify(this._preview)), {
-        ...options,
-        batchId,
-      })
-      this.enqueueData(new TextEncoder().encode(JSON.stringify(this._details)), {
-        ...options,
-        batchId,
-      })
+      this.enqueueData(new TextEncoder().encode(JSON.stringify(this._preview)))
+      this.enqueueData(new TextEncoder().encode(JSON.stringify(this._details)))
 
       // save mantary node
       this._reference = await this.node
         .save(async (data) => {
-          return this.enqueueData(data, {
-            ...options,
-            batchId,
-          })
+          return this.enqueueData(data)
         })
         .then(bytesReferenceToReference)
-      await this.queue.drain()
+
+      this.chunksUploader.resume({
+        batchId,
+        ...options,
+      })
+      await this.chunksUploader.drain()
 
       // update feed
       const feed = this.beeClient.feed.makeFeed(PROFILE_TOPIC, this.address, "epoch")
@@ -300,6 +299,13 @@ export class ProfileManifest extends BaseMantarayManifest {
     }
   }
 
+  public override async resume(options?: BaseManifestUploadOptions): Promise<Profile> {
+    throw new EthernaSdkError(
+      "NOT_IMPLEMENTED",
+      ".resume() is not implemented for data manifests with little data",
+    )
+  }
+
   public addPlaylist(playlistRootManifest: Reference) {
     this._details.playlists.push(playlistRootManifest)
   }
@@ -320,16 +326,19 @@ export class ProfileManifest extends BaseMantarayManifest {
   }
 
   public addAvatar(imageProcessor: ImageProcessor) {
-    this.importImageProcessor(imageProcessor)
+    this.removeAvatar()
+    this.importImageProcessor(imageProcessor, AVATAR_QUEUE_KEY)
     this._preview.avatar = imageProcessor.image
   }
 
   public addCover(imageProcessor: ImageProcessor) {
-    this.importImageProcessor(imageProcessor)
+    this.removeCover()
+    this.importImageProcessor(imageProcessor, COVER_QUEUE_KEY)
     this._details.cover = imageProcessor.image
   }
 
   public removeAvatar() {
+    this.dequeueData(AVATAR_QUEUE_KEY)
     for (const source of this._preview.avatar?.sources ?? []) {
       if (source.path) {
         this.removeFile(source.path)
@@ -339,6 +348,7 @@ export class ProfileManifest extends BaseMantarayManifest {
   }
 
   public removeCover() {
+    this.dequeueData(COVER_QUEUE_KEY)
     for (const source of this._details.cover?.sources ?? []) {
       if (source.path) {
         this.removeFile(source.path)

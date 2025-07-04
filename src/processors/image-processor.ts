@@ -4,7 +4,6 @@ import { BaseProcessor } from "./base-processor"
 import { ImageTypeSchema } from "@/schemas/image-schema"
 import {
   bufferToDataURL,
-  bytesReferenceToReference,
   fileToBuffer,
   fileToDataURL,
   getImageMeta,
@@ -58,6 +57,8 @@ export class ImageProcessor extends BaseProcessor {
   }
 
   public override async process(options: ImageProcessorOptions): Promise<ProcessorOutput[]> {
+    super.process()
+
     const originalImageData = new Uint8Array(
       this.input instanceof File || this.input instanceof Blob
         ? await fileToBuffer(this.input)
@@ -125,13 +126,7 @@ export class ImageProcessor extends BaseProcessor {
       const data = new Uint8Array(await blob.arrayBuffer())
       const chunkedFile = makeChunkedFile(data)
 
-      // append to uploader queue
-      this.uploader?.append(chunkedFile)
-      // add chunks collisions
-      chunkedFile
-        .bmt()
-        .flat()
-        .forEach((chunk) => this.stampCalculator.add(bytesReferenceToReference(chunk.address())))
+      this.appendChunkedFile(chunkedFile)
 
       const type = blob.type.split("/")[1] as string
 

@@ -1,4 +1,4 @@
-import type { Image, VideoQuality, VideoSource } from "@/schemas"
+import type { Image, VideoCaption, VideoQuality, VideoSource } from "@/schemas"
 import type { EthAddress } from "@/types/eth"
 import type { BatchId, Reference } from "@/types/swarm"
 
@@ -55,6 +55,7 @@ export type IndexVideoManifest = Omit<IndexVideoPreview, "id"> & {
   originalQuality: VideoQuality | null
   personalData: string | null
   sources: VideoSource[]
+  captions?: VideoCaption[]
 }
 
 export type IndexVideoCreation = {

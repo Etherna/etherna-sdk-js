@@ -1,8 +1,8 @@
 import { z } from "zod/v4"
 
-export const MantarayNodeSchema: z.ZodSchema<MantarayNode> = z.lazy(() => {
+export const MantarayNodeSchema: z.ZodSchema<ReadableMantarayNode> = z.lazy(() => {
   return z.object({
-    type: z.number(),
+    type: z.number().optional(),
     entry: z.string().optional(),
     contentAddress: z.string().optional(),
     metadata: z.record(z.string(), z.string()).optional(),
@@ -16,8 +16,8 @@ export const MantarayForkSchema = z.object({
 })
 
 // Types
-type MantarayNode = {
-  type: number
+export type ReadableMantarayNode = {
+  type?: number
   entry?: string
   contentAddress?: string
   metadata?: Record<string, string>

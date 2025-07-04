@@ -134,6 +134,13 @@ export class UserPlaylistsManifest extends BaseManifest {
     }
   }
 
+  public override async resume(options?: BaseManifestUploadOptions): Promise<UserPlaylists> {
+    throw new EthernaSdkError(
+      "NOT_IMPLEMENTED",
+      ".resume() is not implemented for data manifests with little data",
+    )
+  }
+
   public addPlaylist(playlistRootManifest: Reference) {
     this._playlists.unshift(playlistRootManifest)
     this._isDirty = true

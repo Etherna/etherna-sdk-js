@@ -64,7 +64,7 @@ export const ENCRYPTED_REFERENCE_BYTES_LENGTH = 64
 
 export const BUCKET_DEPTH = 16
 export const STAMPS_DEPTH_MIN = 17
-export const STAMPS_DEPTH_MAX = 255
+export const STAMPS_DEPTH_MAX = 41
 
 export const TAGS_LIMIT_MIN = 1
 export const TAGS_LIMIT_MAX = 1000

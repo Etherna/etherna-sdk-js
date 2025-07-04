@@ -115,7 +115,7 @@ export class VideoManifest extends BaseMantarayManifest {
   }
 
   public override get serialized(): Video {
-    return Object.freeze({
+    return Object.seal({
       reference: this.reference,
       preview: this._preview,
       details: this._details,
@@ -268,25 +268,46 @@ export class VideoManifest extends BaseMantarayManifest {
 
       // update data
       this.updateNodeDefaultEntries()
-      this.enqueueData(new TextEncoder().encode(JSON.stringify(this._preview)), {
-        ...options,
-        batchId,
-      })
-      this.enqueueData(new TextEncoder().encode(JSON.stringify(this._details)), {
-        ...options,
-        batchId,
-      })
+      this.enqueueData(new TextEncoder().encode(JSON.stringify(this._preview)))
+      this.enqueueData(new TextEncoder().encode(JSON.stringify(this._details)))
 
       // save mantary node
       this._reference = await this.node
         .save(async (data) => {
-          return this.enqueueData(data, {
-            ...options,
-            batchId,
-          })
+          return this.enqueueData(data)
         })
         .then(bytesReferenceToReference)
-      await this.queue.drain()
+
+      return await this.resume(options)
+    } catch (error) {
+      throwSdkError(error)
+    }
+  }
+
+  public override async resume(options?: BaseManifestUploadOptions): Promise<Video> {
+    if (options?.batchId) {
+      this._batchId = options.batchId
+    }
+
+    if (!this.batchId) {
+      throw new EthernaSdkError("MISSING_BATCH_ID", "batchId is missing")
+    }
+
+    try {
+      // resume upload
+      if (options?.onUploadProgress) {
+        this.chunksUploader.on("progress", options.onUploadProgress)
+      }
+
+      this.chunksUploader.resume({
+        batchId: this.batchId,
+        ...options,
+      })
+      await this.chunksUploader.drain()
+
+      if (options?.onUploadProgress) {
+        this.chunksUploader.off("progress", options.onUploadProgress)
+      }
 
       this._hasLoadedPreview = true
       this._hasLoadedDetails = true
@@ -299,7 +320,10 @@ export class VideoManifest extends BaseMantarayManifest {
 
   public async migrate(options?: { signal?: AbortSignal }): Promise<Video> {
     if (this.v === CURRENT_MANIFEST_VERSION) {
-      throw new EthernaSdkError("UNSUPPORTED_OPERATION", "Manifest is already in version 2.0")
+      throw new EthernaSdkError(
+        "UNSUPPORTED_OPERATION",
+        `Manifest is already in version ${CURRENT_MANIFEST_VERSION}`,
+      )
     }
 
     try {
@@ -402,19 +426,24 @@ export class VideoManifest extends BaseMantarayManifest {
   }
 
   public addThumbnail(imageProcessor: ImageProcessor) {
-    this.queue.dequeue(THUMB_QUEUE_KEY)
+    this.removeThumbnail()
     this.importImageProcessor(imageProcessor, THUMB_QUEUE_KEY)
     this._preview.thumbnail = imageProcessor.image
   }
 
   public removeThumbnail() {
-    this.queue.dequeue(THUMB_QUEUE_KEY)
+    this.dequeueData(THUMB_QUEUE_KEY)
+    for (const source of this._preview.thumbnail?.sources ?? []) {
+      if (source.path) {
+        this.removeFile(source.path)
+      }
+    }
+    this._preview.thumbnail = null
   }
 
   public addVideo(videoProcessor: VideoProcessor) {
-    this.queue.dequeue(VIDEO_QUEUE_KEY)
-
-    this.importVideoProcessor(videoProcessor)
+    this.removeVideo()
+    this.importVideoProcessor(videoProcessor, VIDEO_QUEUE_KEY)
 
     if (!videoProcessor.video) {
       return
@@ -425,6 +454,15 @@ export class VideoManifest extends BaseMantarayManifest {
     this._details.sources = videoProcessor.video.sources
   }
 
+  public removeVideo() {
+    this.dequeueData(VIDEO_QUEUE_KEY)
+    for (const source of this._details.sources ?? []) {
+      if (source.path) {
+        this.removeFile(source.path)
+      }
+    }
+  }
+
   public addCaption(reference: Reference, lang: string, label: string): void
   public addCaption(text: string | Uint8Array, lang: string, label: string): void
   public addCaption(
@@ -432,17 +470,31 @@ export class VideoManifest extends BaseMantarayManifest {
     lang: string,
     label: string,
   ): void {
+    this.removeCaption(lang)
+
     const data =
       textOrReference instanceof Uint8Array
         ? textOrReference
-        : new TextEncoder().encode(textOrReference)
+        : !isValidReference(textOrReference)
+          ? new TextEncoder().encode(textOrReference)
+          : null
     const reference =
       typeof textOrReference === "string" && isValidReference(textOrReference)
         ? textOrReference
-        : getReferenceFromData(data)
+        : data
+          ? getReferenceFromData(data)
+          : null
+
+    if (!reference) {
+      throw new EthernaSdkError("INVALID_ARGUMENT", "Coudn't get reference from data")
+    }
 
     if (typeof textOrReference !== "string" || !isValidReference(textOrReference)) {
       const header = new TextEncoder().encode(`WEBVTT\n`)
+
+      if (!data) {
+        throw new EthernaSdkError("INVALID_ARGUMENT", "Coudn't get data from textOrReference")
+      }
 
       // check if valid vtt
       if (
@@ -457,8 +509,6 @@ export class VideoManifest extends BaseMantarayManifest {
     const key = this.getCaptionKey(lang)
     const path = this.getCaptionPath(lang)
 
-    this.queue.dequeue(key)
-
     this._details.captions.push({
       lang,
       label,
@@ -470,10 +520,8 @@ export class VideoManifest extends BaseMantarayManifest {
       contentType: "text/vtt",
     })
 
-    if (typeof textOrReference === "string" && !isValidReference(textOrReference)) {
-      this.enqueueData(data, key, {
-        batchId: this.batchId,
-      })
+    if (data) {
+      this.enqueueData(data, key)
     }
   }
 
@@ -482,7 +530,7 @@ export class VideoManifest extends BaseMantarayManifest {
     const path = this.getCaptionPath(lang)
 
     this._details.captions = this._details.captions.filter((caption) => caption.lang !== lang)
-    this.queue.dequeue(key)
+    this.dequeueData(key)
     this.removeFile(path)
   }
 

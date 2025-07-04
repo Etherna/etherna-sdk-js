@@ -246,7 +246,7 @@ export class PlaylistManifest extends BaseMantarayManifest {
   }
 
   public override get serialized(): Playlist {
-    return Object.freeze({
+    return Object.seal({
       reference: this.reference,
       rootManifest: this._rootManifest,
       preview: this._preview,
@@ -338,28 +338,24 @@ export class PlaylistManifest extends BaseMantarayManifest {
 
       // update data
       this.updateNodeDefaultEntries()
-      this.enqueueData(new TextEncoder().encode(JSON.stringify(this._preview)), {
-        ...options,
-        batchId,
-      })
+      this.enqueueData(new TextEncoder().encode(JSON.stringify(this._preview)))
       const serializedDetails = this.isEncryptableType
         ? this._encryptedDetails
         : JSON.stringify(this._details)
-      this.enqueueData(new TextEncoder().encode(serializedDetails), {
-        ...options,
-        batchId,
-      })
+      this.enqueueData(new TextEncoder().encode(serializedDetails))
 
       // save mantary node
       this._reference = await this.node
         .save(async (data) => {
-          return this.enqueueData(data, {
-            ...options,
-            batchId,
-          })
+          return this.enqueueData(data)
         })
         .then(bytesReferenceToReference)
-      await this.queue.drain()
+
+      this.chunksUploader.resume({
+        batchId,
+        ...options,
+      })
+      await this.chunksUploader.drain()
 
       // update feed
       const feed = this.beeClient.feed.makeFeed(
@@ -394,6 +390,13 @@ export class PlaylistManifest extends BaseMantarayManifest {
     } catch (error) {
       throwSdkError(error)
     }
+  }
+
+  public override async resume(options?: BaseManifestUploadOptions): Promise<Playlist> {
+    throw new EthernaSdkError(
+      "NOT_IMPLEMENTED",
+      ".resume() is not implemented for data manifests with little data",
+    )
   }
 
   public decrypt(password: string) {
