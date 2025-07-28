@@ -8,7 +8,7 @@ import {
   MantarayEntryMetadataFilenameKey,
   MantarayRootPath,
   MantarayWebsiteErrorDocumentPathKey,
-  MantarayWebsiteIndexDocumentSuffixKey,
+  MantarayWebsiteIndexDocumentPathKey,
   ZeroHashReference,
 } from "@/consts"
 import {
@@ -57,7 +57,7 @@ export class FolderBuilder {
     const metadata: Record<string, string> = {}
 
     if (this.config.indexDocument) {
-      metadata[MantarayWebsiteIndexDocumentSuffixKey] = this.config.indexDocument
+      metadata[MantarayWebsiteIndexDocumentPathKey] = this.config.indexDocument
     }
     if (this.config.errorDocument) {
       metadata[MantarayWebsiteErrorDocumentPathKey] = this.config.errorDocument

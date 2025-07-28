@@ -74,6 +74,45 @@ export const getBatchPercentUtilization = (
 }
 
 /**
+ * Calculates the Utilization Rate (%) from a given Batch Depth
+ * using a logistic function approximation.
+ *
+ * @param depth - Batch depth (typically between 17 and 41)
+ * @returns Utilization Rate as a percentage (0 to 1)
+ */
+export function getBatchUtilizationRate(depth: number): number {
+  const TABLE: Record<number, number> = {
+    17: 0.0001,
+    18: 0.0061,
+    19: 0.0509,
+    20: 0.1565,
+    21: 0.3027,
+    22: 0.4499,
+    23: 0.5803,
+    24: 0.6848,
+    25: 0.7677,
+    26: 0.8294,
+    27: 0.8671,
+    28: 0.8837,
+    29: 0.9288,
+    30: 0.9481,
+    31: 0.9606,
+    32: 0.9701,
+    33: 0.9765,
+    34: 0.9811,
+    35: 0.9844,
+    36: 0.9867,
+    37: 0.9883,
+    38: 0.9891,
+    39: 0.9896,
+    40: 0.9898,
+    41: 0.9911,
+  } as const
+
+  return TABLE[depth] ?? 0
+}
+
+/**
  * Get the batch expiration day
  *
  * @param batch Batch data

@@ -28,7 +28,11 @@ export interface IIndexVideosInterface {
   ): Promise<PaginatedResult<IndexVideoPreview>>
   fetchValidations(id: string, opts?: RequestOptions): Promise<IndexVideoValidation[]>
   fetchHashValidation(hash: string, opts?: RequestOptions): Promise<IndexVideoValidation>
-  fetchBulkValidation(hashes: string[], opts?: RequestOptions): Promise<IndexVideoValidation[]>
+  fetchBulkValidationById(ids: string[], opts?: RequestOptions): Promise<IndexVideoValidation[]>
+  fetchBulkValidationByHash(
+    hashes: string[],
+    opts?: RequestOptions,
+  ): Promise<IndexVideoValidation[]>
   updateVideo(id: string, newHash: string, opts?: RequestOptions): Promise<IndexVideoManifest>
   deleteVideo(id: string, opts?: RequestOptions): Promise<boolean>
   fetchComments(
@@ -67,6 +71,8 @@ export class IndexVideos implements IIndexVideosInterface {
     },
   ) {
     try {
+      await this.instance.awaitAccessToken()
+
       const resp = await this.instance.apiRequest.post<string>(
         `/videos`,
         {
@@ -198,11 +204,34 @@ export class IndexVideos implements IIndexVideosInterface {
    * @param opts Request options
    * @returns Validation status
    */
-  async fetchBulkValidation(hashes: string[], opts?: RequestOptions) {
+  async fetchBulkValidationByHash(hashes: string[], opts?: RequestOptions) {
     try {
       const resp = await this.instance.apiRequest.put<IndexVideoValidation[]>(
         `/videos/manifest/bulkvalidation`,
         hashes,
+        {
+          ...this.instance.prepareAxiosConfig(opts),
+        },
+      )
+
+      return resp.data
+    } catch (error) {
+      throwSdkError(error)
+    }
+  }
+
+  /**
+   * Get videos validation status
+   *
+   * @param ids Video id on Index
+   * @param opts Request options
+   * @returns Validation status
+   */
+  async fetchBulkValidationById(ids: string[], opts?: RequestOptions) {
+    try {
+      const resp = await this.instance.apiRequest.put<IndexVideoValidation[]>(
+        `/videos/bulkvalidation2`,
+        ids,
         {
           ...this.instance.prepareAxiosConfig(opts),
         },
@@ -224,6 +253,8 @@ export class IndexVideos implements IIndexVideosInterface {
    */
   async updateVideo(id: string, newHash: string, opts?: RequestOptions) {
     try {
+      await this.instance.awaitAccessToken()
+
       const resp = await this.instance.apiRequest.put<IndexVideoManifest>(
         `/videos/${id}/update2`,
         null,
@@ -248,6 +279,8 @@ export class IndexVideos implements IIndexVideosInterface {
    */
   async deleteVideo(id: string, opts?: RequestOptions) {
     try {
+      await this.instance.awaitAccessToken()
+
       await this.instance.apiRequest.delete(`/videos/${id}`, {
         ...this.instance.prepareAxiosConfig(opts),
       })
@@ -270,7 +303,7 @@ export class IndexVideos implements IIndexVideosInterface {
   async fetchComments(id: string, page = 0, take = 25, opts?: RequestOptions) {
     try {
       const resp = await this.instance.apiRequest.get<PaginatedResult<IndexVideoComment>>(
-        `/videos/${id}/comments`,
+        `/videos/${id}/comments3`,
         {
           ...this.instance.prepareAxiosConfig(opts),
           params: { page, take },
@@ -293,9 +326,11 @@ export class IndexVideos implements IIndexVideosInterface {
    */
   async postComment(id: string, message: string, opts?: RequestOptions) {
     try {
+      await this.instance.awaitAccessToken()
+
       const resp = await this.instance.apiRequest.post<IndexVideoComment>(
-        `/videos/${id}/comments`,
-        `"${message}"`,
+        `/videos/${id}/comments2`,
+        JSON.stringify(message),
         {
           ...this.instance.prepareAxiosConfig(opts),
           headers: {
@@ -321,6 +356,8 @@ export class IndexVideos implements IIndexVideosInterface {
    */
   async vote(id: string, vote: VoteValue, opts?: RequestOptions) {
     try {
+      await this.instance.awaitAccessToken()
+
       const resp = await this.instance.apiRequest.post<IndexVideoComment>(
         `/videos/${id}/votes`,
         null,

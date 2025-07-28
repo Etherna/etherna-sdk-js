@@ -113,6 +113,8 @@ export class Stamps {
           break
         }
         case "etherna": {
+          await this.instance.awaitAccessToken()
+
           if (useWelcomeIfPossible && depth <= ETHERNA_WELCOME_BATCH_DEPTH) {
             const { batchID } = await this.createWelcomeBatch(options)
             batchId = batchID
@@ -195,6 +197,8 @@ export class Stamps {
             return postageResp.data
           }
           case "etherna": {
+            await this.instance.awaitAccessToken()
+
             const resp = await this.instance.apiRequest.get<EthernaGatewayBatch>(
               `/users/current/batches/${batchId}`,
               {
@@ -237,6 +241,8 @@ export class Stamps {
             .toReversed()
         }
         case "etherna": {
+          await this.instance.awaitAccessToken()
+
           const resp = await this.instance.apiRequest.get<EthernaGatewayBatchPreview[]>(
             `/users/current/batches`,
             {
@@ -392,6 +398,8 @@ export class Stamps {
           break
         }
         case "etherna": {
+          await this.instance.awaitAccessToken()
+
           await this.instance.apiRequest.patch(
             `/postage/batches/${batchId}/topup/${amount}`,
             null,
@@ -435,6 +443,8 @@ export class Stamps {
           break
         }
         case "etherna": {
+          await this.instance.awaitAccessToken()
+
           await this.instance.apiRequest.patch(
             `/users/current/batches/${batchId}/dilute/${depth}`,
             null,
@@ -480,20 +490,21 @@ export class Stamps {
       blockTime: this.instance.chain.blockTime,
     })
 
-    // topup batch (before dilute to avoid possible expiration)
-    if (BigInt(amount) > BigInt(0)) {
-      await this.topup(batchId, {
-        by: {
-          type: "amount",
-          amount,
-        },
-        // we are forced to wait the topup before diluting
-        waitUntilUpdated: true,
-      })
-    }
+    // Dilute first: If you top up before diluting, the TTL you gain will be reduced by the dilution step.
+    await this.dilute(batchId, {
+      ...options,
+      // we are forced to wait the topup before diluting
+      waitUntilUpdated: true,
+    })
 
-    // dilute batch
-    return await this.dilute(batchId, options)
+    // Top up after: This ensures the TTL reflects the new, higher depth and the additional xBZZ.
+    return await this.topup(batchId, {
+      by: {
+        type: "amount",
+        amount,
+      },
+      ...options,
+    })
   }
 
   async isWelcomeConsumed(opts?: RequestOptions) {
@@ -503,6 +514,8 @@ export class Stamps {
           throw new EthernaSdkError("NOT_IMPLEMENTED", "This method is not implemented for Bee")
         }
         case "etherna": {
+          await this.instance.awaitAccessToken()
+
           const resp = await this.instance.apiRequest.get<EthernaGatewayWelcomeStatus>(
             "/users/current/welcome",
             {
@@ -526,6 +539,8 @@ export class Stamps {
       const isFreePostageBatchConsumed = await this.isWelcomeConsumed(opts)
 
       if (!isFreePostageBatchConsumed) {
+        await this.instance.awaitAccessToken()
+
         await this.instance.apiRequest.post(`/users/current/welcome`, null, {
           ...this.instance.prepareAxiosConfig(opts),
         })
@@ -625,7 +640,6 @@ export class Stamps {
               rejecter(error)
             }
           })
-        waitBatchValid()
       }, 5000)
     }
 

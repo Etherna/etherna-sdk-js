@@ -11,7 +11,7 @@ export class EthernaSSOClient extends BaseClient {
   identity: SSOIdentity
 
   /**
-   * Init an index client
+   * Init an SSO client
    * @param options Client options
    */
   constructor(baseUrl: string, options?: SSOClientOptions) {

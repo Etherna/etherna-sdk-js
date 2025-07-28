@@ -8,5 +8,12 @@ export default defineConfig({
   sourcemap: false,
   clean: true,
   minify: false,
-  external: ["@ffmpeg/ffmpeg", "@ffmpeg/util", "axios", "zod", "zod/v4"],
+  external: [
+    "@ffmpeg/ffmpeg",
+    "@ffmpeg/util",
+    "@ffmpeg.wasm/main",
+    "@ffmpeg.wasm/core-mt",
+    "axios",
+    "zod",
+  ],
 })

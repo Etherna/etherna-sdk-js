@@ -2,7 +2,7 @@ import type { Image, VideoCaption, VideoQuality, VideoSource } from "@/schemas"
 import type { EthAddress } from "@/types/eth"
 import type { BatchId, Reference } from "@/types/swarm"
 
-export type PaginatedResult<T> = {
+export interface PaginatedResult<T> {
   elements: T[]
   currentPage: number
   maxPage: number
@@ -10,23 +10,22 @@ export type PaginatedResult<T> = {
   totalElements: number
 }
 
-export type IndexUser = {
+export interface IndexUser {
   address: EthAddress
   creationDateTime: string
   identityManifest: string
 }
 
-export type IndexCurrentUser = {
+export interface IndexCurrentUser {
   address: EthAddress
-  identityManifest: string
-  prevAddresses: EthAddress[]
+  isSuperModerator: boolean
 }
 
-export type IndexUserVideos = IndexUser & {
+export interface IndexUserVideos extends IndexUser {
   videos: IndexVideo[]
 }
 
-export type IndexVideo = {
+export interface IndexVideo {
   id: string
   creationDateTime: string
   ownerAddress: EthAddress
@@ -36,7 +35,7 @@ export type IndexVideo = {
   totUpvotes: number
 }
 
-export type IndexVideoPreview = {
+export interface IndexVideoPreview {
   id: string
   title: string
   hash: Reference
@@ -45,9 +44,10 @@ export type IndexVideoPreview = {
   thumbnail: Image | null
   createdAt: number
   updatedAt: number
+  indexUrl: string // added by index-aggregator
 }
 
-export type IndexVideoManifest = Omit<IndexVideoPreview, "id"> & {
+export interface IndexVideoManifest extends Omit<IndexVideoPreview, "id"> {
   batchId: BatchId | null
   aspectRatio: number | null
   hash: Reference
@@ -58,7 +58,7 @@ export type IndexVideoManifest = Omit<IndexVideoPreview, "id"> & {
   captions?: VideoCaption[]
 }
 
-export type IndexVideoCreation = {
+export interface IndexVideoCreation {
   id: string
   creationDateTime: string
   encryptionKey: string | null
@@ -66,7 +66,7 @@ export type IndexVideoCreation = {
   manifestHash: string
 }
 
-export type IndexVideoValidation = {
+export interface IndexVideoValidation {
   errorDetails: Array<{ errorMessage: string; errorNumber: string | number }>
   hash: string
   isValid: boolean | null
@@ -74,13 +74,12 @@ export type IndexVideoValidation = {
   videoId: string | null
 }
 
-export type IndexVideoComment = {
+export interface IndexVideoComment {
   id: string
   isFrozen: boolean
-  creationDateTime: string
+  isEditable: boolean
   ownerAddress: EthAddress
-  text: string
-  lastUpdateDateTime: string
+  textHistory: Record<string, string>
   videoId: string
 }
 
@@ -88,7 +87,7 @@ export type VoteValue = "Up" | "Down" | "Neutral"
 
 export type IndexEncryptionType = "AES256" | "Plain"
 
-export type IndexParameters = {
+export interface IndexParameters {
   commentMaxLength: number
   videoDescriptionMaxLength: number
   videoTitleMaxLength: number

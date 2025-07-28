@@ -115,7 +115,7 @@ export class VideoManifest extends BaseMantarayManifest {
   }
 
   public override get serialized(): Video {
-    return Object.seal({
+    return structuredClone({
       reference: this.reference,
       preview: this._preview,
       details: this._details,
@@ -223,7 +223,7 @@ export class VideoManifest extends BaseMantarayManifest {
                   })
                   .then((resp) => VideoDetailsSchema.parse(resp.data.json()))
               } else {
-                throw error
+                throw new Error()
               }
             })
         : Promise.resolve(this._details)
@@ -259,8 +259,10 @@ export class VideoManifest extends BaseMantarayManifest {
       await this.prepareForUpload(options?.batchId, options?.batchLabelQuery)
 
       // after 'prepareForUpload' batchId must be defined
-      const batchId = this.batchId as BatchId
-      this._details.batchId = batchId
+
+      // WIP: remove batchId since it mutates the final buckets collisions
+      // const batchId = this.batchId as BatchId
+      // this._details.batchId = batchId
 
       // ensure data is not malformed
       this._preview = VideoPreviewSchema.parse(this._preview)

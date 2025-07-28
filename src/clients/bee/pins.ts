@@ -58,6 +58,8 @@ export class Pins {
           return resp.data
         }
         case "etherna": {
+          await this.instance.awaitAccessToken()
+
           const resp = await this.instance.apiRequest.get<string[]>(
             `/users/current/pinnedResources`,
             {
@@ -116,6 +118,8 @@ export class Pins {
           })
         }
         case "etherna": {
+          await this.instance.awaitAccessToken()
+
           return await this.instance.apiRequest.post(`/resources/${reference}/pin`, undefined, {
             ...this.instance.prepareAxiosConfig(options),
           })
@@ -135,6 +139,8 @@ export class Pins {
           })
         }
         case "etherna": {
+          await this.instance.awaitAccessToken()
+
           return await this.instance.apiRequest.delete(`/resources/${reference}/pin`, {
             ...this.instance.prepareAxiosConfig(options),
           })

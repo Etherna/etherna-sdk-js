@@ -50,6 +50,8 @@ export interface Playlist {
   rootManifest: Reference
   preview: PlaylistPreview
   details: PlaylistDetails
+  isEncrypted: boolean
+  encryptedDetails?: string
 }
 
 export const CHANNEL_PLAYLIST_ID = "Channel"
@@ -98,7 +100,7 @@ export class PlaylistManifest extends BaseMantarayManifest {
     input: PlaylistIdentification | Playlist | BaseManifestOptions,
     options?: BaseManifestOptions,
   ) {
-    const init = "beeClient" in input ? undefined : input
+    const init = typeof input === "object" && "beeClient" in input ? undefined : input
     const opts = options ?? (input as BaseManifestOptions)
 
     super(init, opts)
@@ -131,6 +133,8 @@ export class PlaylistManifest extends BaseMantarayManifest {
 
         this._preview = init.preview
         this._details = init.details
+        this._encryptedDetails = init.encryptedDetails
+        this._isEncrypted = init.isEncrypted
         this._reference = init.reference
         this._rootManifest = init.rootManifest
       } else {
@@ -246,11 +250,13 @@ export class PlaylistManifest extends BaseMantarayManifest {
   }
 
   public override get serialized(): Playlist {
-    return Object.seal({
+    return structuredClone({
       reference: this.reference,
       rootManifest: this._rootManifest,
       preview: this._preview,
       details: this._details,
+      isEncrypted: this._isEncrypted,
+      encryptedDetails: this._encryptedDetails,
     })
   }
 
@@ -260,8 +266,8 @@ export class PlaylistManifest extends BaseMantarayManifest {
         this._preview.owner = (await fetchAddressFromEns(this._ensName)) ?? EmptyAddress
       }
 
-      if (this._preview.owner === EmptyAddress) {
-        throw new EthernaSdkError("INVALID_ARGUMENT", "Address or ENS name is required")
+      if (isEmptyReference(this._rootManifest) && this._preview.owner === EmptyAddress) {
+        throw new EthernaSdkError("INVALID_ARGUMENT", "Playlist owner or root manifest is required")
       }
 
       if (isEmptyReference(this._reference) || isEmptyReference(this._rootManifest)) {
@@ -414,6 +420,7 @@ export class PlaylistManifest extends BaseMantarayManifest {
     try {
       const decryptedData = decryptData(this._encryptedDetails, password)
       this._details = PlaylistDetailsSchema.parse(JSON.parse(decryptedData))
+      this._preview.name = this._details.name ?? this._preview.name
       this._encryptedDetails = undefined
       this._isEncrypted = false
     } catch (error) {

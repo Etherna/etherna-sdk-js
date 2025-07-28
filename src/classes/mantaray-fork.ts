@@ -78,7 +78,8 @@ export class MantarayFork {
 
     const entry: BytesReference | undefined = this.node.contentAddress
 
-    if (!entry) throw Error("cannot serialize MantarayFork because it does not have contentAddress")
+    if (!entry)
+      throw new Error("cannot serialize MantarayFork because it does not have contentAddress")
 
     const data = new Uint8Array([nodeType, ...prefixLengthBytes, ...prefixBytes, ...entry])
 
@@ -111,7 +112,7 @@ export class MantarayFork {
     const prefixLength = data[1] as number
 
     if (prefixLength === 0 || prefixLength > MantarayFork.nodeForkSizes.prefixMaxSize()) {
-      throw Error(
+      throw new Error(
         `Prefix length of fork is greater than ${MantarayFork.nodeForkSizes.prefixMaxSize()}. Got: ${prefixLength}`,
       )
     }

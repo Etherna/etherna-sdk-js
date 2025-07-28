@@ -4,6 +4,7 @@ import { BaseProcessor } from "./base-processor"
 import { ImageProcessor } from "./image-processor"
 import { EthernaSdkError } from "@/classes"
 import { bytesReferenceToReference, fileToBuffer, getHlsBitrate } from "@/utils"
+import { loadNodeFFmpeg } from "@/utils/ffmpeg"
 
 import type { ProcessorOutput } from "./base-processor"
 import type { VideoSource } from "@/schemas/video-schema"
@@ -169,54 +170,54 @@ export class VideoProcessor extends BaseProcessor {
       throw new EthernaSdkError("INVALID_ARGUMENT", "'string' directory is for nodejs environment'")
     }
 
-    const handle = await (async () => {
-      if (typeof directory === "string") {
-        const getOriginPrivateDirectory = await import("native-file-system-adapter").then(
-          (mod) => mod.getOriginPrivateDirectory,
-        )
-        const driver = (await import("native-file-system-adapter/lib/adapters/node.js")) as object
-        const handle = (await getOriginPrivateDirectory(
-          driver,
-          directory,
-        )) as unknown as FileSystemDirectoryHandle
-        return handle
-      } else {
-        return directory
+    if (typeof window !== "undefined" && typeof directory !== "string") {
+      const getLastDir = async (path: string) => {
+        const dirs = path.split("/").slice(0, -1)
+        let lastDirHandle = directory
+        for (const dir of dirs) {
+          lastDirHandle = await lastDirHandle.getDirectoryHandle(dir)
+        }
+        return lastDirHandle
       }
-    })()
 
-    const getLastDir = async (path: string) => {
-      const dirs = path.split("/").slice(0, -1)
-      let lastDirHandle = handle
-      for (const dir of dirs) {
-        lastDirHandle = await lastDirHandle.getDirectoryHandle(dir)
-      }
-      return lastDirHandle
+      await this.processOutput({
+        basePath: opts?.basePath,
+        loadFileDataFn: (path) =>
+          getLastDir(path)
+            .then((dir) => dir.getFileHandle(path.split("/").pop() as string))
+            .then((f) => f.getFile())
+            .then((f) => f.arrayBuffer())
+            .then((b) => new Uint8Array(b)),
+        listDirFoldersFn: (path) =>
+          getLastDir(path)
+            .then((dir) => (path ? dir.getDirectoryHandle(path.split("/").pop() as string) : dir))
+            .then((dir) => dir.entries())
+            .then((entries) => Array.fromAsync(entries))
+            .then((entries) =>
+              entries.filter(([_, h]) => h.kind === "directory").map(([name]) => name),
+            ),
+        listDirFilesFn: (path) =>
+          getLastDir(path)
+            .then((dir) => (path ? dir.getDirectoryHandle(path.split("/").pop() as string) : dir))
+            .then((dir) => dir.entries())
+            .then((entries) => Array.fromAsync(entries))
+            .then((entries) => entries.filter(([_, h]) => h.kind === "file").map(([name]) => name)),
+      })
+    } else if (typeof window === "undefined" && typeof directory === "string") {
+      const fs = await import("fs/promises")
+      await this.processOutput({
+        basePath: opts?.basePath,
+        loadFileDataFn: (path) => fs.readFile(`${directory}/${path}`),
+        listDirFoldersFn: (path) =>
+          fs
+            .readdir(`${directory}/${path}`, { withFileTypes: true })
+            .then((files) => files.filter((f) => f.isDirectory()).map((f) => f.name)),
+        listDirFilesFn: (path) =>
+          fs
+            .readdir(`${directory}/${path}`, { withFileTypes: true })
+            .then((files) => files.filter((f) => f.isFile()).map((f) => f.name)),
+      })
     }
-
-    await this.processOutput({
-      basePath: opts?.basePath,
-      loadFileDataFn: (path) =>
-        getLastDir(path)
-          .then((dir) => dir.getFileHandle(path.split("/").pop() as string))
-          .then((f) => f.getFile())
-          .then((f) => f.arrayBuffer())
-          .then((b) => new Uint8Array(b)),
-      listDirFoldersFn: (path) =>
-        getLastDir(path)
-          .then((dir) => (path ? dir.getDirectoryHandle(path.split("/").pop() as string) : dir))
-          .then((dir) => dir.entries())
-          .then((entries) => Array.fromAsync(entries))
-          .then((entries) =>
-            entries.filter(([_, h]) => h.kind === "directory").map(([name]) => name),
-          ),
-      listDirFilesFn: (path) =>
-        getLastDir(path)
-          .then((dir) => (path ? dir.getDirectoryHandle(path.split("/").pop() as string) : dir))
-          .then((dir) => dir.entries())
-          .then((entries) => Array.fromAsync(entries))
-          .then((entries) => entries.filter(([_, h]) => h.kind === "file").map(([name]) => name)),
-    })
   }
 
   public async createThumbnailProcessor(
@@ -265,7 +266,7 @@ export class VideoProcessor extends BaseProcessor {
       })),
     )
     const resolutionsSegments = await Promise.all(
-      resolutions.map(async (res) => {
+      resolutions.flatMap(async (res) => {
         const resDirContent = (await options.listDirFilesFn(`${res}`)).filter((f) =>
           f.endsWith(".ts"),
         )
@@ -330,6 +331,14 @@ export class VideoProcessor extends BaseProcessor {
       return this._cachedMetadata
     }
 
+    if (typeof window !== "undefined") {
+      return this.getBrowserVideoMeta()
+    } else {
+      return this.getNodeVideoMeta()
+    }
+  }
+
+  private async getBrowserVideoMeta() {
     return new Promise<{ width: number; height: number; duration: number }>((resolve, reject) => {
       let width: number
       let height: number
@@ -356,7 +365,7 @@ export class VideoProcessor extends BaseProcessor {
             reject(new EthernaSdkError("ENCODING_ERROR", "Metadata loading failed"))
           }
         } catch (error) {
-          console.log("FFPROBE ERROR", error)
+          console.error("FFPROBE ERROR", error)
         }
       })
 
@@ -378,6 +387,61 @@ export class VideoProcessor extends BaseProcessor {
         .catch(() => {
           reject(new EthernaSdkError("ENCODING_ERROR", "Failed to save input file"))
         })
+    })
+  }
+
+  private async getFFmpeg() {
+    return await loadNodeFFmpeg(this.input, INPUT_FILENAME)
+  }
+
+  private async getNodeVideoMeta() {
+    const ffmpeg = await this.getFFmpeg()
+
+    return new Promise<{ width: number; height: number; duration: number }>((resolve, reject) => {
+      let height = 0
+      let width = 0
+      let duration = 0
+
+      ffmpeg.setLogger((_, message) => {
+        if (!message || typeof message !== "string") return
+        // check resolution
+        const parsedSize = message.match(/\d{3,}x\d{3,}/)?.[0]
+
+        if (parsedSize) {
+          const [w, h] = parsedSize.split("x").map(Number)
+          if (w && h && !isNaN(w) && !isNaN(h)) {
+            height = h
+            width = w
+          }
+        }
+        // check duration
+        const parsedDuration = message.match(/Duration: (\d{2}:\d{2}:\d{2})/)?.[1]
+
+        if (parsedDuration) {
+          const [h, m, s] = parsedDuration.split(":").map(Number)
+          if (h != null && m != null && s != null && !isNaN(h) && !isNaN(m) && !isNaN(s)) {
+            duration = h * 3600 + m * 60 + s
+          }
+        }
+        // check failed conversion
+        if (message.includes("Conversion failed!")) {
+          reject(new Error("Failed to convert video"))
+        }
+      })
+
+      ffmpeg.setLogging(true)
+
+      ffmpeg
+        .run(`-i`, `${INPUT_FILENAME}`, `-f`, `null`)
+        .then(() => {
+          if (height && width && duration) {
+            this._cachedMetadata = { width, height, duration }
+            resolve({ width, height, duration })
+          } else {
+            reject(new EthernaSdkError("ENCODING_ERROR", "Failed to load video metadata"))
+          }
+        })
+        .catch(reject)
     })
   }
 
@@ -408,32 +472,42 @@ export class VideoProcessor extends BaseProcessor {
       return `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}:${seconds.padStart(2, "0")}`
     })()
 
-    const dirContent = await ffmpeg.listDir(".")
+    const args = [
+      "-y",
+      "-hide_banner",
+      "-i",
+      INPUT_FILENAME,
+      "-ss",
+      thumbFrame,
+      "-vframes",
+      "1",
+      "-vf",
+      `scale=${Math.round(720 * aspectRatio)}:720`,
+      "-q:v",
+      "5",
+      "thumb.jpg",
+    ]
 
-    if (!dirContent.some((f) => f.name === INPUT_FILENAME)) {
-      await this.writeInputFileIfNeeded()
+    if (typeof window !== "undefined") {
+      const dirContent = await ffmpeg.listDir(".")
+
+      if (!dirContent.some((f) => f.name === INPUT_FILENAME)) {
+        await this.writeInputFileIfNeeded()
+      }
+
+      await handleFFmpegPromise(ffmpeg.exec(args))
+
+      const thumbData = (await ffmpeg.readFile("thumb.jpg")) as Uint8Array
+
+      return thumbData
+    } else {
+      const ffmpeg = await this.getFFmpeg()
+
+      await handleFFmpegPromise(ffmpeg.run(...args))
+
+      const thumbData = ffmpeg.fs.readFile("thumb.jpg")
+
+      return thumbData
     }
-
-    await handleFFmpegPromise(
-      ffmpeg.exec([
-        "-y",
-        "-hide_banner",
-        "-i",
-        INPUT_FILENAME,
-        "-ss",
-        thumbFrame,
-        "-vframes",
-        "1",
-        "-vf",
-        `scale=${Math.round(720 * aspectRatio)}:720`,
-        "-q:v",
-        "5",
-        "thumb.jpg",
-      ]),
-    )
-
-    const thumbData = (await ffmpeg.readFile("thumb.jpg")) as Uint8Array
-
-    return thumbData
   }
 }

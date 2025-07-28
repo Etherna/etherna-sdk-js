@@ -27,7 +27,7 @@ export class MantarayIndexBytes {
    */
   public setByte(byte: number): void {
     if (byte > 255) {
-      throw Error(`IndexBytes setByte error: ${byte} is greater than 255`)
+      throw new Error(`IndexBytes setByte error: ${byte} is greater than 255`)
     }
 
     const index = Math.floor(byte / 8)

@@ -21,38 +21,10 @@ export class User {
           )
         }
         case "etherna": {
+          await this.instance.awaitAccessToken()
+
           const resp = await this.instance.apiRequest.get<EthernaGatewayCurrentUser>(
             `/users/current`,
-            {
-              ...this.instance.prepareAxiosConfig(opts),
-            },
-          )
-
-          return resp.data
-        }
-      }
-    } catch (error) {
-      throwSdkError(error)
-    }
-  }
-
-  /**
-   * Get current user's credits
-   *
-   * @returns User's credits amount
-   */
-  async downloadCredits(opts?: RequestOptions) {
-    try {
-      switch (this.instance.type) {
-        case "bee": {
-          throw new EthernaSdkError(
-            "NOT_IMPLEMENTED",
-            "This operation is not supported by Bee client",
-          )
-        }
-        case "etherna": {
-          const resp = await this.instance.apiRequest.get<EthernaGatewayCredit>(
-            `/users/current/credit`,
             {
               ...this.instance.prepareAxiosConfig(opts),
             },

@@ -35,7 +35,7 @@ export function makeInjectedWalletSigner(address: EthAddress): Signer {
         if (error.code === -32602) {
           return await signMessage(digest, address)
         } else {
-          throw error
+          throw new Error()
         }
       }
     },

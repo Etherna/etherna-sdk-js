@@ -1,5 +1,7 @@
 import { decode, encode, isBlurhashValid } from "blurhash"
 
+import { loadNodeFFmpeg } from "./ffmpeg"
+
 // Credit: https://gist.github.com/mattiaz9/53cb67040fa135cb395b1d015a200aff
 
 /**
@@ -190,14 +192,26 @@ function generatePng(width: number, height: number, rgbaString: string) {
 }
 
 async function getImageData(imageData: Uint8Array, width: number, height: number) {
-  const canvas = document.createElement("canvas")
-  canvas.width = width
-  canvas.height = height
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const ctx = canvas.getContext("2d")!
-  const image = await loadImage(imageData)
-  image && ctx.drawImage(image, 0, 0)
-  return ctx.getImageData(0, 0, width, height).data
+  if (typeof window !== "undefined") {
+    const canvas = document.createElement("canvas")
+    canvas.width = width
+    canvas.height = height
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const ctx = canvas.getContext("2d")!
+    const image = await loadImage(imageData)
+    image && ctx.drawImage(image, 0, 0)
+    return ctx.getImageData(0, 0, width, height).data
+  } else {
+    const ffmpeg = await loadNodeFFmpeg(imageData, "image")
+    await ffmpeg.run("-i", "image", "-f", "rawvideo", "-pix_fmt", "rgba", "output")
+    const rgba = ffmpeg.fs.readFile("output")
+
+    if (rgba.length !== width * height * 4) {
+      throw new Error("Array length doesn't match width and height for RGBA data")
+    }
+
+    return new Uint8ClampedArray(rgba.buffer, rgba.byteOffset, rgba.byteLength)
+  }
 }
 
 async function loadImage(data: Uint8Array) {

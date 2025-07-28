@@ -9,7 +9,7 @@ import type { Bytes } from "@/types/utils"
  * @returns The number
  */
 export function fromBigEndian(bytes: Uint8Array): number {
-  if (bytes.length === 0) throw Error("fromBigEndian got 0 length bytes")
+  if (bytes.length === 0) throw new Error("fromBigEndian got 0 length bytes")
   const numbers: number[] = []
   const lastIndex = bytes.length - 1
 
@@ -27,10 +27,10 @@ export function fromBigEndian(bytes: Uint8Array): number {
  * @returns The big endian bytes
  */
 export function toBigEndianFromUint16(value: number): Bytes<2> {
-  if (value < 0) throw Error(`toBigEndianFromUint16 got lesser than 0 value: ${value}`)
+  if (value < 0) throw new Error(`toBigEndianFromUint16 got lesser than 0 value: ${value}`)
   const maxValue = (1 << 16) - 1
   if (value > maxValue)
-    throw Error(`toBigEndianFromUint16 got greater value then ${maxValue}: ${value} `)
+    throw new Error(`toBigEndianFromUint16 got greater value then ${maxValue}: ${value} `)
 
   const buffer = new ArrayBuffer(2)
   const view = new DataView(buffer)
@@ -45,7 +45,7 @@ export function toBigEndianFromUint16(value: number): Bytes<2> {
  * @returns The big endian bytes
  */
 export function toBigEndianFromUint32(value: number): Bytes<4> {
-  if (value < 0) throw Error(`toBigEndianFromUint32 got lesser than 0 value: ${value}`)
+  if (value < 0) throw new Error(`toBigEndianFromUint32 got lesser than 0 value: ${value}`)
 
   const buffer = new ArrayBuffer(4)
   const view = new DataView(buffer)
@@ -60,7 +60,7 @@ export function toBigEndianFromUint32(value: number): Bytes<4> {
  * @returns The big endian bytes
  */
 export function toBigEndianFromBigInt64(value: bigint): Bytes<8> {
-  if (value < 0) throw Error(`toBigEndianFromBigInt64 got lesser than 0 value: ${value}`)
+  if (value < 0) throw new Error(`toBigEndianFromBigInt64 got lesser than 0 value: ${value}`)
 
   const buffer = new ArrayBuffer(8)
   const view = new DataView(buffer)

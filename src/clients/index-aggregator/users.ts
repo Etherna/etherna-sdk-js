@@ -42,7 +42,14 @@ export class IndexAggregatorUsers implements IIndexUsersInterface {
     const result = await this.instance.fetchAggregatedPaginatedData(
       page,
       take,
-      (client, relativeTake) => client.users.fetchVideos(address, page, relativeTake, opts),
+      (client, relativeTake) =>
+        client.users.fetchVideos(address, page, relativeTake, opts).then((res) => ({
+          ...res,
+          elements: res.elements.map((element) => ({
+            ...element,
+            indexUrl: client.baseUrl,
+          })),
+        })),
       opts,
     )
     return result

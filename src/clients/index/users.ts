@@ -88,6 +88,8 @@ export class IndexUsers implements IIndexUsersInterface {
    */
   async fetchCurrentUser(opts?: RequestOptions) {
     try {
+      await this.instance.awaitAccessToken()
+
       const resp = await this.instance.apiRequest.get<IndexCurrentUser>(`/users/current`, {
         ...this.instance.prepareAxiosConfig(opts),
       })

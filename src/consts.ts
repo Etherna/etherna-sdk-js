@@ -19,7 +19,7 @@ export const EmptyReference = "0".repeat(64) as Reference
 export const ZeroHashReference = new Uint8Array(32).fill(0) as BytesReference
 
 export const MantarayRootPath = "/"
-export const MantarayWebsiteIndexDocumentSuffixKey = "website-index-document"
+export const MantarayWebsiteIndexDocumentPathKey = "website-index-document"
 export const MantarayWebsiteErrorDocumentPathKey = "website-error-document"
 export const MantarayEntryMetadataContentTypeKey = "Content-Type"
 export const MantarayEntryMetadataFilenameKey = "Filename"

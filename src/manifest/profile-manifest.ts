@@ -107,7 +107,7 @@ export class ProfileManifest extends BaseMantarayManifest {
   }
 
   public override get serialized(): Profile {
-    return Object.seal({
+    return structuredClone({
       reference: this.reference,
       address: this.address,
       ensName: this.ensName,
@@ -315,6 +315,10 @@ export class ProfileManifest extends BaseMantarayManifest {
     if (index >= 0) {
       this._details.playlists.splice(index, 1)
     }
+  }
+
+  public setPlaylists(playlists: Reference[]) {
+    this._details.playlists = playlists
   }
 
   public movePlaylist(playlistRootManifest: Reference, newIndex: number) {

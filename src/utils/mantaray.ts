@@ -7,7 +7,7 @@ import { EthernaSdkError, MantarayNode } from "@/classes"
 import {
   MantarayEntryMetadataContentTypeKey,
   MantarayRootPath,
-  MantarayWebsiteIndexDocumentSuffixKey,
+  MantarayWebsiteIndexDocumentPathKey,
 } from "@/consts"
 
 import type { MantarayFork, MarshalVersion } from "@/classes"
@@ -30,14 +30,14 @@ export const equalNodes = (
 ): void | never => {
   // node type comparisation
   if (a.type !== b.type) {
-    throw Error(
+    throw new Error(
       `Nodes do not have same type at prefix "${accumulatedPrefix}"\na: ${a.type} <-> b: ${b.type}`,
     )
   }
 
   // node metadata comparisation
   if (!a.metadata !== !b.metadata) {
-    throw Error(
+    throw new Error(
       `One of the nodes do not have metadata defined. \n a: ${a.metadata} \n b: ${b.metadata}`,
     )
   } else if (a.metadata && b.metadata) {
@@ -46,19 +46,19 @@ export const equalNodes = (
       aMetadata = JSON.stringify(a.metadata)
       bMetadata = JSON.stringify(b.metadata)
     } catch (e) {
-      throw Error(
+      throw new Error(
         `Either of the nodes has invalid JSON metadata. \n a: ${a.metadata} \n b: ${b.metadata}`,
       )
     }
 
     if (aMetadata !== bMetadata) {
-      throw Error(`The node's metadata are different. a: ${aMetadata} \n b: ${bMetadata}`)
+      throw new Error(`The node's metadata are different. a: ${aMetadata} \n b: ${bMetadata}`)
     }
   }
 
   // node entry comparisation
   if (a.entry === b.entry) {
-    throw Error(`Nodes do not have same entries. \n a: ${a.entry} \n b: ${a.entry}`)
+    throw new Error(`Nodes do not have same entries. \n a: ${a.entry} \n b: ${a.entry}`)
   }
 
   if (!a.forks) return
@@ -67,7 +67,7 @@ export const equalNodes = (
   const aKeys = Object.keys(a.forks)
 
   if (!b.forks || aKeys.length !== Object.keys(b.forks).length) {
-    throw Error(
+    throw new Error(
       `Nodes do not have same fork length on equality check at prefix ${accumulatedPrefix}`,
     )
   }
@@ -79,7 +79,7 @@ export const equalNodes = (
     const prefixString = new TextDecoder().decode(prefix)
 
     if (!bytesEqual(prefix, bFork.prefix)) {
-      throw Error(
+      throw new Error(
         `Nodes do not have same prefix under the same key "${key}" at prefix ${accumulatedPrefix}`,
       )
     }
@@ -252,7 +252,7 @@ export async function getBzzNodeInfo(
 
     const fork = node.getForkAtPath(encodePath(MantarayRootPath))
     const metadata = fork?.node.metadata
-    const indexEntry = metadata?.[MantarayWebsiteIndexDocumentSuffixKey]
+    const indexEntry = metadata?.[MantarayWebsiteIndexDocumentPathKey]
 
     if (!fork?.node.entry) {
       throw new EthernaSdkError("NOT_FOUND", "No root fork found")

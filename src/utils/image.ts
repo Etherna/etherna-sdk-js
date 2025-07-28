@@ -1,4 +1,5 @@
 import { bufferToDataURL } from "./buffer"
+import { loadNodeFFmpeg } from "./ffmpeg"
 import { EthernaSdkError } from "@/classes"
 
 import type { ImageType } from "../schemas/image-schema"
@@ -22,33 +23,42 @@ export async function resizeImage(
   toWidth: number,
   quality = 90,
 ): Promise<Blob> {
-  const image = await createImage(imageBlob)
+  if (typeof window !== "undefined") {
+    const image = await createImage(imageBlob)
 
-  const ratio = toWidth / image.width
-  const width = Math.floor(toWidth)
-  const height = Math.floor(image.height * ratio)
+    const ratio = toWidth / image.width
+    const width = Math.floor(toWidth)
+    const height = Math.floor(image.height * ratio)
 
-  const canvas = document.createElement("canvas")
-  canvas.width = width
-  canvas.height = height
+    const canvas = document.createElement("canvas")
+    canvas.width = width
+    canvas.height = height
 
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const ctx = canvas.getContext("2d")!
-  ctx.fillStyle = "white"
-  ctx.fillRect(0, 0, width, height)
-  ctx.drawImage(image, 0, 0, image.width, image.height, 0, 0, width, height)
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const ctx = canvas.getContext("2d")!
+    ctx.fillStyle = "white"
+    ctx.fillRect(0, 0, width, height)
+    ctx.drawImage(image, 0, 0, image.width, image.height, 0, 0, width, height)
 
-  URL.revokeObjectURL(image.src)
+    URL.revokeObjectURL(image.src)
 
-  if (typeof canvas.toBlob !== "undefined") {
-    return new Promise((res) =>
-      canvas.toBlob((blob) => res(blob as Blob), imageBlob.type, quality / 100),
-    )
-  } else if (typeof canvas.msToBlob !== "undefined") {
-    return canvas.msToBlob()
+    if (typeof canvas.toBlob !== "undefined") {
+      return new Promise((res) =>
+        canvas.toBlob((blob) => res(blob as Blob), imageBlob.type, quality / 100),
+      )
+    } else if (typeof canvas.msToBlob !== "undefined") {
+      return canvas.msToBlob()
+    }
+
+    throw new EthernaSdkError("SERVER_ERROR", "Cannot create blob from canvas")
+  } else {
+    const ffmpeg = await loadNodeFFmpeg(imageBlob, "image")
+    await ffmpeg.run(`-i`, "image", `-vf`, `"scale=${toWidth}:-1"`, `output`)
+    const data = ffmpeg.fs.readFile("output")
+    const type = getImageTypeFromData(data)
+
+    return new Blob([data], { type })
   }
-
-  throw new EthernaSdkError("SERVER_ERROR", "Cannot create blob from canvas")
 }
 
 /**
@@ -77,25 +87,54 @@ export function isImageTypeSupported(type: ImageType) {
  * @param data The image data
  * @returns The image metadata
  */
-export function getImageMeta(data: Uint8Array | ArrayBuffer) {
-  return new Promise<{
-    width: number
-    height: number
-    type: ReturnType<typeof getImageTypeFromData>
-  }>((resolve, reject) => {
-    bufferToDataURL(data).then((dataURL) => {
-      const img = new Image()
-      img.onload = function () {
-        resolve({
-          width: img.width,
-          height: img.height,
-          type: getImageTypeFromData(data),
-        })
-      }
-      img.onerror = reject
-      img.src = dataURL
+export async function getImageMeta(data: Uint8Array | ArrayBuffer) {
+  if (typeof window !== "undefined") {
+    return new Promise<{
+      width: number
+      height: number
+      type: ReturnType<typeof getImageTypeFromData>
+    }>((resolve, reject) => {
+      bufferToDataURL(data).then((dataURL) => {
+        const img = new Image()
+        img.onload = function () {
+          resolve({
+            width: img.width,
+            height: img.height,
+            type: getImageTypeFromData(data),
+          })
+        }
+        img.onerror = reject
+        img.src = dataURL
+      })
     })
-  })
+  } else {
+    let width = 0
+    let height = 0
+
+    const ffmpeg = await loadNodeFFmpeg(data, "image")
+    ffmpeg.setLogging(true)
+    ffmpeg.setLogger((_, message) => {
+      if (!message || typeof message !== "string") return
+      // check resolution
+      const parsedSize = message.match(/\d{3,}x\d{3,}/)?.[0]
+
+      if (parsedSize) {
+        const [w, h] = parsedSize.split("x").map(Number)
+        if (w && h && !isNaN(w) && !isNaN(h)) {
+          height = h
+          width = w
+        }
+      }
+    })
+
+    await ffmpeg.run(`-i`, "image", `-f`, `null`)
+
+    if (width && height) {
+      return { width, height, type: getImageTypeFromData(data) }
+    } else {
+      throw new EthernaSdkError("ENCODING_ERROR", "Failed to load image metadata")
+    }
+  }
 }
 
 /**

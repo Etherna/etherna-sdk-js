@@ -1,4 +1,4 @@
-import { ZodError } from "zod/v4"
+import { ZodError } from "zod"
 
 import { EthernaIndexAggregatorClient } from "."
 import { IndexVideo, VoteValue } from "../index/types"
@@ -53,7 +53,12 @@ export class IndexAggregatorVideos implements IIndexVideosInterface {
       ? [this.instance.getIndexClientByRequest(opts)]
       : this.instance.indexClients
     const results = await Promise.allSettled(
-      clients.map((client) => client.videos.fetchVideoFromHash(hash, opts)),
+      clients.map((client) =>
+        client.videos.fetchVideoFromHash(hash, opts).then((res) => ({
+          ...res,
+          indexUrl: client.baseUrl,
+        })),
+      ),
     )
 
     const firstVideo = results
@@ -94,10 +99,11 @@ export class IndexAggregatorVideos implements IIndexVideosInterface {
       currentVoteValue,
       totDownvotes,
       totUpvotes,
-      aggregatedResult: results.map((result) =>
+      aggregatedResult: results.map((result, i) =>
         result.status === "fulfilled"
           ? result.value
           : {
+              indexUrl: clients[i]?.baseUrl ?? null,
               code: result.reason instanceof EthernaSdkError ? result.reason.code : null,
               message:
                 result.reason instanceof Error ? result.reason.message : String(result.reason),
@@ -108,6 +114,7 @@ export class IndexAggregatorVideos implements IIndexVideosInterface {
       aggregatedResult: (
         | IndexVideo
         | {
+            indexUrl: string | null
             code: ErrorCode | null
             message: string
             zodError: ZodError | null | undefined
@@ -128,7 +135,14 @@ export class IndexAggregatorVideos implements IIndexVideosInterface {
     const result = await this.instance.fetchAggregatedPaginatedData(
       page,
       take,
-      (client, relativeTake) => client.videos.fetchLatestVideos(page, relativeTake, opts),
+      (client, relativeTake) =>
+        client.videos.fetchLatestVideos(page, relativeTake, opts).then((res) => ({
+          ...res,
+          elements: res.elements.map((element) => ({
+            ...element,
+            indexUrl: client.baseUrl,
+          })),
+        })),
       opts,
     )
     return result
@@ -165,9 +179,21 @@ export class IndexAggregatorVideos implements IIndexVideosInterface {
    * @param opts Request options
    * @returns Validation status
    */
-  async fetchBulkValidation(hashes: string[], opts: IndexAggregatorRequestOptions) {
+  async fetchBulkValidationByHash(hashes: string[], opts: IndexAggregatorRequestOptions) {
     const client = this.instance.getIndexClientByRequest(opts)
-    return await client.videos.fetchBulkValidation(hashes, opts)
+    return await client.videos.fetchBulkValidationByHash(hashes, opts)
+  }
+
+  /**
+   * Get videos validation status
+   *
+   * @param ids Video id on Index
+   * @param opts Request options
+   * @returns Validation status
+   */
+  async fetchBulkValidationById(ids: string[], opts: IndexAggregatorRequestOptions) {
+    const client = this.instance.getIndexClientByRequest(opts)
+    return await client.videos.fetchBulkValidationById(ids, opts)
   }
 
   /**
@@ -204,14 +230,9 @@ export class IndexAggregatorVideos implements IIndexVideosInterface {
    * @param opts Request options
    * @returns The list of comments
    */
-  async fetchComments(id: string, page = 0, take = 25, opts?: IndexAggregatorRequestOptions) {
-    const result = await this.instance.fetchAggregatedPaginatedData(
-      page,
-      take,
-      (client, relativeTake) => client.videos.fetchComments(id, page, relativeTake, opts),
-      opts,
-    )
-    return result
+  async fetchComments(id: string, page = 0, take = 25, opts: IndexAggregatorRequestOptions) {
+    const client = this.instance.getIndexClientByRequest(opts)
+    return await client.videos.fetchComments(id, page, take, opts)
   }
 
   /**

@@ -1,4 +1,4 @@
-import { z } from "zod/v4"
+import { z } from "zod"
 
 export const MantarayNodeSchema: z.ZodSchema<ReadableMantarayNode> = z.lazy(() => {
   return z.object({

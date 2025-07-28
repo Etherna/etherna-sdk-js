@@ -1,4 +1,4 @@
-import { z } from "zod/v4"
+import { z } from "zod"
 
 import { ImageSchema } from "./image-schema"
 import { BeeReferenceSchema, EthAddressSchema, SlicedStringSchema, TimestampSchema } from "./utils"

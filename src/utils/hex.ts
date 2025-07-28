@@ -20,7 +20,7 @@ export function keccak256Hash(...messages: Message[]): Bytes<32> {
 export function fromHexString(hexString: string): Uint8Array {
   const matches = hexString.match(/.{1,2}/g)
   if (!matches) {
-    throw Error(`Invalid hex string: ${hexString}`)
+    throw new Error(`Invalid hex string: ${hexString}`)
   }
   return Uint8Array.from(matches.map((byte) => parseInt(byte, 16)))
 }

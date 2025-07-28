@@ -121,6 +121,8 @@ export class VideoPublisher {
             signal: options?.signal,
           })
 
+          source.playlist = playlistManifest.serialized
+
           return { id: this.video.reference }
         }
         case "index": {
@@ -172,6 +174,8 @@ export class VideoPublisher {
             batchId: this.batchId,
             signal: options?.signal,
           })
+
+          source.playlist = playlistManifest.serialized
 
           return { id: this.video.reference }
         }

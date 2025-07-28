@@ -1,16 +1,12 @@
-import { z } from "zod/v4"
+import { z } from "zod"
 
 import { BeeReferenceSchema, EthAddressSchema, TimestampSchema } from "./utils"
 
 export const PlaylistTypeEncryptedSchema = z.enum(["private", "protected"])
 
-export const PlaylistReservedIdsSchema = z.enum(["Channel", "Saved"])
-
 export const PlaylistTypeVisibleSchema = z.literal("public")
 
 export const PlaylistTypeSchema = z.union([PlaylistTypeEncryptedSchema, PlaylistTypeVisibleSchema])
-
-export const PlaylistIdSchema = z.string().uuid().or(PlaylistReservedIdsSchema)
 
 export const PlaylistThumbSchema = z.object({
   blurhash: z.string(),
@@ -30,7 +26,7 @@ export const PlaylistVideoSchema = z.object({
 
 export const PlaylistPreviewSchema = z.object({
   /** Playlist id (used for feed update) */
-  id: PlaylistIdSchema,
+  id: z.string(),
   /** Playlist visibility: public (visibile by anyone), private (visibible by owner), protected (visible by anyone with the password) */
   type: PlaylistTypeSchema,
   /** Private type password hint */
@@ -55,7 +51,6 @@ export const PlaylistDetailsSchema = z.object({
 
 // types
 export type PlaylistType = z.infer<typeof PlaylistTypeSchema>
-export type PlaylistId = z.infer<typeof PlaylistIdSchema>
 export type PlaylistThumb = z.infer<typeof PlaylistThumbSchema>
 export type PlaylistVideo = z.infer<typeof PlaylistVideoSchema>
 export type PlaylistPreview = z.infer<typeof PlaylistPreviewSchema>

@@ -84,29 +84,29 @@ export interface ReferenceResponse {
   reference: Reference
 }
 
-export type EthernaGatewayCurrentUser = {
+export interface EthernaGatewayCurrentUser {
   etherAddress: string
   etherPreviousAddresses: string[]
   username: string
 }
 
-export type EthernaGatewayCredit = {
+export interface EthernaGatewayCredit {
   isUnlimited: boolean
   balance: number
 }
 
-export type EthernaGatewayBatchPreview = {
+export interface EthernaGatewayBatchPreview {
   batchId: BatchId
   ownerNodeId: string
 }
 
-export type EthernaGatewayBatch = Omit<PostageBatch, "batchID"> & {
+export interface EthernaGatewayBatch extends Omit<PostageBatch, "batchID"> {
   id: BatchId
   amountPaid: number
   normalisedBalance: number
 }
 
-export type EthernaGatewayChainState = {
+export interface EthernaGatewayChainState {
   block: number
   currentPrice: number
   sourceNodeId: string
@@ -114,13 +114,13 @@ export type EthernaGatewayChainState = {
   totalAmount: number
 }
 
-export type EthernaGatewayPin = {
+export interface EthernaGatewayPin {
   freePinningEndOfLife: string
   isPinned: boolean
   isPinningInProgress: boolean
   isPinningRequired: boolean
 }
 
-export type EthernaGatewayWelcomeStatus = {
+export interface EthernaGatewayWelcomeStatus {
   isFreePostageBatchConsumed: boolean
 }

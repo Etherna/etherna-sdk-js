@@ -100,7 +100,7 @@ export function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
  */
 export function overwriteBytes(a: Uint8Array, b: Uint8Array, i = 0): void {
   if (a.length < b.length + i) {
-    throw Error(
+    throw new Error(
       `Cannot copy bytes because the base byte array length is lesser (${a.length}) than the others (${b.length})`,
     )
   }
@@ -141,10 +141,10 @@ export function checkBytes<Length extends number>(
   length: number,
 ): asserts bytes is Bytes<Length> {
   if (!(bytes instanceof Uint8Array))
-    throw Error("Cannot set given bytes, because is not an Uint8Array type")
+    throw new Error("Cannot set given bytes, because is not an Uint8Array type")
 
   if (bytes.length !== 32) {
-    throw Error(
+    throw new Error(
       `Cannot set given bytes, because it does not have ${length} length. Got ${bytes.length}`,
     )
   }

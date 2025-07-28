@@ -18,6 +18,8 @@ export class IndexModeration implements IIndexModerationInterface {
    */
   async deleteComment(id: string, opts?: RequestOptions) {
     try {
+      await this.instance.awaitAccessToken()
+
       await this.instance.apiRequest.delete(`/moderation/comments/${id}`, {
         ...this.instance.prepareAxiosConfig(opts),
       })
@@ -35,6 +37,8 @@ export class IndexModeration implements IIndexModerationInterface {
    */
   async deleteVideo(id: string, opts?: RequestOptions) {
     try {
+      await this.instance.awaitAccessToken()
+
       await this.instance.apiRequest.delete(`/moderation/videos/${id}`, {
         ...this.instance.prepareAxiosConfig(opts),
       })

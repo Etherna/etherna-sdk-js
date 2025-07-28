@@ -5,15 +5,7 @@
  * @returns The array buffer data
  */
 export function fileToBuffer(file: File | Blob) {
-  return new Promise<ArrayBuffer>((resolve, reject) => {
-    const fr = new FileReader()
-    fr.onload = () => {
-      resolve(fr.result as ArrayBuffer)
-    }
-    fr.onabort = reject
-    fr.onerror = reject
-    fr.readAsArrayBuffer(file)
-  })
+  return file.arrayBuffer()
 }
 /**
  * Get the array buffer of a file
@@ -33,15 +25,19 @@ export async function fileToUint8Array(file: File | Blob) {
  * @returns The base64 data URL
  */
 export function fileToDataURL(file: File | Blob) {
-  return new Promise<string>((resolve, reject) => {
-    const fr = new FileReader()
-    fr.onload = () => {
-      resolve(fr.result as string)
-    }
-    fr.onabort = reject
-    fr.onerror = reject
-    fr.readAsDataURL(file)
-  })
+  if (typeof window !== "undefined") {
+    return new Promise<string>((resolve, reject) => {
+      const fr = new FileReader()
+      fr.onload = () => {
+        resolve(fr.result as string)
+      }
+      fr.onabort = reject
+      fr.onerror = reject
+      fr.readAsDataURL(file)
+    })
+  } else {
+    throw new Error("Not implemented")
+  }
 }
 
 /**

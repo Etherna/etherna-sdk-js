@@ -1,5 +1,5 @@
 import { AxiosError } from "axios"
-import { ZodError } from "zod/v4"
+import { ZodError } from "zod"
 
 export const ErrorCodes = [
   "NOT_FOUND",
@@ -8,6 +8,7 @@ export const ErrorCodes = [
   "UNAUTHORIZED",
   "PERMISSION_DENIED",
   "DUPLICATE",
+  "JWT_MISSING_OR_EXPIRED",
   "MISSING_FUNDS",
   "MISSING_BATCH_ID",
   "MISSING_REFERENCE",

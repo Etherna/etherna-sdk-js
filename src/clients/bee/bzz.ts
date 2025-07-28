@@ -1,7 +1,7 @@
 // Forked from: https://github.com/ethersphere/bee
 
 import { extractFileUploadHeaders, readFileHeaders, wrapBytesWithHelpers } from "./utils"
-import { throwSdkError } from "@/classes"
+import { EthernaSdkError, throwSdkError } from "@/classes"
 
 import type { BeeClient } from "."
 import type { FileDownloadOptions, FileUploadOptions, ReferenceResponse } from "./types"
@@ -83,6 +83,9 @@ export class Bzz {
             ...extractFileUploadHeaders(options),
           },
         }),
+        params: {
+          name: options.filename,
+        },
         onUploadProgress: (e) => {
           if (options?.onUploadProgress) {
             const progress = Math.round((e.progress ?? 0) * 100)
@@ -95,6 +98,37 @@ export class Bzz {
         reference: resp.data.reference,
         tagUid: resp.headers["swarm-tag"],
       }
+    } catch (error) {
+      throwSdkError(error)
+    }
+  }
+
+  async head(path: string, options?: FileDownloadOptions) {
+    try {
+      const abortController = new AbortController()
+      const signal = abortController.signal
+      if (options?.signal) {
+        options.signal.onabort = () => abortController.abort()
+      }
+
+      const resp = await this.instance.request.head(`${bzzEndpoint}/${path.replace(/^\//, "")}`, {
+        ...this.instance.prepareAxiosConfig({
+          ...options,
+          signal,
+        }),
+      })
+
+      if (resp.status === 200) {
+        const size = resp.headers["content-length"] as string | undefined
+        const contentType = resp.headers["content-type"] as string | undefined
+
+        return {
+          size,
+          contentType,
+        }
+      }
+
+      throw new EthernaSdkError("NOT_FOUND", "Resource not found")
     } catch (error) {
       throwSdkError(error)
     }

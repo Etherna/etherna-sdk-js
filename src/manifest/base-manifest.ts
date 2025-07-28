@@ -15,7 +15,7 @@ import {
   MantarayEntryMetadataContentTypeKey,
   MantarayEntryMetadataFilenameKey,
   MantarayRootPath,
-  MantarayWebsiteIndexDocumentSuffixKey,
+  MantarayWebsiteIndexDocumentPathKey,
   STAMPS_DEPTH_MIN,
   ZeroHashReference,
 } from "@/consts"
@@ -25,6 +25,7 @@ import {
   isZeroBytesReference,
   jsonToReference,
   referenceToBytesReference,
+  structuredClone,
 } from "@/utils"
 
 import type { BucketCollisions } from "@/classes"
@@ -173,7 +174,7 @@ export class BaseMantarayManifest extends BaseManifest {
   }
 
   public get serialized(): unknown {
-    return Object.seal({
+    return structuredClone({
       reference: this.reference,
       preview: this._preview,
       details: this._details,
@@ -268,7 +269,7 @@ export class BaseMantarayManifest extends BaseManifest {
 
   protected updateNodeDefaultEntries() {
     this.node.addFork(encodePath(MantarayRootPath), ZeroHashReference, {
-      [MantarayWebsiteIndexDocumentSuffixKey]: MANIFEST_PREVIEW_PATH,
+      [MantarayWebsiteIndexDocumentPathKey]: MANIFEST_PREVIEW_PATH,
     })
     this.node.addFork(encodePath(MANIFEST_PREVIEW_PATH), jsonToReference(this._preview), {
       [MantarayEntryMetadataContentTypeKey]: "application/json",

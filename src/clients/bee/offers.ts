@@ -55,6 +55,8 @@ export class Offers {
           )
         }
         case "etherna": {
+          await this.instance.awaitAccessToken()
+
           const resp = await this.instance.apiRequest.get<Reference[]>(
             `/users/current/offeredResources`,
             {
@@ -152,6 +154,8 @@ export class Offers {
           )
         }
         case "etherna": {
+          await this.instance.awaitAccessToken()
+
           await this.instance.apiRequest.post(`/resources/${reference}/offers`, undefined, {
             ...this.instance.prepareAxiosConfig(opts),
           })
@@ -181,6 +185,8 @@ export class Offers {
           )
         }
         case "etherna": {
+          await this.instance.awaitAccessToken()
+
           await this.instance.apiRequest.delete(`/resources/${reference}/offers`, {
             ...this.instance.prepareAxiosConfig(opts),
           })

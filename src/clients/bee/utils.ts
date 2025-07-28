@@ -37,7 +37,7 @@ export function readFileHeaders(
 ) {
   const name = readContentDispositionFilename(headers["content-disposition"])
   const tagUid = readTagUid(headers["swarm-tag-uid"])
-  const contentType = headers["content-type"] || undefined
+  const contentType = headers["content-type"] as string | undefined
 
   return {
     name,

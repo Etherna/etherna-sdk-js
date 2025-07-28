@@ -54,8 +54,12 @@ export class Feed {
   constructor(private instance: BeeClient) {}
 
   makeFeed(topicName: string, owner: EthAddress, type: FeedType = "sequence"): FeedInfo {
+    return this.makeFeedFromHex(bytesToHex(keccak256Hash(topicName)), owner, type)
+  }
+
+  makeFeedFromHex(topicHex: string, owner: EthAddress, type: FeedType = "sequence"): FeedInfo {
     return {
-      topic: bytesToHex(keccak256Hash(topicName)),
+      topic: topicHex,
       owner: makeHexString(owner).toLowerCase(),
       type,
     }

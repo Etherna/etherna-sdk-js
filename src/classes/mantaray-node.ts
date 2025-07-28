@@ -3,6 +3,7 @@
 import { MantarayFork } from "./mantaray-fork"
 import { MantarayIndexBytes } from "./mantaray-index-bytes"
 import { EthernaSdkError } from "./sdk-error"
+import { MantarayWebsiteErrorDocumentPathKey, MantarayWebsiteIndexDocumentPathKey } from "@/consts"
 import {
   bytesEqual,
   checkBytesReference,
@@ -158,7 +159,10 @@ export class MantarayNode {
     // TODO: when the mantaray node is a pointer by its metadata then
     // the node has to be with `value` type even though it has zero address
     // should get info why is `withMetadata` as type is not enough
-    if (metadata["website-index-document"] || metadata["website-error-document"]) {
+    if (
+      metadata[MantarayWebsiteIndexDocumentPathKey] ||
+      metadata[MantarayWebsiteErrorDocumentPathKey]
+    ) {
       this.makeValue()
     }
     this.makeDirty()
@@ -319,13 +323,13 @@ export class MantarayNode {
     }
 
     if (!this.forks) {
-      throw Error(`Fork mapping is not defined in the manifest`)
+      throw new Error(`Fork mapping is not defined in the manifest`)
     }
 
     const pathFirstByte = path[0]
 
     if (pathFirstByte == null) {
-      throw Error(`Path is empty`)
+      throw new Error(`Path is empty`)
     }
 
     const fork = this.forks[pathFirstByte]
@@ -411,13 +415,13 @@ export class MantarayNode {
     }
 
     if (!this.forks) {
-      throw Error(`Fork mapping is not defined in the manifest`)
+      throw new Error(`Fork mapping is not defined in the manifest`)
     }
 
     const pathFirstByte = path[0]
 
     if (pathFirstByte == null) {
-      throw Error(`Path is empty`)
+      throw new Error(`Path is empty`)
     }
 
     const fork = this.forks[pathFirstByte]
@@ -487,7 +491,7 @@ export class MantarayNode {
     const pathFirstByte = path[0]
 
     if (pathFirstByte == null) {
-      throw Error(`Path is empty`)
+      throw new Error(`Path is empty`)
     }
 
     if (!this.forks) {
@@ -522,7 +526,7 @@ export class MantarayNode {
   }
 
   public async load(storageLoader: StorageLoader, reference: BytesReference): Promise<void> {
-    if (!reference) throw Error("Reference is undefined at manifest load")
+    if (!reference) throw new Error("Reference is undefined at manifest load")
 
     await this.recursiveLoad(storageLoader, reference)
 
@@ -579,7 +583,7 @@ export class MantarayNode {
     index.forEach((byte) => {
       const fork = this.forks?.[byte]
 
-      if (!fork) throw Error(`Fork indexing error: fork has not found under ${byte} index`)
+      if (!fork) throw new Error(`Fork indexing error: fork has not found under ${byte} index`)
       forkSerializations.push(fork.serialize())
     })
 
@@ -606,7 +610,7 @@ export class MantarayNode {
     const nodeHeaderSize = MantarayFork.nodeHeaderSizes.full()
 
     if (data.length < nodeHeaderSize) {
-      throw Error(
+      throw new Error(
         `The serialised input is too short, received = ${data.length}, expected >= ${nodeHeaderSize}`,
       )
     }
@@ -654,7 +658,7 @@ export class MantarayNode {
         let fork: MantarayFork
 
         if (data.length < offset + MantarayFork.nodeForkSizes.nodeType) {
-          throw Error(`There is not enough size to read nodeType of fork at offset ${offset}`)
+          throw new Error(`There is not enough size to read nodeType of fork at offset ${offset}`)
         }
 
         const nodeType = data.slice(offset, offset + MantarayFork.nodeForkSizes.nodeType)
@@ -663,7 +667,7 @@ export class MantarayNode {
         const nodeTypeByte = nodeType[0]
 
         if (nodeTypeByte == null) {
-          throw Error(`nodeType is not defined`)
+          throw new Error(`nodeType is not defined`)
         }
 
         const isWithMetadataType = (nodeTypeByte & NodeType.withMetadata) === NodeType.withMetadata
@@ -679,7 +683,7 @@ export class MantarayNode {
               refBytesSize +
               MantarayFork.nodeForkSizes.metadata
           ) {
-            throw Error(`Not enough bytes for metadata node fork at byte ${byte}`)
+            throw new Error(`Not enough bytes for metadata node fork at byte ${byte}`)
           }
 
           const metadataByteSize = fromBigEndian(
@@ -699,7 +703,7 @@ export class MantarayNode {
           )
         } else {
           if (data.length < offset + MantarayFork.nodeForkSizes.preReference + refBytesSize) {
-            throw Error(`There is not enough size to read fork at offset ${offset}`)
+            throw new Error(`There is not enough size to read fork at offset ${offset}`)
           }
 
           fork = MantarayFork.deserialize(data.slice(offset, offset + nodeForkSize), obfuscationKey)
@@ -711,7 +715,7 @@ export class MantarayNode {
         offset += nodeForkSize
       })
     } else {
-      throw Error("Wrong mantaray version")
+      throw new Error("Wrong mantaray version")
     }
   }
 
@@ -730,19 +734,19 @@ export class MantarayNode {
       const forkPath = this.forks[fork]
 
       if (forkPath == null) {
-        throw Error("forkPath is not defined")
+        throw new Error("forkPath is not defined")
       }
 
       const contentAddress = forkPath.node._entry
 
       if (!contentAddress) {
-        throw Error("contentAddress is not defined")
+        throw new Error("contentAddress is not defined")
       }
 
       const entry = await forkPath.node.recursiveLoad(storageLoader, contentAddress)
 
       if (!entry) {
-        throw Error("entry is not defined")
+        throw new Error("entry is not defined")
       }
 
       forkPath.node.contentAddress = contentAddress
