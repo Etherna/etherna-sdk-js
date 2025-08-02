@@ -5,7 +5,6 @@ import {
   EthernaSdkError,
   getSdkError,
   MantarayNode,
-  Queue,
   StampCalculator,
 } from "@/classes"
 import {
@@ -37,6 +36,7 @@ import type { BatchId, BytesReference, Reference } from "@/types/swarm"
 
 export interface BaseManifestOptions {
   beeClient: BeeClient
+  uploadConcurrentChunks?: number
 }
 
 export interface BaseManifestDownloadOptions extends RequestDownloadOptions {
@@ -170,6 +170,7 @@ export class BaseMantarayManifest extends BaseManifest {
     this._node = new MantarayNode()
     this.chunksUploader = new ChunksUploader({
       beeClient: options.beeClient,
+      concurrentChunks: options.uploadConcurrentChunks,
     })
   }
 
@@ -264,7 +265,11 @@ export class BaseMantarayManifest extends BaseManifest {
   }
 
   protected removeFile(path: string) {
-    this.node.removePath(encodePath(path))
+    try {
+      this.node.removePath(encodePath(path))
+    } catch (error) {
+      //
+    }
   }
 
   protected updateNodeDefaultEntries() {
@@ -308,7 +313,7 @@ export class BaseMantarayManifest extends BaseManifest {
   }
 
   protected importImageProcessor(imageProcessor: ImageProcessor, key = "image") {
-    if (!imageProcessor.image) {
+    if (!imageProcessor.image || !imageProcessor.isProcessed) {
       throw new EthernaSdkError("BAD_REQUEST", "Image not processed. Run 'process' method first")
     }
 
@@ -320,7 +325,7 @@ export class BaseMantarayManifest extends BaseManifest {
   }
 
   protected importVideoProcessor(videoProcessor: VideoProcessor, key = "video") {
-    if (!videoProcessor.video) {
+    if (!videoProcessor.video || !videoProcessor.isProcessed) {
       throw new EthernaSdkError("BAD_REQUEST", "Video not processed. Run 'process' method first")
     }
 

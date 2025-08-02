@@ -10,6 +10,35 @@ export const CHAIN_BLOCK_TIME = {
   goerli: 15,
 } as const satisfies Record<BeeChain["name"], number>
 
+/**
+ * Add redundancy to the data being uploaded so that downloaders can download it with better UX.
+ * 0 value is default and does not add any redundancy to the file.
+ */
+export const RedundancyLevels = {
+  OFF: 0,
+  MEDIUM: 1,
+  STRONG: 2,
+  INSANE: 3,
+  PARANOID: 4,
+} as const
+
+/**
+ * Specify the retrieve strategy on redundant data.
+ * The possible values are NONE, DATA, PROX and RACE.
+ * Strategy NONE means no prefetching takes place.
+ * Strategy DATA means only data chunks are prefetched.
+ * Strategy PROX means only chunks that are close to the node are prefetched.
+ * Strategy RACE means all chunks are prefetched: n data chunks and k parity chunks. The first n chunks to arrive are used to reconstruct the file.
+ * Multiple strategies can be used in a fallback cascade if the swarm redundancy fallback mode is set to true.
+ * The default strategy is NONE, DATA, falling back to PROX, falling back to RACE
+ */
+export const RedundancyStrategies = {
+  NONE: 0,
+  DATA: 1,
+  PROX: 2,
+  RACE: 3,
+} as const
+
 export const ETHERNA_MAX_BATCH_DEPTH = 20
 export const ETHERNA_WELCOME_BATCH_DEPTH = 20
 export const ETHERNA_WELCOME_POSTAGE_LABEL = "default" as const

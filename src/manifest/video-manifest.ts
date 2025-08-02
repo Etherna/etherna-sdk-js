@@ -30,7 +30,7 @@ import type { VideoProcessor } from "@/processors/video-processor"
 import type { ImageSource } from "@/schemas/image-schema"
 import type { VideoDetails, VideoPreview, VideoSource } from "@/schemas/video-schema"
 import type { EthAddress } from "@/types/eth"
-import type { BatchId, Reference } from "@/types/swarm"
+import type { Reference } from "@/types/swarm"
 
 export interface Video {
   reference: Reference
@@ -40,7 +40,7 @@ export interface Video {
 
 export type ProfileManifestInit = Reference | { owner: EthAddress } | Video
 
-const CURRENT_MANIFEST_VERSION = "2.1" as const
+export const CURRENT_VIDEO_MANIFEST_VERSION = "2.1" as const
 const THUMB_QUEUE_KEY = "thumb"
 const VIDEO_QUEUE_KEY = "video"
 
@@ -49,7 +49,7 @@ const VIDEO_QUEUE_KEY = "video"
  */
 export class VideoManifest extends BaseMantarayManifest {
   protected override _preview: VideoPreview = {
-    v: CURRENT_MANIFEST_VERSION,
+    v: CURRENT_VIDEO_MANIFEST_VERSION,
     title: "",
     duration: 0,
     ownerAddress: EmptyAddress,
@@ -245,13 +245,13 @@ export class VideoManifest extends BaseMantarayManifest {
       throw new EthernaSdkError("PERMISSION_DENIED", "You can't update other user's videos")
     }
 
-    if (+this.v < +CURRENT_MANIFEST_VERSION) {
+    if (+this.v < +CURRENT_VIDEO_MANIFEST_VERSION) {
       throw new EthernaSdkError(
         "UNSUPPORTED_OPERATION",
         "Outdate manifest version. Run '.migrate()' first",
       )
     }
-    if (this.v !== CURRENT_MANIFEST_VERSION) {
+    if (this.v !== CURRENT_VIDEO_MANIFEST_VERSION) {
       throw new EthernaSdkError("UNSUPPORTED_OPERATION", "Unsupported manifest version.")
     }
 
@@ -321,10 +321,10 @@ export class VideoManifest extends BaseMantarayManifest {
   }
 
   public async migrate(options?: { signal?: AbortSignal }): Promise<Video> {
-    if (this.v === CURRENT_MANIFEST_VERSION) {
+    if (this.v === CURRENT_VIDEO_MANIFEST_VERSION) {
       throw new EthernaSdkError(
         "UNSUPPORTED_OPERATION",
-        `Manifest is already in version ${CURRENT_MANIFEST_VERSION}`,
+        `Manifest is already in version ${CURRENT_VIDEO_MANIFEST_VERSION}`,
       )
     }
 

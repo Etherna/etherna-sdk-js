@@ -102,6 +102,7 @@ export class ImageProcessor extends BaseProcessor {
         path: parsePath(imageMeta.width, imageMeta.type),
       },
     ]
+    this.appendChunkedFile(makeChunkedFile(originalImageData))
 
     const sizes = Array.isArray(options.sizes)
       ? options.sizes

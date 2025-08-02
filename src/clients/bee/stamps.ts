@@ -636,7 +636,13 @@ export class Stamps {
             const error = getSdkError(err)
             const data = error.axiosError?.response?.data as { message?: string } | undefined
             const msg = data?.message as string | undefined
-            if (msg && msg !== "batch not usable") {
+            const isNotUsableError =
+              error.axiosError?.response?.status === 400 &&
+              msg?.toLowerCase().includes("not usable")
+
+            if (isNotUsableError) {
+              waitBatchValid()
+            } else {
               rejecter(error)
             }
           })

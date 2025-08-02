@@ -429,6 +429,7 @@ export class PlaylistManifest extends BaseMantarayManifest {
   }
 
   public addVideo(video: Video, publishAt?: Date) {
+    this._details.videos = this._details.videos.filter((v) => v.r !== video.reference)
     this._details.videos.unshift(
       structuredClone({
         r: video.reference,

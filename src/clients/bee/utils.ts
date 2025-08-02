@@ -8,7 +8,13 @@ import { CAC_PAYLOAD_OFFSET } from "@/consts"
 import { bmtHash } from "@/utils/bmt"
 import { serializeBytes } from "@/utils/bytes"
 
-import type { ContentAddressedChunk, Data, FileUploadOptions, RequestUploadOptions } from "./types"
+import type {
+  ContentAddressedChunk,
+  Data,
+  FileUploadOptions,
+  RequestDownloadOptions,
+  RequestUploadOptions,
+} from "./types"
 import type { AxiosResponseHeaders, RawAxiosResponseHeaders } from "axios"
 
 /**
@@ -56,13 +62,29 @@ export function extractUploadHeaders(options: RequestUploadOptions): Record<stri
     "swarm-postage-batch-id": options.batchId,
   }
 
-  if (options?.pin) headers["swarm-pin"] = String(options.pin)
+  if (options.act != null) {
+    headers["swarm-act"] = String(options.act)
+  }
 
-  if (options?.encrypt) headers["swarm-encrypt"] = String(options.encrypt)
+  if (options.pin != null) {
+    headers["swarm-pin"] = String(options.pin)
+  }
 
-  if (options?.tag) headers["swarm-tag"] = String(options.tag)
+  if (options.encrypt != null) {
+    headers["swarm-encrypt"] = options.encrypt.toString()
+  }
 
-  headers["swarm-deferred-upload"] = String(options.deferred ?? true)
+  if (options.tag) {
+    headers["swarm-tag"] = String(options.tag)
+  }
+
+  if (options.deferred != null) {
+    headers["swarm-deferred-upload"] = options.deferred.toString()
+  }
+
+  if (options.actHistoryAddress) {
+    headers["swarm-act-history-address"] = options.actHistoryAddress
+  }
 
   return headers
 }
@@ -73,6 +95,50 @@ export function extractFileUploadHeaders(options: FileUploadOptions): Record<str
   if (options?.size) headers["Content-Length"] = String(options.size)
 
   if (options?.contentType) headers["Content-Type"] = options.contentType
+
+  return headers
+}
+
+export function extractDownloadHeaders(options: RequestDownloadOptions): Record<string, string> {
+  const headers: Record<string, string> = {
+    ...options.headers,
+  }
+
+  if (options.redundancyStrategy) {
+    headers["swarm-redundancy-strategy"] = String(options.redundancyStrategy)
+  }
+
+  if (options.fallback != null) {
+    headers["swarm-redundancy-fallback-mode"] = options.fallback.toString()
+  }
+
+  if (options.timeoutMs) {
+    headers["swarm-chunk-retrieval-timeout"] = String(options.timeoutMs)
+  }
+
+  // if (options.actPublisher) {
+  //   headers["swarm-act-publisher"] = new PublicKey(options.actPublisher as any).toCompressedHex()
+  // }
+
+  if (options.actHistoryAddress) {
+    headers["swarm-act-history-address"] = options.actHistoryAddress
+  }
+
+  if (options.actTimestamp) {
+    headers["swarm-act-timestamp"] = String(options.actTimestamp)
+  }
+
+  if (/*options.actPublisher || */ options.actHistoryAddress || options.actTimestamp) {
+    headers["swarm-act"] = "true"
+  }
+
+  if (options.gasPrice) {
+    headers["gas-price"] = String(options.gasPrice)
+  }
+
+  if (options.gasLimit) {
+    headers["gas-limit"] = String(options.gasLimit)
+  }
 
   return headers
 }

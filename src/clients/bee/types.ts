@@ -1,3 +1,5 @@
+import { RedundancyLevels, RedundancyStrategies } from "@/consts"
+
 import type { RequestOptions } from "@/types/clients"
 import type { BatchId, PostageBatch, Reference } from "@/types/swarm"
 import type { HexString } from "@/types/utils"
@@ -40,17 +42,87 @@ export interface Data extends Uint8Array {
   json<T extends Record<string, unknown> | unknown[]>(): T
 }
 
+export type RedundancyStrategy = (typeof RedundancyStrategies)[keyof typeof RedundancyStrategies]
+
+export type RedundancyLevel = (typeof RedundancyLevels)[keyof typeof RedundancyLevels]
+
 export interface RequestUploadOptions extends RequestOptions {
   batchId: BatchId
+
+  /**
+   * If set to true, an ACT will be created for the uploaded data.
+   */
+  act?: boolean
+
+  actHistoryAddress?: Reference | string
+
+  /**
+   * Will pin the data locally in the Bee node as well.
+   *
+   * Locally pinned data is possible to reupload to network if it disappear.
+   *
+   * @see [Bee docs - Pinning](https://docs.ethswarm.org/docs/develop/access-the-swarm/pinning)
+   * @see [Bee API reference - `POST /bzz`](https://docs.ethswarm.org/api/#tag/BZZ/paths/~1bzz/post)
+   */
   pin?: boolean
+
+  /**
+   * Will encrypt the uploaded data and return longer hash which also includes the decryption key.
+   *
+   * @see [Bee docs - Store with Encryption](https://docs.ethswarm.org/docs/develop/access-the-swarm/store-with-encryption)
+   * @see [Bee API reference - `POST /bzz`](https://docs.ethswarm.org/api/#tag/BZZ/paths/~1bzz/post)
+   * @see Reference
+   */
   encrypt?: boolean
-  tag?: number | string
+
+  /**
+   * Tags keep track of syncing the data with network. This option allows attach existing Tag UUID to the uploaded data.
+   *
+   * @see [Bee API reference - `POST /bzz`](https://docs.ethswarm.org/api/#tag/BZZ/paths/~1bzz/post)
+   * @see [Bee docs - Syncing / Tags](https://docs.ethswarm.org/docs/develop/access-the-swarm/syncing)
+   * @link Tag
+   */
+  tag?: number
+
+  /**
+   * Determines if the uploaded data should be sent to the network immediately (eq. deferred=false) or in a deferred fashion (eq. deferred=true).
+   *
+   * With deferred style client uploads all the data to Bee node first and only then Bee node starts push the data to network itself. The progress of this upload can be tracked with tags.
+   * With non-deferred style client uploads the data to Bee which immediately starts pushing the data to network. The request is only finished once all the data was pushed through the Bee node to the network.
+   *
+   * In future there will be move to the non-deferred style and even the support for deferred upload will be removed from Bee itself.
+   *
+   * @default true
+   */
   deferred?: boolean
   /** Upload progress, ranging 0 to 100 */
   onUploadProgress?(completion: number): void
 }
 
 export interface RequestDownloadOptions extends RequestOptions {
+  /**
+   * Specify the retrieve strategy on redundant data.
+   */
+  redundancyStrategy?: RedundancyStrategy
+  /**
+   * Specify if the retrieve strategies (chunk prefetching on redundant data) are used in a fallback cascade. The default is true.
+   */
+  fallback?: boolean
+  /**
+   * Specify the timeout for chunk retrieval. The default is 30 seconds.
+   */
+  timeoutMs?: number
+
+  // actPublisher?: PublicKey | Uint8Array | string
+
+  actHistoryAddress?: Reference | string
+
+  actTimestamp?: string | number
+
+  gasLimit?: number
+
+  gasPrice?: number
+
   /** Download progress, ranging 0 to 100 */
   onDownloadProgress?(completion: number): void
 }

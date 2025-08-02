@@ -2,7 +2,7 @@ import { EthernaSdkError, getSdkError, throwSdkError } from "./sdk-error"
 import { PlaylistManifest } from "@/manifest"
 import { isEmptyReference } from "@/utils"
 
-import type { BeeClient, EthernaIndexClient } from "@/clients"
+import type { BeeClient, EthernaIndexClient, RequestUploadOptions } from "@/clients"
 import type { Playlist, Video } from "@/manifest"
 import type { BatchId, Reference } from "@/types"
 
@@ -40,9 +40,8 @@ export interface VideoPublisherSyncResult {
 
 export type PublishSource = PublishSourcePlaylist | PublishSourceIndex
 
-export interface VideoPublisherUploadOptions {
-  signal?: AbortSignal
-}
+export interface VideoPublisherUploadOptions
+  extends Omit<RequestUploadOptions, "batchId" | "onUploadProgress"> {}
 
 export class VideoPublisher {
   private video: Video
@@ -103,6 +102,7 @@ export class VideoPublisher {
         case "playlist": {
           const playlistManifest = new PlaylistManifest(source.playlist, {
             beeClient: this.beeClient,
+            ...options,
           })
 
           if (!isEmptyReference(playlistManifest.reference)) {
@@ -118,7 +118,7 @@ export class VideoPublisher {
 
           await playlistManifest.upload({
             batchId: this.batchId,
-            signal: options?.signal,
+            ...options,
           })
 
           source.playlist = playlistManifest.serialized
@@ -130,13 +130,13 @@ export class VideoPublisher {
 
           if (source.indexVideoId) {
             await indexClient.videos.updateVideo(source.indexVideoId, this.video.reference, {
-              signal: options?.signal,
+              ...options,
             })
 
             return { id: source.indexVideoId }
           } else {
             const videoId = await indexClient.videos.createVideo(this.video.reference, {
-              signal: options?.signal,
+              ...options,
             })
 
             return { id: videoId }
@@ -172,7 +172,7 @@ export class VideoPublisher {
 
           await playlistManifest.upload({
             batchId: this.batchId,
-            signal: options?.signal,
+            ...options,
           })
 
           source.playlist = playlistManifest.serialized
@@ -185,7 +185,7 @@ export class VideoPublisher {
           }
 
           const indexClient = source.indexClient
-          await indexClient.videos.deleteVideo(source.indexVideoId, { signal: options?.signal })
+          await indexClient.videos.deleteVideo(source.indexVideoId, { ...options })
 
           return { id: source.indexVideoId }
         }

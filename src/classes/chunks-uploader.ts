@@ -120,14 +120,15 @@ export class ChunksUploader {
   }
 
   private _internal_resume() {
-    const options = this.uploadOptions
-
-    if (!options) {
+    if (!this.uploadOptions) {
       throw new EthernaSdkError("BAD_REQUEST", "Call .resume() before .drain()")
     }
 
+    const { deferred, ...options } = this.uploadOptions
+
+    // tag is required for deferred uploads of chunks (but not for etherna)
     const tagPromise =
-      options.deferred && !this.tag
+      deferred && !this.tag && this.beeClient.type !== "etherna"
         ? this.beeClient.tags.create(this.tagReference ?? EmptyReference).then((res) => res.uid)
         : Promise.resolve(this.tag)
 

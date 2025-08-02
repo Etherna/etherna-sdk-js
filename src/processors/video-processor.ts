@@ -218,6 +218,8 @@ export class VideoProcessor extends BaseProcessor {
             .then((files) => files.filter((f) => f.isFile()).map((f) => f.name)),
       })
     }
+
+    this._isProcessed = true
   }
 
   public async createThumbnailProcessor(
