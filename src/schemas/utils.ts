@@ -65,6 +65,10 @@ export const BeeSafeReferenceSchema = z
     return result.success ? result.data : EmptyReference
   })
 
+export const BeeAddressSchema = BeeReferenceSchema.or(
+  z.templateLiteral([z.string().regex(/^[a-fA-F0-9]{64}$/), "/", z.string()]),
+)
+
 export const BatchIdSchema = z
   .string()
   .regex(/^[a-fA-F0-9]{64}$/, {

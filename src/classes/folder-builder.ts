@@ -63,7 +63,10 @@ export class FolderBuilder {
       metadata[MantarayWebsiteErrorDocumentPathKey] = this.config.errorDocument
     }
 
-    this.node.addFork(encodePath(MantarayRootPath), ZeroHashReference, metadata)
+    if (Object.keys(metadata).length > 0) {
+      this.node.addFork(encodePath(MantarayRootPath), ZeroHashReference, metadata)
+    }
+
     const reference = await this.node.save(async (data) => {
       return this.enqueueData(data)
     })

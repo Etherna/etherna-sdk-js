@@ -21,6 +21,8 @@ export type PostageBatchBucket = {
 
 export type Reference = HexString<typeof REFERENCE_HEX_LENGTH>
 
+export type BeeAddress = Reference | `${Reference}/${string}`
+
 export type BytesReference = Bytes<32 | 64>
 
 export type PostageBatch = {

@@ -4,6 +4,8 @@ import { keccak256Hash } from "./hex"
 import { EthernaSdkError } from "@/classes"
 import { HASH_SIZE, MAX_CHUNK_PAYLOAD_SIZE, SEGMENT_PAIR_SIZE } from "@/consts"
 
+export { makeChunkedFile } from "@fairdatasociety/bmt-js"
+
 /**
  * Calculate a Binary Merkle Tree hash for a chunk
  *
