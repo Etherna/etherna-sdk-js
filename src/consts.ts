@@ -39,7 +39,7 @@ export const RedundancyStrategies = {
   RACE: 3,
 } as const
 
-export const ETHERNA_MAX_BATCH_DEPTH = 20
+export const ETHERNA_MAX_BATCH_DEPTH = 22
 export const ETHERNA_WELCOME_BATCH_DEPTH = 20
 export const ETHERNA_WELCOME_POSTAGE_LABEL = "default" as const
 

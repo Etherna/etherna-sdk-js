@@ -73,38 +73,6 @@ export class Offers {
   }
 
   /**
-   * Check if a resource is offered
-   *
-   * @param reference Hash of the resource
-   * @param opts Request options
-   * @returns True if has offers
-   */
-  async isOffered(reference: Reference, opts?: RequestOptions) {
-    try {
-      switch (this.instance.type) {
-        case "bee": {
-          throw new EthernaSdkError(
-            "NOT_IMPLEMENTED",
-            "This operation is not supported by Bee client",
-          )
-        }
-        case "etherna": {
-          const resp = await this.instance.apiRequest.get<boolean>(
-            `/resources/${reference}/isoffered`,
-            {
-              ...this.instance.prepareAxiosConfig(opts),
-            },
-          )
-
-          return resp.data
-        }
-      }
-    } catch (error) {
-      throwSdkError(error)
-    }
-  }
-
-  /**
    * Check if multiple resources are offered
    *
    * @param references Hashes of the resources

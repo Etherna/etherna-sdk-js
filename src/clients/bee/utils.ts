@@ -28,7 +28,7 @@ export function prepareData(
   if (typeof data === "string") return new Blob([data], { type: "text/plain" })
 
   if (data instanceof Uint8Array) {
-    return new Blob([data], { type: "application/octet-stream" })
+    return new Blob([data as BlobPart], { type: "application/octet-stream" })
   }
 
   if (data instanceof File) {

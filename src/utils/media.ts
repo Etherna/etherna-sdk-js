@@ -33,7 +33,7 @@ export function getVideoMeta(input: string | Uint8Array): Promise<VideoMeta> {
     }
     video.src =
       input instanceof Uint8Array
-        ? URL.createObjectURL(new Blob([input], { type: "video/mp4" }))
+        ? URL.createObjectURL(new Blob([input as BlobPart], { type: "video/mp4" }))
         : input
   })
 }

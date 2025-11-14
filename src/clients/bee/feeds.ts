@@ -95,6 +95,10 @@ export class Feed {
               reference,
             }
           } else {
+            if (instance.type === "etherna") {
+              await instance.awaitAccessToken()
+            }
+
             const { data } = await instance.request.get<ReferenceResponse>(
               `${feedEndpoint}/${feed.owner}/${feed.topic}`,
               {
@@ -181,6 +185,10 @@ export class Feed {
         await epochRoot.save(options)
 
         return epochRoot.reference
+      }
+
+      if (this.instance.type === "etherna") {
+        await this.instance.awaitAccessToken()
       }
 
       const response = await this.instance.request.post<ReferenceResponse>(
@@ -279,6 +287,10 @@ export class Feed {
 
   // Utils
   async fetchLatestFeedUpdate(feed: FeedInfo) {
+    if (this.instance.type === "etherna") {
+      await this.instance.awaitAccessToken()
+    }
+
     const resp = await this.instance.request.get<ReferenceResponse>(
       `${feedEndpoint}/${feed.owner}/${feed.topic}`,
       {

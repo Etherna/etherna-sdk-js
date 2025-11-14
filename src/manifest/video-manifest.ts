@@ -316,6 +316,9 @@ export class VideoManifest extends BaseMantarayManifest {
 
       return this.serialized
     } catch (error) {
+      if (options?.onUploadProgress) {
+        this.chunksUploader.off("progress", options.onUploadProgress)
+      }
       throwSdkError(error)
     }
   }

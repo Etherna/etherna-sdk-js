@@ -23,11 +23,11 @@ export class System {
           )
         }
         case "etherna": {
-          const resp = await this.instance.apiRequest.get<number>(`/system/byteprice`, {
+          const resp = await this.instance.apiRequest.get<string>(`/system/byteprice2`, {
             ...this.instance.prepareAxiosConfig(opts),
           })
 
-          if (typeof resp.data !== "number") {
+          if (typeof resp.data !== "string") {
             throw new EthernaSdkError("VALIDATION_ERROR", "Cannot fetch byte price")
           }
 

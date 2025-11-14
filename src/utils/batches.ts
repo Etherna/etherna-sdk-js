@@ -135,7 +135,7 @@ export const getBatchExpiration = (batch: PostageBatch): "unlimited" | Date => {
  * @param blockTime Chain blocktime
  * @returns Batch amount (PLUR / block / chunk)
  */
-export const ttlToAmount = (ttl: number, price: number, blockTime: number): bigint => {
+export const ttlToAmount = (ttl: number, price: string, blockTime: number): bigint => {
   return (BigInt(ttl) * BigInt(price)) / BigInt(blockTime)
 }
 
@@ -184,7 +184,7 @@ export const calcDilutedTTL = (
 }
 
 interface ExpandAmountOpts {
-  price: number
+  price: string
   blockTime: number
 }
 
@@ -224,7 +224,7 @@ export function calcExpandAmount(
     typeof desiredTTLOrOpts === "number" && desiredTTLOrOpts > batch.batchTTL
       ? desiredTTLOrOpts
       : batch.batchTTL
-  const price = opts?.price ?? (typeof desiredTTLOrOpts === "object" ? desiredTTLOrOpts.price : 1)
+  const price = opts?.price ?? (typeof desiredTTLOrOpts === "object" ? desiredTTLOrOpts.price : "1")
   const blockTime =
     opts?.blockTime ??
     (typeof desiredTTLOrOpts === "object" ? desiredTTLOrOpts.blockTime : CHAIN_BLOCK_TIME.gnosis)

@@ -219,6 +219,6 @@ async function loadImage(data: Uint8Array) {
     const img = new Image()
     img.onload = () => resolve(img)
     img.onerror = () => reject(null)
-    img.src = URL.createObjectURL(new Blob([data]))
+    img.src = URL.createObjectURL(new Blob([data as BlobPart]))
   })
 }

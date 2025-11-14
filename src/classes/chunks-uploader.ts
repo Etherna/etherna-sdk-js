@@ -30,6 +30,7 @@ export class ChunksUploader {
   private tag?: number
   private activeTasks = 0
   private uploadOptions?: ChunksUploadOptions
+  private stop = false
   private drainPromiseResolver?: () => void
   private drainPromiseRejecter?: (error: Error) => void
 
@@ -136,9 +137,7 @@ export class ChunksUploader {
       .then((tag) => {
         this.tag = tag
 
-        let stop = false
-
-        while (this.activeTasks < this.concurrentChunks && this.chunks.length > 0 && !stop) {
+        while (this.activeTasks < this.concurrentChunks && this.chunks.length > 0 && !this.stop) {
           const chunk = this.chunks.shift()
           if (chunk) {
             this.activeTasks++
@@ -152,7 +151,7 @@ export class ChunksUploader {
                 this.progressListeners.forEach((l) => l(progress))
               })
               .catch((err) => {
-                stop = true
+                this.stop = true
 
                 this.chunks.unshift(chunk)
 
@@ -179,6 +178,8 @@ export class ChunksUploader {
   }
 
   drain(): Promise<void> {
+    this.stop = false
+
     return new Promise((resolve, reject) => {
       if (this.activeTasks === 0 && this.chunks.length > 0) {
         this._internal_resume()

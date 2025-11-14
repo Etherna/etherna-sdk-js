@@ -186,28 +186,17 @@ export class Stamps {
       const { waitUntilUsable, waitUntil, ...opts } = options ?? {}
 
       const fetchBatch = async () => {
-        switch (this.instance.type) {
-          case "bee": {
-            const postageResp = await this.instance.request.get<PostageBatch>(
-              `${stampsEndpoint}/${batchId}`,
-              {
-                ...this.instance.prepareAxiosConfig(opts),
-              },
-            )
-            return postageResp.data
-          }
-          case "etherna": {
-            await this.instance.awaitAccessToken()
-
-            const resp = await this.instance.apiRequest.get<EthernaGatewayBatch>(
-              `/users/current/batches/${batchId}`,
-              {
-                ...this.instance.prepareAxiosConfig(opts),
-              },
-            )
-            return this.parseGatewayPostageBatch(resp.data)
-          }
+        if (this.instance.type === "etherna") {
+          await this.instance.awaitAccessToken()
         }
+
+        const postageResp = await this.instance.request.get<PostageBatch>(
+          `${stampsEndpoint}/${batchId}`,
+          {
+            ...this.instance.prepareAxiosConfig(opts),
+          },
+        )
+        return postageResp.data
       }
 
       if (!waitUntilUsable && !waitUntil) {
@@ -225,36 +214,21 @@ export class Stamps {
     options?: RequestOptions,
   ): Promise<(PostageBatch | EthernaGatewayBatchPreview)[]> {
     try {
-      switch (this.instance.type) {
-        case "bee": {
-          const postageResp = await this.instance.request.get<{ stamps: PostageBatch[] }>(
-            stampsEndpoint,
-            {
-              ...this.instance.prepareAxiosConfig(options),
-            },
-          )
-          return postageResp.data.stamps
-            .filter(
-              (batch) =>
-                !labelQuery || batch.label.toLowerCase().includes(labelQuery.toLowerCase()),
-            )
-            .toReversed()
-        }
-        case "etherna": {
-          await this.instance.awaitAccessToken()
-
-          const resp = await this.instance.apiRequest.get<EthernaGatewayBatchPreview[]>(
-            `/users/current/batches`,
-            {
-              ...this.instance.prepareAxiosConfig(options),
-              params: {
-                labelContainsFilter: labelQuery,
-              },
-            },
-          )
-          return resp.data.toReversed()
-        }
+      if (this.instance.type === "etherna") {
+        await this.instance.awaitAccessToken()
       }
+
+      const postageResp = await this.instance.request.get<{ stamps: PostageBatch[] }>(
+        stampsEndpoint,
+        {
+          ...this.instance.prepareAxiosConfig(options),
+        },
+      )
+      return postageResp.data.stamps
+        .filter(
+          (batch) => !labelQuery || batch.label.toLowerCase().includes(labelQuery.toLowerCase()),
+        )
+        .toReversed()
     } catch (error) {
       throwSdkError(error)
     }
@@ -265,20 +239,17 @@ export class Stamps {
     options?: RequestOptions,
   ): Promise<PostageBatchBucketsData> {
     try {
-      switch (this.instance.type) {
-        case "bee": {
-          const postageResp = await this.instance.request.get<PostageBatchBucketsData>(
-            `${stampsEndpoint}/${batchId}/buckets`,
-            {
-              ...this.instance.prepareAxiosConfig(options),
-            },
-          )
-          return postageResp.data
-        }
-        case "etherna": {
-          throw new EthernaSdkError("NOT_IMPLEMENTED", "This method is not implemented for Etherna")
-        }
+      if (this.instance.type === "etherna") {
+        await this.instance.awaitAccessToken()
       }
+
+      const postageResp = await this.instance.request.get<PostageBatchBucketsData>(
+        `${stampsEndpoint}/${batchId}/buckets`,
+        {
+          ...this.instance.prepareAxiosConfig(options),
+        },
+      )
+      return postageResp.data
     } catch (error) {
       throwSdkError(error)
     }
@@ -386,30 +357,17 @@ export class Stamps {
     const initialAmount = options.initialAmount ?? postage.amount
 
     try {
-      switch (this.instance.type) {
-        case "bee": {
-          await this.instance.request.patch<{ batchID: BatchId }>(
-            `${stampsEndpoint}/topup/${batchId}/${amount}`,
-            null,
-            {
-              ...this.instance.prepareAxiosConfig(opts),
-            },
-          )
-          break
-        }
-        case "etherna": {
-          await this.instance.awaitAccessToken()
-
-          await this.instance.apiRequest.patch(
-            `/postage/batches/${batchId}/topup/${amount}`,
-            null,
-            {
-              ...this.instance.prepareAxiosConfig(opts),
-            },
-          )
-          break
-        }
+      if (this.instance.type === "etherna") {
+        await this.instance.awaitAccessToken()
       }
+
+      await this.instance.request.patch<{ batchID: BatchId }>(
+        `${stampsEndpoint}/topup/${batchId}/${amount}`,
+        null,
+        {
+          ...this.instance.prepareAxiosConfig(opts),
+        },
+      )
 
       if (waitUntilUpdated) {
         return await this.waitBatchValid(batchId, (batch) => batch.amount > initialAmount, opts)
@@ -431,30 +389,17 @@ export class Stamps {
     const { depth, waitUntilUpdated, ...opts } = options
 
     try {
-      switch (this.instance.type) {
-        case "bee": {
-          await this.instance.request.patch<{ batchID: BatchId }>(
-            `${stampsEndpoint}/dilute/${batchId}/${depth}`,
-            null,
-            {
-              ...this.instance.prepareAxiosConfig(opts),
-            },
-          )
-          break
-        }
-        case "etherna": {
-          await this.instance.awaitAccessToken()
-
-          await this.instance.apiRequest.patch(
-            `/users/current/batches/${batchId}/dilute/${depth}`,
-            null,
-            {
-              ...this.instance.prepareAxiosConfig(opts),
-            },
-          )
-          break
-        }
+      if (this.instance.type === "etherna") {
+        await this.instance.awaitAccessToken()
       }
+
+      await this.instance.request.patch<{ batchID: BatchId }>(
+        `${stampsEndpoint}/dilute/${batchId}/${depth}`,
+        null,
+        {
+          ...this.instance.prepareAxiosConfig(opts),
+        },
+      )
 
       if (waitUntilUpdated) {
         return await this.waitBatchValid(batchId, (batch) => batch.depth === depth, opts)
@@ -594,14 +539,6 @@ export class Stamps {
       })
     } catch (error) {
       throwSdkError(error)
-    }
-  }
-
-  private parseGatewayPostageBatch(batch: EthernaGatewayBatch): PostageBatch {
-    const { id, amountPaid: _p, normalisedBalance: _b, ...postageBatch } = batch
-    return {
-      batchID: id,
-      ...postageBatch,
     }
   }
 

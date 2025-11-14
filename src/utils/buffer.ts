@@ -48,7 +48,7 @@ export function fileToDataURL(file: File | Blob) {
  * @returns The file object
  */
 export function bufferToFile(buffer: ArrayBuffer | Uint8Array, contentType?: string) {
-  return new Blob([buffer], { type: contentType }) as File
+  return new Blob([buffer as BlobPart], { type: contentType }) as File
 }
 
 /**

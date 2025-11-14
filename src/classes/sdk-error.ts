@@ -60,19 +60,38 @@ export function getSdkError(err: unknown): EthernaSdkError {
 
   if (err instanceof AxiosError) {
     const code = err.response?.status ?? 500
+    const message = (() => {
+      if (typeof err.response?.data === "string") {
+        return err.response?.data
+      }
+
+      if (
+        typeof err.response?.data === "object" &&
+        typeof err.response?.data?.message === "string"
+      ) {
+        return err.response?.data?.message
+      }
+
+      if (typeof err.response?.data === "object" && typeof err.response?.data?.error === "string") {
+        return err.response?.data?.error
+      }
+
+      return err.message
+    })()
+
     switch (code) {
       case 400:
-        return new EthernaSdkError("BAD_REQUEST", err.message, err)
+        return new EthernaSdkError("BAD_REQUEST", message, err)
       case 401:
-        return new EthernaSdkError("UNAUTHORIZED", err.message, err)
+        return new EthernaSdkError("UNAUTHORIZED", message, err)
       case 402:
-        return new EthernaSdkError("MISSING_FUNDS", err.message, err)
+        return new EthernaSdkError("MISSING_FUNDS", message, err)
       case 403:
-        return new EthernaSdkError("PERMISSION_DENIED", err.message, err)
+        return new EthernaSdkError("PERMISSION_DENIED", message, err)
       case 404:
-        return new EthernaSdkError("NOT_FOUND", err.message, err)
+        return new EthernaSdkError("NOT_FOUND", message, err)
       default:
-        return new EthernaSdkError(code ? "SERVER_ERROR" : "BAD_REQUEST", err.message, err)
+        return new EthernaSdkError(code ? "SERVER_ERROR" : "BAD_REQUEST", message, err)
     }
   }
 

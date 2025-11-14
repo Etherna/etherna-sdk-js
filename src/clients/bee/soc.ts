@@ -41,6 +41,10 @@ export class Soc {
 
   async download(identifier: Uint8Array, ownerAddress: EthAddress, options?: RequestOptions) {
     try {
+      if (this.instance.type === "etherna") {
+        await this.instance.awaitAccessToken()
+      }
+
       const addressBytes = hexToBytes(makeHexString(ownerAddress))
       const address = this.makeSOCAddress(identifier, addressBytes)
       const data = await this.instance.chunk.download(bytesToHex(address), options)
@@ -53,6 +57,10 @@ export class Soc {
 
   async upload(identifier: Uint8Array, data: Uint8Array, options: RequestUploadOptions) {
     try {
+      if (this.instance.type === "etherna") {
+        await this.instance.awaitAccessToken()
+      }
+
       const cac = makeContentAddressedChunk(data)
       const soc = await this.makeSingleOwnerChunk(cac, identifier)
 

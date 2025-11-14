@@ -57,7 +57,7 @@ export async function resizeImage(
     const data = ffmpeg.fs.readFile("output")
     const type = getImageTypeFromData(data)
 
-    return new Blob([data], { type })
+    return new Blob([data as BlobPart], { type })
   }
 }
 
