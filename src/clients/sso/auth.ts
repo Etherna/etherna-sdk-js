@@ -17,8 +17,12 @@ export class SSOAuth {
       }
 
       const {
-        data: { access_token: accessToken },
-      } = await this.instance.request.post<{ access_token: string }>(
+        data: { access_token: accessToken, ...rest },
+      } = await this.instance.request.post<{
+        access_token: string
+        expires_in: number
+        scope: string
+      }>(
         "/connect/token",
         new URLSearchParams({
           grant_type: "password",
@@ -34,7 +38,7 @@ export class SSOAuth {
         },
       )
 
-      this.instance.accessToken = accessToken
+      this.instance.updateAccessToken(accessToken, Date.now() / 1000 + rest.expires_in)
 
       return { accessToken }
     } catch (error) {

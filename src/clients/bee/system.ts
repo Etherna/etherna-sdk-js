@@ -23,6 +23,8 @@ export class System {
           )
         }
         case "etherna": {
+          await this.instance.autoLoadApiPath()
+
           const resp = await this.instance.apiRequest.get<string>(`/system/byteprice2`, {
             ...this.instance.prepareAxiosConfig(opts),
           })
@@ -55,6 +57,8 @@ export class System {
           )
         }
         case "etherna": {
+          await this.instance.autoLoadApiPath()
+
           const resp = await this.instance.apiRequest.get<BatchId>(
             `/system/postagebatchref/${referenceId}`,
             {

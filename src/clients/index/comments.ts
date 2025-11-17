@@ -20,6 +20,7 @@ export class IndexComments implements IIndexCommentsInterface {
    */
   async editComment(id: string, newText: string, opts?: RequestOptions) {
     try {
+      await this.instance.autoLoadApiPath()
       await this.instance.awaitAccessToken()
       const resp = await this.instance.apiRequest.put<IndexVideoComment>(
         `/videos/comments/${id}`,
@@ -47,6 +48,7 @@ export class IndexComments implements IIndexCommentsInterface {
    */
   async deleteComment(id: string, opts?: RequestOptions) {
     try {
+      await this.instance.autoLoadApiPath()
       await this.instance.awaitAccessToken()
 
       await this.instance.apiRequest.delete(`/comments/${id}`, {

@@ -11,6 +11,7 @@ export class SSOIdentity {
    */
   async fetchCurrentIdentity() {
     try {
+      await this.instance.autoLoadApiPath()
       await this.instance.awaitAccessToken()
 
       const resp = await this.instance.apiRequest.get<Identity>(`/identity`, {

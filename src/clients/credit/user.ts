@@ -12,6 +12,7 @@ export class CreditUser {
    */
   async fetchBalance(opts?: RequestOptions) {
     try {
+      await this.instance.autoLoadApiPath()
       await this.instance.awaitAccessToken()
 
       const resp = await this.instance.apiRequest.get<CreditBalance>(`/user/credit`, {
@@ -29,6 +30,7 @@ export class CreditUser {
    */
   async fetchLogs(page = 0, take = 25, opts?: RequestOptions) {
     try {
+      await this.instance.autoLoadApiPath()
       await this.instance.awaitAccessToken()
 
       const resp = await this.instance.apiRequest.get<CreditLog[]>(`/user/logs`, {

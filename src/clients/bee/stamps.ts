@@ -113,6 +113,7 @@ export class Stamps {
           break
         }
         case "etherna": {
+          await this.instance.autoLoadApiPath()
           await this.instance.awaitAccessToken()
 
           if (useWelcomeIfPossible && depth <= ETHERNA_WELCOME_BATCH_DEPTH) {
@@ -459,6 +460,7 @@ export class Stamps {
           throw new EthernaSdkError("NOT_IMPLEMENTED", "This method is not implemented for Bee")
         }
         case "etherna": {
+          await this.instance.autoLoadApiPath()
           await this.instance.awaitAccessToken()
 
           const resp = await this.instance.apiRequest.get<EthernaGatewayWelcomeStatus>(
@@ -484,6 +486,7 @@ export class Stamps {
       const isFreePostageBatchConsumed = await this.isWelcomeConsumed(opts)
 
       if (!isFreePostageBatchConsumed) {
+        await this.instance.autoLoadApiPath()
         await this.instance.awaitAccessToken()
 
         await this.instance.apiRequest.post(`/users/current/welcome`, null, {

@@ -71,6 +71,7 @@ export class IndexVideos implements IIndexVideosInterface {
     },
   ) {
     try {
+      await this.instance.autoLoadApiPath()
       await this.instance.awaitAccessToken()
 
       const resp = await this.instance.apiRequest.post<string>(
@@ -100,6 +101,7 @@ export class IndexVideos implements IIndexVideosInterface {
    */
   async fetchVideoFromId(id: string, opts?: RequestOptions) {
     try {
+      await this.instance.autoLoadApiPath()
       const resp = await this.instance.apiRequest.get<IndexVideo>(`/videos/${id}/find2`, {
         ...this.instance.prepareAxiosConfig(opts),
       })
@@ -119,6 +121,7 @@ export class IndexVideos implements IIndexVideosInterface {
    */
   async fetchVideoFromHash(hash: string, opts?: RequestOptions) {
     try {
+      await this.instance.autoLoadApiPath()
       const resp = await this.instance.apiRequest.get<IndexVideo>(`/videos/manifest2/${hash}`, {
         ...this.instance.prepareAxiosConfig(opts),
       })
@@ -139,6 +142,7 @@ export class IndexVideos implements IIndexVideosInterface {
    */
   async fetchLatestVideos(page = 0, take = 25, opts?: RequestOptions) {
     try {
+      await this.instance.autoLoadApiPath()
       const resp = await this.instance.apiRequest.get<PaginatedResult<IndexVideoPreview>>(
         `/videos/latest3`,
         {
@@ -162,6 +166,7 @@ export class IndexVideos implements IIndexVideosInterface {
    */
   async fetchValidations(id: string, opts?: RequestOptions) {
     try {
+      await this.instance.autoLoadApiPath()
       const resp = await this.instance.apiRequest.get<IndexVideoValidation[]>(
         `/videos/${id}/validation2`,
         {
@@ -184,6 +189,7 @@ export class IndexVideos implements IIndexVideosInterface {
    */
   async fetchHashValidation(hash: string, opts?: RequestOptions) {
     try {
+      await this.instance.autoLoadApiPath()
       const resp = await this.instance.apiRequest.get<IndexVideoValidation>(
         `/videos/manifest/${hash}/validation`,
         {
@@ -206,6 +212,7 @@ export class IndexVideos implements IIndexVideosInterface {
    */
   async fetchBulkValidationByHash(hashes: string[], opts?: RequestOptions) {
     try {
+      await this.instance.autoLoadApiPath()
       const resp = await this.instance.apiRequest.put<IndexVideoValidation[]>(
         `/videos/manifest/bulkvalidation`,
         hashes,
@@ -229,6 +236,7 @@ export class IndexVideos implements IIndexVideosInterface {
    */
   async fetchBulkValidationById(ids: string[], opts?: RequestOptions) {
     try {
+      await this.instance.autoLoadApiPath()
       const resp = await this.instance.apiRequest.put<IndexVideoValidation[]>(
         `/videos/bulkvalidation2`,
         ids,
@@ -253,6 +261,7 @@ export class IndexVideos implements IIndexVideosInterface {
    */
   async updateVideo(id: string, newHash: string, opts?: RequestOptions) {
     try {
+      await this.instance.autoLoadApiPath()
       await this.instance.awaitAccessToken()
 
       const resp = await this.instance.apiRequest.put<IndexVideoManifest>(
@@ -279,6 +288,7 @@ export class IndexVideos implements IIndexVideosInterface {
    */
   async deleteVideo(id: string, opts?: RequestOptions) {
     try {
+      await this.instance.autoLoadApiPath()
       await this.instance.awaitAccessToken()
 
       await this.instance.apiRequest.delete(`/videos/${id}`, {
@@ -302,6 +312,7 @@ export class IndexVideos implements IIndexVideosInterface {
    */
   async fetchComments(id: string, page = 0, take = 25, opts?: RequestOptions) {
     try {
+      await this.instance.autoLoadApiPath()
       const resp = await this.instance.apiRequest.get<PaginatedResult<IndexVideoComment>>(
         `/videos/${id}/comments3`,
         {
@@ -326,6 +337,7 @@ export class IndexVideos implements IIndexVideosInterface {
    */
   async postComment(id: string, message: string, opts?: RequestOptions) {
     try {
+      await this.instance.autoLoadApiPath()
       await this.instance.awaitAccessToken()
 
       const resp = await this.instance.apiRequest.post<IndexVideoComment>(
@@ -356,6 +368,7 @@ export class IndexVideos implements IIndexVideosInterface {
    */
   async vote(id: string, vote: VoteValue, opts?: RequestOptions) {
     try {
+      await this.instance.autoLoadApiPath()
       await this.instance.awaitAccessToken()
 
       const resp = await this.instance.apiRequest.post<IndexVideoComment>(
@@ -388,6 +401,8 @@ export class IndexVideos implements IIndexVideosInterface {
     opts?: RequestOptions,
   ) {
     try {
+      await this.instance.autoLoadApiPath()
+
       const resp = await this.instance.apiRequest.post(
         `/videos/${id}/manifest/${manifestReference}/reports`,
         null,

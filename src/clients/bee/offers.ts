@@ -25,6 +25,8 @@ export class Offers {
           )
         }
         case "etherna": {
+          await this.instance.autoLoadApiPath()
+
           const resp = await this.instance.apiRequest.get<EthAddress[]>(
             `/resources/${reference}/offers`,
             {
@@ -55,6 +57,7 @@ export class Offers {
           )
         }
         case "etherna": {
+          await this.instance.autoLoadApiPath()
           await this.instance.awaitAccessToken()
 
           const resp = await this.instance.apiRequest.get<Reference[]>(
@@ -89,6 +92,8 @@ export class Offers {
           )
         }
         case "etherna": {
+          await this.instance.autoLoadApiPath()
+
           const resp = await this.instance.apiRequest.post<Record<Reference, boolean>>(
             `/resources/areoffered`,
             references,
@@ -122,6 +127,7 @@ export class Offers {
           )
         }
         case "etherna": {
+          await this.instance.autoLoadApiPath()
           await this.instance.awaitAccessToken()
 
           await this.instance.apiRequest.post(`/resources/${reference}/offers`, undefined, {
@@ -153,6 +159,7 @@ export class Offers {
           )
         }
         case "etherna": {
+          await this.instance.autoLoadApiPath()
           await this.instance.awaitAccessToken()
 
           await this.instance.apiRequest.delete(`/resources/${reference}/offers`, {

@@ -31,6 +31,8 @@ export class IndexUsers implements IIndexUsersInterface {
    */
   async fetchUsers(page = 0, take = 25, opts?: RequestOptions) {
     try {
+      await this.instance.autoLoadApiPath()
+
       const resp = await this.instance.apiRequest.get<PaginatedResult<IndexUser>>("/users/list2", {
         ...this.instance.prepareAxiosConfig(opts),
         params: { page, take },
@@ -49,6 +51,8 @@ export class IndexUsers implements IIndexUsersInterface {
    */
   async fetchUser(address: string, opts?: RequestOptions) {
     try {
+      await this.instance.autoLoadApiPath()
+
       const resp = await this.instance.apiRequest.get<IndexUser>(`/users/${address}`, {
         ...this.instance.prepareAxiosConfig(opts),
       })
@@ -68,6 +72,8 @@ export class IndexUsers implements IIndexUsersInterface {
    */
   async fetchVideos(address: string, page = 0, take = 25, opts?: RequestOptions) {
     try {
+      await this.instance.autoLoadApiPath()
+
       const resp = await this.instance.apiRequest.get<PaginatedResult<IndexVideo>>(
         `/users/${address}/videos3`,
         {
@@ -88,6 +94,8 @@ export class IndexUsers implements IIndexUsersInterface {
    */
   async fetchCurrentUser(opts?: RequestOptions) {
     try {
+      await this.instance.autoLoadApiPath()
+
       await this.instance.awaitAccessToken()
 
       const resp = await this.instance.apiRequest.get<IndexCurrentUser>(`/users/current`, {

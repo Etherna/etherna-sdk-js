@@ -17,6 +17,8 @@ export class IndexSystem implements IIndexSystemInterface {
    */
   async fetchParameters(opts?: RequestOptions) {
     try {
+      await this.instance.autoLoadApiPath()
+
       const resp = await this.instance.apiRequest.get<IndexParameters>("/system/parameters", {
         ...this.instance.prepareAxiosConfig(opts),
       })

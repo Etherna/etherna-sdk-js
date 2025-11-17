@@ -25,6 +25,8 @@ export class IndexSearch implements IIndexSearchInterface {
    */
   async fetchVideos(query: string, page = 0, take = 25, opts?: RequestOptions) {
     try {
+      await this.instance.autoLoadApiPath()
+
       const resp = await this.instance.apiRequest.get<PaginatedResult<IndexVideoPreview>>(
         "/search/query2",
         {

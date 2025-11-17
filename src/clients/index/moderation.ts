@@ -18,6 +18,7 @@ export class IndexModeration implements IIndexModerationInterface {
    */
   async deleteComment(id: string, opts?: RequestOptions) {
     try {
+      await this.instance.autoLoadApiPath()
       await this.instance.awaitAccessToken()
 
       await this.instance.apiRequest.delete(`/moderation/comments/${id}`, {
@@ -37,6 +38,7 @@ export class IndexModeration implements IIndexModerationInterface {
    */
   async deleteVideo(id: string, opts?: RequestOptions) {
     try {
+      await this.instance.autoLoadApiPath()
       await this.instance.awaitAccessToken()
 
       await this.instance.apiRequest.delete(`/moderation/videos/${id}`, {
