@@ -5,9 +5,9 @@
  * @param path Url path
  * @returns Full composed url
  */
-export const composeUrl = (host: string, path: string): string => {
+export function composeUrl(host: string, path?: string): string {
   const url = new URL(host)
-  url.pathname = path
+  url.pathname = path ?? ""
   return url.toString()
 }
 
@@ -19,14 +19,14 @@ export const composeUrl = (host: string, path: string): string => {
  * @param path Path to append (optional)
  * @returns The safe URL object
  */
-export const safeURL = (url: string | null | undefined, path?: string) => {
+export function safeURL(url: string | null | undefined, path?: string) {
   try {
     let baseUrl = url ?? ""
     if (!/https?:\/\//.test(baseUrl)) {
       baseUrl = `https://${baseUrl}`
     }
     return new URL(path ?? "", baseUrl)
-  } catch (error: any) {
+  } catch (error) {
     return null
   }
 }
@@ -38,7 +38,7 @@ export const safeURL = (url: string | null | undefined, path?: string) => {
  * @param path Path to append
  * @returns True if safe
  */
-export const isSafeURL = (url: string | null | undefined, path?: string) => {
+export function isSafeURL(url: string | null | undefined, path?: string) {
   try {
     let baseUrl = url ?? ""
     if (!/https?:\/\//.test(baseUrl)) {
@@ -46,7 +46,7 @@ export const isSafeURL = (url: string | null | undefined, path?: string) => {
     }
     new URL(path ?? "", baseUrl)
     return true
-  } catch (error: any) {
+  } catch (error) {
     return false
   }
 }
@@ -57,7 +57,7 @@ export const isSafeURL = (url: string | null | undefined, path?: string) => {
  * @param baseUrl Reference url
  * @returns The url origin
  */
-export const urlOrigin = (baseUrl: string) => {
+export function urlOrigin(baseUrl: string) {
   return safeURL(baseUrl)?.origin
 }
 
@@ -67,7 +67,7 @@ export const urlOrigin = (baseUrl: string) => {
  * @param baseUrl Reference url
  * @returns The url hostname
  */
-export const urlHostname = (baseUrl: string) => {
+export function urlHostname(baseUrl: string) {
   return safeURL(baseUrl)?.hostname
 }
 
@@ -78,6 +78,6 @@ export const urlHostname = (baseUrl: string) => {
  * @param path Path to append (optional)
  * @returns The url href
  */
-export const urlPath = (baseUrl: string, path?: string) => {
+export function urlPath(baseUrl: string, path?: string) {
   return safeURL(baseUrl, path)?.href
 }

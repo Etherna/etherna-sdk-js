@@ -1,6 +1,6 @@
-import type { EthAddress } from ".."
+import type { EthAddress } from "@/types/eth"
 
-export type SSOIdentity = {
+export interface SSOIdentity {
   accountType: "web2" | "web3"
   email: string | null
   etherAddress: EthAddress

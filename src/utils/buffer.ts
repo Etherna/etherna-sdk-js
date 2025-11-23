@@ -4,16 +4,8 @@
  * @param file File to convert
  * @returns The array buffer data
  */
-export const fileToBuffer = (file: File | Blob) => {
-  return new Promise<ArrayBuffer>((resolve, reject) => {
-    let fr = new FileReader()
-    fr.onload = () => {
-      resolve(fr.result as ArrayBuffer)
-    }
-    fr.onabort = reject
-    fr.onerror = reject
-    fr.readAsArrayBuffer(file)
-  })
+export function fileToBuffer(file: File | Blob) {
+  return file.arrayBuffer()
 }
 /**
  * Get the array buffer of a file
@@ -21,7 +13,7 @@ export const fileToBuffer = (file: File | Blob) => {
  * @param file File to convert
  * @returns The array buffer data
  */
-export const fileToUint8Array = async (file: File) => {
+export async function fileToUint8Array(file: File | Blob) {
   const buffer = await fileToBuffer(file)
   return new Uint8Array(buffer)
 }
@@ -32,16 +24,20 @@ export const fileToUint8Array = async (file: File) => {
  * @param file File to convert
  * @returns The base64 data URL
  */
-export const fileToDataURL = (file: File) => {
-  return new Promise<string>((resolve, reject) => {
-    const fr = new FileReader()
-    fr.onload = () => {
-      resolve(fr.result as string)
-    }
-    fr.onabort = reject
-    fr.onerror = reject
-    fr.readAsDataURL(file)
-  })
+export function fileToDataURL(file: File | Blob) {
+  if (typeof window !== "undefined") {
+    return new Promise<string>((resolve, reject) => {
+      const fr = new FileReader()
+      fr.onload = () => {
+        resolve(fr.result as string)
+      }
+      fr.onabort = reject
+      fr.onerror = reject
+      fr.readAsDataURL(file)
+    })
+  } else {
+    throw new Error("Not implemented")
+  }
 }
 
 /**
@@ -51,8 +47,8 @@ export const fileToDataURL = (file: File) => {
  * @param contentType Mime type of the array buffer
  * @returns The file object
  */
-export const bufferToFile = (buffer: ArrayBuffer, contentType?: string) => {
-  return new Blob([buffer], { type: contentType }) as File
+export function bufferToFile(buffer: ArrayBuffer | Uint8Array, contentType?: string) {
+  return new Blob([buffer as BlobPart], { type: contentType }) as File
 }
 
 /**
@@ -61,22 +57,20 @@ export const bufferToFile = (buffer: ArrayBuffer, contentType?: string) => {
  * @param buffer Buffer to convert
  * @returns The base64 data URL
  */
-export const bufferToDataURL = (buffer: ArrayBuffer) => fileToDataURL(bufferToFile(buffer))
+export function bufferToDataURL(buffer: ArrayBuffer | Uint8Array) {
+  return fileToDataURL(bufferToFile(buffer))
+}
 
 /**
  * Convert a string to bae64
  *
  * @param str String to convert
- * @returns
+ * @returns The base64 string
  */
-export const stringToBase64 = (str: string): string => {
+export function stringToBase64(str: string): string {
   if (typeof window === "undefined") {
     return Buffer.from(str).toString("base64")
   } else {
     return window.btoa(str)
   }
-}
-
-export const buffersEquals = (a: Uint8Array, b: Uint8Array) => {
-  return a.length === b.length && a.every((value, index) => value === b[index])
 }

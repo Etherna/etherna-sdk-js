@@ -1,8 +1,19 @@
-import type { EthernaIndexClient } from "."
-import type { PaginatedResult, RequestOptions } from ".."
-import type { IndexVideoPreview } from "./types"
+import { throwSdkError } from "@/classes"
 
-export class IndexSearch {
+import type { EthernaIndexClient } from "."
+import type { IndexVideoPreview, PaginatedResult } from "./types"
+import type { RequestOptions } from "@/types/clients"
+
+export interface IIndexSearchInterface {
+  fetchVideos(
+    query: string,
+    page?: number,
+    take?: number,
+    opts?: RequestOptions,
+  ): Promise<PaginatedResult<IndexVideoPreview>>
+}
+
+export class IndexSearch implements IIndexSearchInterface {
   constructor(private instance: EthernaIndexClient) {}
 
   /**
@@ -13,18 +24,20 @@ export class IndexSearch {
    * @param opts Request options
    */
   async fetchVideos(query: string, page = 0, take = 25, opts?: RequestOptions) {
-    const resp = await this.instance.request.get<PaginatedResult<IndexVideoPreview>>(
-      "/search/query2",
-      {
-        ...this.instance.prepareAxiosConfig(opts),
-        params: { query, page, take },
-      },
-    )
+    try {
+      await this.instance.autoLoadApiPath()
 
-    if (typeof resp.data !== "object") {
-      throw new Error("Cannot fetch videos")
+      const resp = await this.instance.apiRequest.get<PaginatedResult<IndexVideoPreview>>(
+        "/search/query2",
+        {
+          ...this.instance.prepareAxiosConfig(opts),
+          params: { query, page, take },
+        },
+      )
+
+      return resp.data
+    } catch (error) {
+      throwSdkError(error)
     }
-
-    return resp.data
   }
 }

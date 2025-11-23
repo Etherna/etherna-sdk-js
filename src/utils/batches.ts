@@ -1,4 +1,6 @@
-import type { GatewayBatch, PostageBatch } from "../clients"
+import { CHAIN_BLOCK_TIME, STAMPS_DEPTH_MAX, STAMPS_DEPTH_MIN } from "@/consts"
+
+import type { PostageBatch } from "@/types/swarm"
 
 /**
  * Get postage batch space utilization (in bytes)
@@ -6,7 +8,7 @@ import type { GatewayBatch, PostageBatch } from "../clients"
  * @param batch Batch data
  * @returns An object with total, used and available space
  */
-export const getBatchSpace = (batch: PostageBatch | GatewayBatch) => {
+export const getBatchSpace = (batch: PostageBatch) => {
   const { utilization, depth, bucketDepth } = batch
 
   const usage = utilization / 2 ** (depth - bucketDepth)
@@ -22,12 +24,38 @@ export const getBatchSpace = (batch: PostageBatch | GatewayBatch) => {
 }
 
 /**
+ * Calculate the minimum depth required to upload some data
+ * @param bytesToUpload Amount of bytes to upload
+ * @param currentDepth Current batch depth
+ * @param availableSpace Available space in the current batch (leave blank if fully available)
+ * @returns Minimum batch depth required to upload the specified amount of bytes
+ */
+export function calcBatchMinDepth(
+  bytesToUpload: number,
+  currentDepth = STAMPS_DEPTH_MIN,
+  availableSpace?: number,
+) {
+  let currentAvailableSpace = availableSpace ?? getBatchCapacity(currentDepth)
+  let depth = currentDepth
+
+  while (currentAvailableSpace < bytesToUpload && depth <= STAMPS_DEPTH_MAX) {
+    depth++
+    currentAvailableSpace += getBatchCapacity(depth) - getBatchCapacity(depth - 1)
+  }
+
+  return depth
+}
+
+/**
  * Get batch capacity
  *
  * @param batchOrDepth Batch data or depth
  * @returns Batch total capcity in bytes
  */
-export const getBatchCapacity = (batchOrDepth: PostageBatch | GatewayBatch | number) => {
+
+export function getBatchCapacity(batch: PostageBatch): number
+export function getBatchCapacity(depth: number): number
+export function getBatchCapacity(batchOrDepth: PostageBatch | number): number {
   const depth = typeof batchOrDepth === "number" ? batchOrDepth : batchOrDepth.depth
   return 2 ** depth * 4096
 }
@@ -38,9 +66,50 @@ export const getBatchCapacity = (batchOrDepth: PostageBatch | GatewayBatch | num
  * @param batch Batch data
  * @returns Batch percent usage
  */
-export const getBatchPercentUtilization = (batch: PostageBatch | GatewayBatch) => {
+export const getBatchPercentUtilization = (
+  batch: Pick<PostageBatch, "utilization" | "depth" | "bucketDepth">,
+) => {
   const { utilization, depth, bucketDepth } = batch
   return utilization / 2 ** (depth - bucketDepth)
+}
+
+/**
+ * Calculates the Utilization Rate (%) from a given Batch Depth
+ * using a logistic function approximation.
+ *
+ * @param depth - Batch depth (typically between 17 and 41)
+ * @returns Utilization Rate as a percentage (0 to 1)
+ */
+export function getBatchUtilizationRate(depth: number): number {
+  const TABLE: Record<number, number> = {
+    17: 0.0001,
+    18: 0.0061,
+    19: 0.0509,
+    20: 0.1565,
+    21: 0.3027,
+    22: 0.4499,
+    23: 0.5803,
+    24: 0.6848,
+    25: 0.7677,
+    26: 0.8294,
+    27: 0.8671,
+    28: 0.8837,
+    29: 0.9288,
+    30: 0.9481,
+    31: 0.9606,
+    32: 0.9701,
+    33: 0.9765,
+    34: 0.9811,
+    35: 0.9844,
+    36: 0.9867,
+    37: 0.9883,
+    38: 0.9891,
+    39: 0.9896,
+    40: 0.9898,
+    41: 0.9911,
+  } as const
+
+  return TABLE[depth] ?? 0
 }
 
 /**
@@ -49,7 +118,7 @@ export const getBatchPercentUtilization = (batch: PostageBatch | GatewayBatch) =
  * @param batch Batch data
  * @returns Expiration dayjs object
  */
-export const getBatchExpiration = (batch: PostageBatch | GatewayBatch): "unlimited" | Date => {
+export const getBatchExpiration = (batch: PostageBatch): "unlimited" | Date => {
   if (batch.batchTTL === -1) {
     return "unlimited"
   }
@@ -59,83 +128,43 @@ export const getBatchExpiration = (batch: PostageBatch | GatewayBatch): "unlimit
 }
 
 /**
- * Parse a default postage batch to a gateway batch
- *
- * @param batch Postage batch
- * @returns Gateway batch
- */
-export const parsePostageBatch = (batch: PostageBatch): GatewayBatch => {
-  return {
-    id: batch.batchID,
-    amountPaid: 0,
-    normalisedBalance: 0,
-    amount: batch.amount,
-    batchTTL: batch.batchTTL,
-    blockNumber: batch.blockNumber,
-    bucketDepth: batch.bucketDepth,
-    depth: batch.depth,
-    exists: batch.exists,
-    immutableFlag: batch.immutableFlag,
-    label: batch.label,
-    usable: batch.usable,
-    utilization: batch.utilization,
-  }
-}
-
-/**
- * Parse a gateway batch to a standard postage batch
- *
- * @param batch Gateway batch
- * @returns Postage batch
- */
-export const parseGatewayBatch = (batch: GatewayBatch): PostageBatch => {
-  return {
-    batchID: batch.id,
-    amount: batch.amount,
-    batchTTL: batch.batchTTL,
-    blockNumber: batch.blockNumber,
-    bucketDepth: batch.bucketDepth,
-    depth: batch.depth,
-    exists: batch.exists,
-    immutableFlag: batch.immutableFlag,
-    label: batch.label,
-    usable: batch.usable,
-    utilization: batch.utilization,
-  }
-}
-
-/**
  * Convert TTL to batch amount
  *
  * @param ttl TTL in seconds
  * @param price Token price
  * @param blockTime Chain blocktime
- * @returns Batch amount
+ * @returns Batch amount (PLUR / block / chunk)
  */
-export const ttlToAmount = (ttl: number, price: number, blockTime: number): bigint => {
+export const ttlToAmount = (ttl: number, price: string, blockTime: number): bigint => {
   return (BigInt(ttl) * BigInt(price)) / BigInt(blockTime)
 }
 
 /**
- * Calc batch price from depth & amount
+ * Calc transaction price from depth & amount
  *
  * @param depth Batch depth
  * @param amount Batch amount
  * @returns Price in BZZ
  */
-export const calcBatchPrice = (depth: number, amount: bigint | string): string => {
-  const hasInvalidInput = BigInt(amount) <= BigInt(0) || isNaN(depth) || depth < 17 || depth > 255
+export const calcAmountPrice = (depth: number, amount: bigint | string) => {
+  const hasInvalidInput =
+    BigInt(amount) <= BigInt(0) ||
+    isNaN(depth) ||
+    depth < STAMPS_DEPTH_MIN ||
+    depth > STAMPS_DEPTH_MAX
 
   if (hasInvalidInput) {
-    return "-"
+    return null
   }
 
   const tokenDecimals = 16
   const price = BigInt(amount) * BigInt(2 ** depth)
-  // @ts-ignore
-  const readablePrice = price.toString() / 10 ** tokenDecimals
 
-  return `${readablePrice} BZZ`
+  const readablePrice = (price.toString() as unknown as number) / 10 ** tokenDecimals
+
+  return {
+    bzz: readablePrice,
+  }
 }
 
 /**
@@ -152,4 +181,55 @@ export const calcDilutedTTL = (
   newDepth: number,
 ): number => {
   return Math.ceil(currentTTL / 2 ** (newDepth - currentDepth))
+}
+
+interface ExpandAmountOpts {
+  price: string
+  blockTime: number
+}
+
+/**
+ * Calculate the amount needed to expand a postage batch (same TTL as the current one)
+ * @param batch Batch data
+ * @param newDepth New batch depth
+ * @param opts Options object with price and blockTime
+ * @returns Amount in BZZ needed to expand the batch
+ */
+export function calcExpandAmount(
+  batch: PostageBatch,
+  newDepth: number,
+  opts: ExpandAmountOpts,
+): bigint
+/**
+ * Calculate the amount needed to expand a postage batch (dilute and/or increase TTL)
+ * @param batch Postage batch data
+ * @param newDepth New batch depth
+ * @param desiredTTL Desired TTL in seconds (must be greater than current batch TTL)
+ * @param opts Options object with price and blockTime
+ * @returns Amount in BZZ needed to expand the batch
+ */
+export function calcExpandAmount(
+  batch: PostageBatch,
+  newDepth: number,
+  desiredTTL: number,
+  opts: ExpandAmountOpts,
+): bigint
+export function calcExpandAmount(
+  batch: PostageBatch,
+  newDepth: number,
+  desiredTTLOrOpts: number | ExpandAmountOpts,
+  opts?: ExpandAmountOpts,
+): bigint {
+  const desiredTTL =
+    typeof desiredTTLOrOpts === "number" && desiredTTLOrOpts > batch.batchTTL
+      ? desiredTTLOrOpts
+      : batch.batchTTL
+  const price = opts?.price ?? (typeof desiredTTLOrOpts === "object" ? desiredTTLOrOpts.price : "1")
+  const blockTime =
+    opts?.blockTime ??
+    (typeof desiredTTLOrOpts === "object" ? desiredTTLOrOpts.blockTime : CHAIN_BLOCK_TIME.gnosis)
+  const dilutedTTL = calcDilutedTTL(batch.batchTTL, batch.depth, newDepth)
+  const ttl = Math.abs(desiredTTL - dilutedTTL)
+  const amount = BigInt(ttlToAmount(ttl, price, blockTime))
+  return amount
 }

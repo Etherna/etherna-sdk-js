@@ -22,7 +22,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
-          version: 8
+          version: 10
 
       - run: pnpm install
 
@@ -59,14 +59,22 @@ jobs:
       - name: Setup node & npm
         uses: actions/setup-node@v3
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Publish to NPM
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           npm config set "//registry.npmjs.org/:_authToken" "${NPM_TOKEN}"
-          npm -r publish ./dist --access=public --no-git-checks
+          # determine version from tag and publish with appropriate tag
+          version=${GITHUB_REF#refs/tags/}
+          if [[ "$version" == *"-beta"* ]]; then
+            echo "Publishing beta version $version with tag 'beta'"
+            npm publish . --tag beta --access=public --no-git-checks
+          else
+            echo "Publishing version $version with default tag"
+            npm publish . --access=public --no-git-checks
+          fi
 
   create-release:
     name: Create Release

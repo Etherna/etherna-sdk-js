@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest"
 
-import { EpochFeedChunk, EpochIndex } from "../../src/classes"
-import { toEthAccount } from "../../src/utils/bytes"
+import { EpochFeedChunk, EpochIndex } from "@/classes"
+import { toEthAccount } from "@/utils/address"
 
-import type { Reference } from "../../src/clients"
+import type { Reference } from "@/types"
 
 describe("epoch feed chunk", () => {
   it.concurrent("should return the coorect content payload", () => {

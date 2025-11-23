@@ -1,7 +1,14 @@
-import type { EthernaIndexClient } from "."
-import type { RequestOptions } from ".."
+import { throwSdkError } from "@/classes"
 
-export class IndexModeration {
+import type { EthernaIndexClient } from "."
+import type { RequestOptions } from "@/types/clients"
+
+export interface IIndexModerationInterface {
+  deleteComment(id: string, opts?: RequestOptions): Promise<boolean>
+  deleteVideo(id: string, opts?: RequestOptions): Promise<boolean>
+}
+
+export class IndexModeration implements IIndexModerationInterface {
   constructor(private instance: EthernaIndexClient) {}
 
   /**
@@ -10,11 +17,18 @@ export class IndexModeration {
    * @param opts Request options
    */
   async deleteComment(id: string, opts?: RequestOptions) {
-    await this.instance.request.delete(`/moderation/comments/${id}`, {
-      ...this.instance.prepareAxiosConfig(opts),
-    })
+    try {
+      await this.instance.autoLoadApiPath()
+      await this.instance.awaitAccessToken()
 
-    return true
+      await this.instance.apiRequest.delete(`/moderation/comments/${id}`, {
+        ...this.instance.prepareAxiosConfig(opts),
+      })
+
+      return true
+    } catch (error) {
+      throwSdkError(error)
+    }
   }
 
   /**
@@ -23,10 +37,17 @@ export class IndexModeration {
    * @param opts Request options
    */
   async deleteVideo(id: string, opts?: RequestOptions) {
-    await this.instance.request.delete(`/moderation/videos/${id}`, {
-      ...this.instance.prepareAxiosConfig(opts),
-    })
+    try {
+      await this.instance.autoLoadApiPath()
+      await this.instance.awaitAccessToken()
 
-    return true
+      await this.instance.apiRequest.delete(`/moderation/videos/${id}`, {
+        ...this.instance.prepareAxiosConfig(opts),
+      })
+
+      return true
+    } catch (error) {
+      throwSdkError(error)
+    }
   }
 }

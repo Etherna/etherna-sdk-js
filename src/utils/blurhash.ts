@@ -1,7 +1,15 @@
 import { decode, encode, isBlurhashValid } from "blurhash"
 
+import { loadNodeFFmpeg } from "./ffmpeg"
+
 // Credit: https://gist.github.com/mattiaz9/53cb67040fa135cb395b1d015a200aff
 
+/**
+ * Convert blurhash to data URL image
+ *
+ * @param hash Blurhash string
+ * @returns Data URL image
+ */
 export function blurHashToDataURL(hash: string | null | undefined): string {
   if (!hash || !isBlurhashValid(hash).result) {
     // fallback to random blur hash
@@ -13,7 +21,15 @@ export function blurHashToDataURL(hash: string | null | undefined): string {
   return dataURL
 }
 
-export async function imageToBlurhash(image: ArrayBuffer, imageWidth: number, imageHeight: number) {
+/**
+ * Convert image to blurhash
+ *
+ * @param image Image buffer
+ * @param imageWidth Output image width
+ * @param imageHeight Output image height
+ * @returns Blurhash string
+ */
+export async function imageToBlurhash(image: Uint8Array, imageWidth: number, imageHeight: number) {
   const data = await getImageData(image, imageWidth, imageHeight)
   return encode(data, imageWidth, imageHeight, 4, 4)
 }
@@ -85,7 +101,7 @@ function generatePng(width: number, height: number, rgbaString: string) {
   }
 
   function adler32(data: string) {
-    let MOD_ADLER = 65521
+    const MOD_ADLER = 65521
     let a = 1
     let b = 0
 
@@ -103,6 +119,7 @@ function generatePng(width: number, height: number, rgbaString: string) {
 
     for (let n = 0; n < buf.length; n++) {
       b = buf.charCodeAt(n)
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       c = CRC_TABLE[(c ^ b) & 0xff]! ^ (c >>> 8)
     }
     return c
@@ -157,6 +174,7 @@ function generatePng(width: number, height: number, rgbaString: string) {
     scanline = NO_FILTER
     if (Array.isArray(rgbaString)) {
       for (let x = 0; x < width * 4; x++) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         scanline += String.fromCharCode(+rgbaString[y + x]! & 0xff)
       }
     } else {
@@ -173,21 +191,34 @@ function generatePng(width: number, height: number, rgbaString: string) {
   return pngString
 }
 
-async function getImageData(imageData: ArrayBuffer, width: number, height: number) {
-  const canvas = document.createElement("canvas")
-  canvas.width = width
-  canvas.height = height
-  const ctx = canvas.getContext("2d")!
-  const image = await loadImage(imageData)
-  image && ctx.drawImage(image, 0, 0)
-  return ctx.getImageData(0, 0, width, height).data
+async function getImageData(imageData: Uint8Array, width: number, height: number) {
+  if (typeof window !== "undefined") {
+    const canvas = document.createElement("canvas")
+    canvas.width = width
+    canvas.height = height
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const ctx = canvas.getContext("2d")!
+    const image = await loadImage(imageData)
+    image && ctx.drawImage(image, 0, 0)
+    return ctx.getImageData(0, 0, width, height).data
+  } else {
+    const ffmpeg = await loadNodeFFmpeg(imageData, "image")
+    await ffmpeg.run("-i", "image", "-f", "rawvideo", "-pix_fmt", "rgba", "output")
+    const rgba = ffmpeg.fs.readFile("output")
+
+    if (rgba.length !== width * height * 4) {
+      throw new Error("Array length doesn't match width and height for RGBA data")
+    }
+
+    return new Uint8ClampedArray(rgba.buffer, rgba.byteOffset, rgba.byteLength)
+  }
 }
 
-async function loadImage(data: ArrayBuffer) {
+async function loadImage(data: Uint8Array) {
   return new Promise<HTMLImageElement | null>((resolve, reject) => {
     const img = new Image()
     img.onload = () => resolve(img)
     img.onerror = () => reject(null)
-    img.src = URL.createObjectURL(new Blob([data]))
+    img.src = URL.createObjectURL(new Blob([data as BlobPart]))
   })
 }

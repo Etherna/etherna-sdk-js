@@ -1,152 +1,174 @@
-import { etc } from "@noble/secp256k1"
+// Forked from: https://github.com/ethersphere/bee
 
-import { EpochFeed, EpochFeedChunk, EpochIndex } from "../../classes"
-import { MantarayNode } from "../../handlers"
+import { AxiosError } from "axios"
+
+import { extractUploadHeaders } from "./utils"
+import {
+  EpochFeed,
+  EpochFeedChunk,
+  EpochIndex,
+  EthernaSdkError,
+  MantarayNode,
+  throwSdkError,
+} from "@/classes"
+import {
+  MantarayEntryMetadataFeedOwnerKey,
+  MantarayEntryMetadataFeedTopicKey,
+  MantarayEntryMetadataFeedTypeKey,
+  ZeroHashReference,
+} from "@/consts"
 import {
   bytesReferenceToReference,
+  bytesToHex,
+  dateToTimestamp,
   encodePath,
   getReferenceFromData,
+  hexToBytes,
   keccak256Hash,
+  makeBytes,
+  makeBytesReference,
+  makeHexString,
   referenceToBytesReference,
-  ZeroHashReference,
-} from "../../utils"
-import { toEthAccount } from "../../utils/bytes"
-import {
-  EntryMetadataFeedOwnerKey,
-  EntryMetadataFeedTopicKey,
-  EntryMetadataFeedTypeKey,
-} from "../../utils/mantaray"
-import { dateToTimestamp } from "../../utils/time"
-import { makeBytes, serializeBytes } from "./utils/bytes"
-import { extractUploadHeaders } from "./utils/headers"
-import { makeHexString } from "./utils/hex"
-import { makeBytesReference } from "./utils/reference"
-import { writeUint64BigEndian } from "./utils/uint64"
+  serializeBytes,
+  toEthAccount,
+  writeUint64BigEndian,
+} from "@/utils"
 
 import type { BeeClient } from "."
-import type { RequestOptions } from "../types"
 import type {
-  EthAddress,
   FeedInfo,
   FeedType,
-  FeedUpdateHeaders,
   FeedUpdateOptions,
   FeedUploadOptions,
-  Index,
-  Reference,
   ReferenceResponse,
   RequestUploadOptions,
 } from "./types"
-import type { AxiosError, AxiosResponseHeaders, RawAxiosResponseHeaders } from "axios"
+import type { RequestOptions } from "@/types/clients"
+import type { EthAddress } from "@/types/eth"
+import type { FeedUpdateHeaders, Index, Reference } from "@/types/swarm"
+import type { AxiosResponseHeaders, RawAxiosResponseHeaders } from "axios"
 
 const feedEndpoint = "/feeds"
 
 export class Feed {
   constructor(private instance: BeeClient) {}
 
-  makeFeed<T extends FeedType>(
-    topicName: string,
-    owner: EthAddress,
-    type: T = "sequence" as T,
-  ): FeedInfo<T> {
+  makeFeed(topicName: string, owner: EthAddress, type: FeedType = "sequence"): FeedInfo {
+    return this.makeFeedFromHex(bytesToHex(keccak256Hash(topicName)), owner, type)
+  }
+
+  makeFeedFromHex(topicHex: string, owner: EthAddress, type: FeedType = "sequence"): FeedInfo {
     return {
-      topic: etc.bytesToHex(keccak256Hash(topicName)),
+      topic: topicHex,
       owner: makeHexString(owner).toLowerCase(),
       type,
     }
   }
 
-  makeReader<T extends FeedType>(feed: FeedInfo<T>) {
+  makeReader(feed: FeedInfo) {
     const instance = this.instance
     return {
       ...feed,
       async download(options?: FeedUpdateOptions) {
-        const at = options?.at ?? new Date()
+        try {
+          const at = options?.at ?? new Date()
 
-        if (feed.type === "epoch") {
-          const epochFeed = new EpochFeed(instance)
-          const chunk = await epochFeed.tryFindEpochFeed(
-            toEthAccount(feed.owner),
-            etc.hexToBytes(feed.topic),
-            at,
-            options?.index ? EpochIndex.fromString(options.index) : undefined,
-          )
+          if (feed.type === "epoch") {
+            const epochFeed = new EpochFeed(instance)
+            const chunk = await epochFeed.tryFindEpochFeed(
+              toEthAccount(feed.owner),
+              hexToBytes(feed.topic),
+              at,
+              options?.index ? EpochIndex.fromString(options.index) : undefined,
+            )
 
-          if (!chunk) {
-            throw new Error(`No epoch feed found: '${feed.topic}', '0x${feed.owner}'`)
-          }
+            if (!chunk) {
+              throw new EthernaSdkError(
+                "NOT_FOUND",
+                `No epoch feed found: '${feed.topic}', '0x${feed.owner}'`,
+              )
+            }
 
-          const reference = etc.bytesToHex(chunk.getContentPayload()) as Reference
+            const reference = bytesToHex(chunk.getContentPayload()) as Reference
 
-          return {
-            reference,
-          }
-        } else {
-          const { data } = await instance.request.get<ReferenceResponse>(
-            `${feedEndpoint}/${feed.owner}/${feed.topic}`,
-            {
-              params: {
-                type: feed.type,
-                at: at.getTime(),
+            return {
+              reference,
+            }
+          } else {
+            if (instance.type === "etherna") {
+              await instance.awaitAccessToken()
+            }
+
+            const { data } = await instance.request.get<ReferenceResponse>(
+              `${feedEndpoint}/${feed.owner}/${feed.topic}`,
+              {
+                params: {
+                  type: feed.type,
+                  at: at.getTime(),
+                },
+                ...instance.prepareAxiosConfig(options),
               },
-              headers: options?.headers,
-              signal: options?.signal,
-              timeout: options?.timeout,
-            },
-          )
+            )
 
-          return {
-            reference: data.reference,
+            return {
+              reference: data.reference,
+            }
           }
+        } catch (error) {
+          throwSdkError(error)
         }
       },
     }
   }
 
-  makeWriter<T extends FeedType>(feed: FeedInfo<T>) {
+  makeWriter(feed: FeedInfo) {
     if (!this.instance.signer) {
-      throw new Error("No signer provided")
+      throw new EthernaSdkError("MISSING_SIGNER", "No signer provided")
     }
 
     if (makeHexString(this.instance.signer.address).toLowerCase() !== feed.owner.toLowerCase()) {
-      throw new Error("Signer address does not match feed owner")
+      throw new EthernaSdkError("INVALID_ARGUMENT", "Signer address does not match feed owner")
     }
 
     const upload = async (reference: string, options: FeedUploadOptions) => {
-      const canonicalReference = makeBytesReference(reference)
+      try {
+        const canonicalReference = makeBytesReference(reference)
 
-      if (feed.type === "epoch") {
-        const epochFeed = new EpochFeed(this.instance)
-        const chunk = await epochFeed.createNextEpochFeedChunk(
-          toEthAccount(feed.owner),
-          etc.hexToBytes(feed.topic),
-          canonicalReference,
-          options.index ? EpochIndex.fromString(options.index) : undefined,
-        )
+        if (feed.type === "epoch") {
+          const epochFeed = new EpochFeed(this.instance)
+          const chunk = await epochFeed.createNextEpochFeedChunk(
+            toEthAccount(feed.owner),
+            hexToBytes(feed.topic),
+            canonicalReference,
+            options.index ? EpochIndex.fromString(options.index) : undefined,
+          )
 
-        const identifier = EpochFeedChunk.buildIdentifier(etc.hexToBytes(feed.topic), chunk.index)
-        const { reference } = await this.instance.soc.upload(identifier, chunk.payload, options)
+          const identifier = EpochFeedChunk.buildIdentifier(hexToBytes(feed.topic), chunk.index)
+          const { reference } = await this.instance.soc.upload(identifier, chunk.payload, options)
 
-        return {
-          reference,
-          index: chunk.index.toString(),
+          return {
+            reference,
+            index: chunk.index.toString(),
+          }
+        } else {
+          const nextIndex =
+            options.index && options.index !== "latest"
+              ? options.index
+              : await this.findNextIndex(feed)
+
+          const at = dateToTimestamp(options.at ?? new Date())
+          const timestamp = writeUint64BigEndian(at)
+          const payloadBytes = serializeBytes(timestamp, canonicalReference)
+          const identifier = this.makeFeedIdentifier(feed.topic, nextIndex)
+          const { reference } = await this.instance.soc.upload(identifier, payloadBytes, options)
+
+          return {
+            reference,
+            index: nextIndex,
+          }
         }
-      } else {
-        const nextIndex =
-          options.index && options.index !== "latest"
-            ? options.index
-            : await this.findNextIndex(feed)
-
-        const at = dateToTimestamp(options.at ?? new Date())
-        const timestamp = writeUint64BigEndian(at)
-        const payloadBytes = serializeBytes(timestamp, canonicalReference)
-        const identifier = this.makeFeedIdentifier(feed.topic, nextIndex)
-        const { reference } = await this.instance.soc.upload(identifier, payloadBytes, options)
-
-        return {
-          reference,
-          index: nextIndex,
-        }
+      } catch (error) {
+        throwSdkError(error)
       }
     }
 
@@ -155,37 +177,49 @@ export class Feed {
     }
   }
 
-  async createRootManifest<T extends FeedType>(feed: FeedInfo<T>, options: FeedUploadOptions) {
-    if (feed.type === "epoch") {
-      // epoch not yet supported in bee
-      const epochRoot = await this.makeRootManifest(feed)
-      await epochRoot.save(options)
+  async createRootManifest(feed: FeedInfo, options: FeedUploadOptions) {
+    try {
+      if (feed.type === "epoch") {
+        // epoch not yet supported in bee
+        const epochRoot = await this.makeRootManifest(feed)
+        await epochRoot.save(options)
 
-      return epochRoot.reference
-    }
+        return epochRoot.reference
+      }
 
-    const response = await this.instance.request.post<ReferenceResponse>(
-      `${feedEndpoint}/${feed.owner}/${feed.topic}`,
-      null,
-      {
-        params: {
-          type: feed.type,
+      if (this.instance.type === "etherna") {
+        await this.instance.awaitAccessToken()
+      }
+
+      const response = await this.instance.request.post<ReferenceResponse>(
+        `${feedEndpoint}/${feed.owner}/${feed.topic}`,
+        null,
+        {
+          params: {
+            type: feed.type,
+          },
+          ...this.instance.prepareAxiosConfig({
+            ...options,
+            headers: {
+              ...options?.headers,
+              ...extractUploadHeaders(options),
+            },
+          }),
         },
-        headers: extractUploadHeaders(options),
-        timeout: options?.timeout,
-        signal: options?.signal,
-      },
-    )
+      )
 
-    return response.data.reference
+      return response.data.reference
+    } catch (error) {
+      throwSdkError(error)
+    }
   }
 
-  async makeRootManifest<T extends FeedType>(feed: FeedInfo<T>) {
+  async makeRootManifest(feed: FeedInfo) {
     const node = new MantarayNode()
     node.addFork(encodePath("/"), ZeroHashReference, {
-      [EntryMetadataFeedOwnerKey]: feed.owner.toLowerCase(),
-      [EntryMetadataFeedTopicKey]: feed.topic,
-      [EntryMetadataFeedTypeKey]: feed.type.replace(/^./, (c) => c.toUpperCase()),
+      [MantarayEntryMetadataFeedOwnerKey]: feed.owner.toLowerCase(),
+      [MantarayEntryMetadataFeedTopicKey]: feed.topic,
+      [MantarayEntryMetadataFeedTypeKey]: feed.type.replace(/^./, (c) => c.toUpperCase()),
     })
     node.getForkAtPath(encodePath("/")).node["makeValue"]()
     node.getForkAtPath(encodePath("/")).node.entry = ZeroHashReference
@@ -224,41 +258,46 @@ export class Feed {
     }, referenceToBytesReference(reference))
 
     if (opts?.signal?.aborted) {
-      throw new Error("Aborted by user")
+      throw new EthernaSdkError("ABORTED_BY_USER", "Aborted by user")
     }
 
     const fork = node.getForkAtPath(encodePath("/"))
-    const owner = fork.node.metadata?.[EntryMetadataFeedOwnerKey]
-    const topic = fork.node.metadata?.[EntryMetadataFeedTopicKey]
-    const type = fork.node.metadata?.[EntryMetadataFeedTypeKey].replace(/^./, (c) =>
+    const owner = fork.node.metadata?.[MantarayEntryMetadataFeedOwnerKey]
+    const topic = fork.node.metadata?.[MantarayEntryMetadataFeedTopicKey]
+    const type = fork.node.metadata?.[MantarayEntryMetadataFeedTypeKey]?.replace(/^./, (c) =>
       c.toLowerCase(),
     )
 
     if (!owner || owner.length !== 40) {
-      throw new Error(`Invalid feed owner: '${owner}'`)
+      throw new EthernaSdkError("NOT_FOUND", `Invalid feed owner: '${owner}'`)
     }
     if (!topic || topic.length !== 64) {
-      throw new Error(`Invalid feed topic: '${topic}'`)
+      throw new EthernaSdkError("NOT_FOUND", `Invalid feed topic: '${topic}'`)
     }
     if (!type || !["epoch", "sequence"].includes(type)) {
-      throw new Error(`Invalid feed type: '${type}'`)
+      throw new EthernaSdkError("NOT_FOUND", `Invalid feed type: '${type}'`)
     }
 
     return {
       owner,
       topic,
       type: type as FeedType,
-    } as FeedInfo<any>
+    } as FeedInfo
   }
 
   // Utils
-  async fetchLatestFeedUpdate<T extends FeedType>(feed: FeedInfo<T>) {
+  async fetchLatestFeedUpdate(feed: FeedInfo) {
+    if (this.instance.type === "etherna") {
+      await this.instance.awaitAccessToken()
+    }
+
     const resp = await this.instance.request.get<ReferenceResponse>(
       `${feedEndpoint}/${feed.owner}/${feed.topic}`,
       {
         params: {
           type: feed.type,
         },
+        ...this.instance.prepareAxiosConfig(),
       },
     )
 
@@ -268,18 +307,19 @@ export class Feed {
     }
   }
 
-  async findNextIndex<T extends FeedType>(feed: FeedInfo<T>) {
+  async findNextIndex(feed: FeedInfo) {
     try {
       const feedUpdate = await this.fetchLatestFeedUpdate(feed)
 
       return makeHexString(feedUpdate.feedIndexNext)
-    } catch (e: any) {
-      const error = e as AxiosError
-
-      if (error.response?.status === 404) {
-        return etc.bytesToHex(makeBytes(8))
+    } catch (err) {
+      if (err instanceof AxiosError) {
+        if (err.response?.status === 404) {
+          return bytesToHex(makeBytes(8))
+        }
       }
-      throw e
+
+      throw throwSdkError(err)
     }
   }
 
@@ -290,11 +330,17 @@ export class Feed {
     const feedIndexNext = headers["swarm-feed-index-next"]
 
     if (!feedIndex) {
-      throw new Error("Response did not contain expected swarm-feed-index!")
+      throw new EthernaSdkError(
+        "SERVER_ERROR",
+        "Response did not contain expected swarm-feed-index!",
+      )
     }
 
     if (!feedIndexNext) {
-      throw new Error("Response did not contain expected swarm-feed-index-next!")
+      throw new EthernaSdkError(
+        "SERVER_ERROR",
+        "Response did not contain expected swarm-feed-index-next!",
+      )
     }
 
     return {
@@ -310,14 +356,14 @@ export class Feed {
       const indexBytes = this.makeFeedIndexBytes(index)
       return this.hashFeedIdentifier(topic, indexBytes)
     } else if (index instanceof EpochIndex) {
-      return EpochFeedChunk.buildIdentifier(etc.hexToBytes(topic), index)
+      return EpochFeedChunk.buildIdentifier(hexToBytes(topic), index)
     }
 
     return this.hashFeedIdentifier(topic, index)
   }
 
   private hashFeedIdentifier(topic: string, index: Uint8Array): Uint8Array {
-    return keccak256Hash(etc.hexToBytes(topic), index)
+    return keccak256Hash(hexToBytes(topic), index)
   }
 
   private makeSequentialFeedIdentifier(topic: string, index: number): Uint8Array {
@@ -329,6 +375,6 @@ export class Feed {
   private makeFeedIndexBytes(s: string): Uint8Array {
     const hex = makeHexString(s)
 
-    return etc.hexToBytes(hex)
+    return hexToBytes(hex)
   }
 }

@@ -1,39 +1,18 @@
-import cookie from "cookiejs"
-
-import { stringToBase64 } from "../../utils/buffer"
+import { stringToBase64 } from "@/utils"
 
 import type { BeeClient } from "."
-import type { AuthenticationOptions } from ".."
+import type { AuthenticationOptions } from "./types"
 
 const authEndpoint = "/auth"
 const authRefreshEndpoint = "/refresh"
-const TOKEN_COOKIE_NAME = "bee-auth-token"
-const TOKEN_EXPIRATION_SETTING = "bee-auth-token-expiration"
-
-let memoryToken: string | null = null
 
 export class Auth {
+  private tokenExpiration: Date | null = null
+
   constructor(private instance: BeeClient) {}
 
-  public get token(): string | null {
-    if (typeof window === "undefined") return memoryToken
-
-    const token = cookie.get(TOKEN_COOKIE_NAME) as string | null
-    return token || memoryToken
-  }
-
-  public get tokenExpiration(): Date | null {
-    if (typeof window === "undefined") return null
-
-    const tokenExpiration = localStorage.getItem(TOKEN_EXPIRATION_SETTING)
-
-    return tokenExpiration ? new Date(+tokenExpiration) : null
-  }
-
   public get isAuthenticated(): boolean {
-    if (typeof window === "undefined") return false
-
-    const token = this.token
+    const token = this.instance.accessToken
     const tokenExpiration = this.tokenExpiration?.getTime() ?? Date.now()
 
     return !!token && tokenExpiration > Date.now()
@@ -50,7 +29,7 @@ export class Auth {
     password: string,
     options?: AuthenticationOptions,
   ): Promise<string> {
-    let token = this.token
+    let token = this.instance.accessToken ?? null
     const expirationDate = this.tokenExpiration ?? new Date()
 
     if (token && expirationDate <= new Date()) {
@@ -63,7 +42,7 @@ export class Auth {
       const credentials = stringToBase64(`${username}:${password}`)
 
       const data = {
-        role: options?.role || "maintainer",
+        role: options?.role ?? "maintainer",
         expiry: expiration,
       }
 
@@ -77,9 +56,8 @@ export class Auth {
       })
 
       token = resp.data.key
+      this.instance.accessToken = token
     }
-
-    this.saveToken(token, expiration)
 
     return token
   }
@@ -89,7 +67,7 @@ export class Auth {
       const expiration = options?.expiry || 3600 * 24 // 1 day
 
       const data = {
-        role: options?.role || "maintainer",
+        role: options?.role ?? "maintainer",
         expiry: expiration,
       }
 
@@ -105,40 +83,12 @@ export class Auth {
           signal: options?.signal,
         },
       )
-      const newToken = resp.data.key
 
-      this.saveToken(newToken)
+      this.instance.accessToken = resp.data.key
 
-      return newToken
-    } catch (error: any) {
-      console.error(error.response?.data)
-      // cookie.remove(TOKEN_COOKIE_NAME)
+      return resp.data.key
+    } catch (error) {
       return null
-    }
-  }
-
-  // Utils
-
-  private saveToken(token: string | null, expiry = 3600 * 24) {
-    memoryToken = token
-
-    if (typeof window === "undefined") return
-
-    if (!token) {
-      // cookie.remove(TOKEN_COOKIE_NAME)
-      // localStorage.removeItem(TOKEN_EXPIRATION_SETTING)
-    } else {
-      const expiration = new Date(Date.now() + expiry * 1000)
-
-      const cookieExpiration = new Date()
-      cookieExpiration.setFullYear(cookieExpiration.getFullYear() + 10)
-
-      localStorage.setItem(TOKEN_EXPIRATION_SETTING, expiration.getTime().toString())
-      cookie.set(TOKEN_COOKIE_NAME, token!, {
-        sameSite: "Strict",
-        expires: expiration.toISOString(),
-        secure: true,
-      })
     }
   }
 }

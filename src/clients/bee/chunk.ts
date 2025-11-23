@@ -1,9 +1,11 @@
-import { wrapBytesWithHelpers } from "./utils/bytes"
-import { extractUploadHeaders } from "./utils/headers"
+// Forked from: https://github.com/ethersphere/bee
+
+import { extractUploadHeaders, wrapBytesWithHelpers } from "./utils"
+import { throwSdkError } from "@/classes"
 
 import type { BeeClient } from "."
-import type { RequestOptions } from ".."
 import type { ReferenceResponse, RequestUploadOptions } from "./types"
+import type { RequestOptions } from "@/types/clients"
 
 const chunkEndpoint = "/chunks"
 
@@ -11,28 +13,44 @@ export class Chunk {
   constructor(private instance: BeeClient) {}
 
   async download(hash: string, options?: RequestOptions) {
-    const resp = await this.instance.request.get<ArrayBuffer>(`${chunkEndpoint}/${hash}`, {
-      responseType: "arraybuffer",
-      headers: options?.headers,
-      timeout: options?.timeout,
-      signal: options?.signal,
-    })
+    try {
+      if (this.instance.type === "etherna") {
+        await this.instance.awaitAccessToken()
+      }
 
-    return wrapBytesWithHelpers(new Uint8Array(resp.data))
+      const resp = await this.instance.request.get<ArrayBuffer>(`${chunkEndpoint}/${hash}`, {
+        responseType: "arraybuffer",
+        ...this.instance.prepareAxiosConfig(options),
+      })
+
+      return wrapBytesWithHelpers(new Uint8Array(resp.data))
+    } catch (error) {
+      throwSdkError(error)
+    }
   }
 
   async upload(data: Uint8Array, options: RequestUploadOptions) {
-    const resp = await this.instance.request.post<ReferenceResponse>(`${chunkEndpoint}`, data, {
-      headers: {
-        "Content-Type": "application/octet-stream",
-        ...extractUploadHeaders(options),
-      },
-      timeout: options?.timeout,
-      signal: options?.signal,
-    })
+    try {
+      if (this.instance.type === "etherna") {
+        await this.instance.awaitAccessToken()
+      }
 
-    return {
-      reference: resp.data.reference,
+      const resp = await this.instance.request.post<ReferenceResponse>(`${chunkEndpoint}`, data, {
+        ...this.instance.prepareAxiosConfig({
+          ...options,
+          headers: {
+            ...options.headers,
+            "Content-Type": "application/octet-stream",
+            ...extractUploadHeaders(options),
+          },
+        }),
+      })
+
+      return {
+        reference: resp.data.reference,
+      }
+    } catch (error) {
+      throwSdkError(error)
     }
   }
 }

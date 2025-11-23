@@ -1,68 +1,180 @@
 import axios from "axios"
+import z from "zod"
 
-import { composeUrl } from "../utils"
+import { EthernaSdkError } from "@/classes"
+import { composeUrl } from "@/utils"
 
-import type { RequestOptions } from "./types"
+import type { RequestOptions } from "@/types/clients"
 import type { AxiosInstance, AxiosRequestConfig } from "axios"
 
 export interface BaseClientOptions {
-  url: string
-  apiPath: string
+  apiPath?: string
   accessToken?: string
-  loginPath?: string
-  logoutPath?: string
+  accessTokenExpiresAt?: number
+  disableAccessTokenTimeout?: boolean
 }
 
 export class BaseClient {
-  url: string
   baseUrl: string
   request: AxiosInstance
-  loginPath: string
-  logoutPath: string
-  accessToken: string | undefined
+  apiRequest: AxiosInstance
+  accessToken?: string
+  disableAccessTokenTimeout?: boolean
+  private _apiPath?: string
+  private accessTokenExpiresAt?: number
+  private pendingResolvers: ((value: string) => void)[] = []
 
   /**
    * @param options Client options
    */
-  constructor(options: BaseClientOptions) {
-    this.baseUrl = options.url
-    this.url = composeUrl(options.url, options.apiPath)
-    this.request = axios.create({ baseURL: this.url })
-    this.accessToken = options.accessToken
-    this.loginPath = composeUrl(options.url, options.loginPath || "/account/login")
-    this.logoutPath = composeUrl(options.url, options.logoutPath || "/account/logout")
+  constructor(baseUrl: string, options?: BaseClientOptions) {
+    this.baseUrl = baseUrl
+    this._apiPath = options?.apiPath
+    this.request = axios.create({ baseURL: this.baseUrl })
+    this.apiRequest = axios.create({ baseURL: this.apiUrl })
+    this.accessToken = options?.accessToken
+    this.accessTokenExpiresAt = options?.accessTokenExpiresAt
+    this.disableAccessTokenTimeout = options?.disableAccessTokenTimeout ?? false
+  }
+
+  public get apiPath(): string | undefined {
+    return this._apiPath
+  }
+  public set apiPath(apiPath: string | undefined) {
+    this._apiPath = apiPath
+    this.apiRequest = axios.create({ baseURL: this.apiUrl })
+  }
+
+  public get apiUrl(): string {
+    return composeUrl(this.baseUrl, this.apiPath)
+  }
+
+  updateAccessToken(accessToken: string | undefined, expiresAt?: number) {
+    this.accessToken = accessToken
+    this.accessTokenExpiresAt = expiresAt
+
+    if (accessToken) {
+      this.pendingResolvers.forEach((resolve) => resolve(accessToken))
+      this.pendingResolvers = []
+    }
   }
 
   prepareAxiosConfig(opts?: RequestOptions): AxiosRequestConfig {
-    const authHeader = this.accessToken ? { Authorization: `Bearer ${this.accessToken}` } : {}
+    const authHeader = this.accessToken
+      ? {
+          Authorization: `Bearer ${this.accessToken}`,
+        }
+      : {}
     return {
       headers: {
         ...authHeader,
         ...opts?.headers,
       },
-      withCredentials: this.accessToken ? false : true,
       signal: opts?.signal,
       timeout: opts?.timeout,
     }
   }
 
-  /**
-   * Redirect to login page
-   *
-   * @param returnUrl Redirect url after login (default = null)
-   */
-  public loginRedirect(returnUrl: string | null = null) {
-    const retUrl = encodeURIComponent(returnUrl || window.location.href)
-    window.location.href = this.loginPath + `?ReturnUrl=${retUrl}`
+  prepareFetchConfig(opts?: RequestOptions): RequestInit {
+    const headers: HeadersInit = {
+      ...opts?.headers,
+    }
+
+    if (this.accessToken) {
+      headers.Authorization = `Bearer ${this.accessToken}`
+    }
+
+    const timeoutAbortController = new AbortController()
+    if (opts?.timeout) {
+      setTimeout(() => timeoutAbortController.abort(), opts.timeout)
+    }
+
+    return {
+      headers,
+      signal: opts?.signal ?? timeoutAbortController.signal,
+    }
   }
 
-  /**
-   * Redirect to logout page
-   *
-   * @param returnUrl Redirect url after logout (default = null)
-   */
-  public logoutRedirect(returnUrl: string | null = null) {
-    const retUrl = encodeURIComponent(returnUrl || window.location.href)
-    window.location.href = this.logoutPath + `?ReturnUrl=${retUrl}`
+  async fetchSwaggerUrls() {
+    const bundleResponse = await this.request.get(`${this.baseUrl}/swagger/index.js`, {
+      responseType: "text",
+    })
+    const bundle = bundleResponse.data
+    const configJsonText = bundle.match(/configObject *\= *JSON\.parse\(\s*'([\s\S]*?)'\s*\)/m)?.[1]
+
+    try {
+      const configJson = z
+        .object({
+          urls: z.array(
+            z.object({
+              url: z.string(), // eg: /swagger/v0.3/swagger.json
+              name: z.string(), // eg: V0.3
+            }),
+          ),
+        })
+        .parse(JSON.parse(configJsonText))
+
+      return configJson.urls
+    } catch (error) {
+      return null
+    }
+  }
+
+  async fetchApiPath() {
+    const versionMatch = /v(\d+\.\d+)/i
+    const urls = await this.fetchSwaggerUrls()
+    const mainVersion = urls
+      ?.filter((url) => versionMatch.test(url.name))
+      .sort((a, b) => {
+        const aVersion = parseFloat(a.name.match(versionMatch)?.[1] || "0.0")
+        const bVersion = parseFloat(b.name.match(versionMatch)?.[1] || "0.0")
+        return bVersion - aVersion
+      })?.[0]
+
+    return `/api/v${mainVersion?.name.match(versionMatch)?.[1] || "0.1"}`
+  }
+
+  autoLoadApiPath() {
+    if (this.apiPath) {
+      return
+    }
+    return this.fetchApiPath().then((apiPath) => {
+      this.apiPath = apiPath
+    })
+  }
+
+  awaitAccessToken() {
+    if (this.disableAccessTokenTimeout) {
+      return Promise.resolve(this.accessToken)
+    }
+
+    if (this.accessToken && !this.accessTokenExpiresAt) {
+      throw new EthernaSdkError("JWT_MISSING_OR_EXPIRED", "Access token is missing or expired")
+    }
+
+    if (
+      this.accessToken &&
+      this.accessTokenExpiresAt &&
+      this.accessTokenExpiresAt * 1000 < Date.now()
+    ) {
+      throw new EthernaSdkError("JWT_MISSING_OR_EXPIRED", "Access token is missing or expired")
+    }
+
+    if (this.accessToken) {
+      return Promise.resolve(this.accessToken)
+    }
+
+    return Promise.race([
+      new Promise((resolve) => {
+        this.pendingResolvers.push(resolve)
+      }),
+      new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(
+            new EthernaSdkError("TIMEOUT", "Access token not received within the timeout limit"),
+          )
+        }, 30_000)
+      }),
+    ])
   }
 }

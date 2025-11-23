@@ -1,11 +1,12 @@
 import { describe, expect, it, vi } from "vitest"
 
-import { EpochFeed, EpochFeedChunk, EpochIndex } from "../../src/classes"
-import { BeeClient } from "../../src/clients"
-import { SOC_PAYLOAD_OFFSET } from "../../src/utils"
-import { toEthAccount } from "../../src/utils/bytes"
+import { EpochFeed, EpochFeedChunk, EpochIndex } from "@/classes"
+import { BeeClient } from "@/clients"
+import { SOC_PAYLOAD_OFFSET } from "@/consts"
+import { toEthAccount } from "@/utils/address"
 
-import type { EthAddress, Reference } from "../../src/clients"
+import type { Data } from "@/clients"
+import type { EthAddress, Reference } from "@/types"
 
 type EpochFeedTest = {
   description: string
@@ -336,7 +337,7 @@ describe("epoch feed", () => {
     "should find last epoch feed before date ($description)",
     async (test) => {
       vi.spyOn(bee.chunk, "download").mockImplementation(async (hash: string) => {
-        if (hash in test.mockedChunks) return test.mockedChunks[hash] as any
+        if (hash in test.mockedChunks) return test.mockedChunks[hash as Reference] as Data
         throw new Error("Chunk not found")
       })
 
@@ -366,7 +367,7 @@ describe("epoch feed", () => {
     "should try find starting epoch feed online ($description)",
     async (test) => {
       vi.spyOn(bee.chunk, "download").mockImplementation(async (hash: string) => {
-        if (hash in test.mockedChunks) return test.mockedChunks[hash] as any
+        if (hash in test.mockedChunks) return test.mockedChunks[hash as Reference] as Data
         throw new Error("Chunk not found")
       })
 
@@ -390,8 +391,8 @@ describe("epoch feed", () => {
     const data = new Uint8Array([8, 9, 10, 11, 12, 13, 14, 15])
     const payload = makeSocPayload(timestamp, data)
 
-    vi.spyOn(bee.chunk, "download").mockImplementation(async (hash: string) => {
-      if (exists) return makeChunkPayload(payload) as any
+    vi.spyOn(bee.chunk, "download").mockImplementation(async () => {
+      if (exists) return makeChunkPayload(payload) as Data
       throw new Error("Chunk not found")
     })
 
@@ -399,9 +400,9 @@ describe("epoch feed", () => {
 
     if (exists) {
       expect(result).not.toBeNull()
-      expect(result!.index).toEqual(index)
-      expect(result!.payload).toEqual(payload)
-      expect(result!.reference).toEqual(reference)
+      expect(result?.index).toEqual(index)
+      expect(result?.payload).toEqual(payload)
+      expect(result?.reference).toEqual(reference)
     } else {
       expect(result).toBeNull()
     }

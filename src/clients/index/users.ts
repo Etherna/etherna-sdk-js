@@ -1,7 +1,26 @@
-import type { EthernaIndexClient } from "."
-import type { IndexCurrentUser, IndexUser, IndexVideo, PaginatedResult, RequestOptions } from ".."
+import { throwSdkError } from "@/classes"
 
-export class IndexUsers {
+import type { EthernaIndexClient } from "."
+import type { IndexCurrentUser, IndexUser, IndexVideo, PaginatedResult } from "./types"
+import type { RequestOptions } from "@/types/clients"
+
+export interface IIndexUsersInterface {
+  fetchUsers(
+    page?: number,
+    take?: number,
+    opts?: RequestOptions,
+  ): Promise<PaginatedResult<IndexUser>>
+  fetchUser(address: string, opts?: RequestOptions): Promise<IndexUser>
+  fetchVideos(
+    address: string,
+    page?: number,
+    take?: number,
+    opts?: RequestOptions,
+  ): Promise<PaginatedResult<IndexVideo>>
+  fetchCurrentUser(opts?: RequestOptions): Promise<IndexCurrentUser>
+}
+
+export class IndexUsers implements IIndexUsersInterface {
   constructor(private instance: EthernaIndexClient) {}
 
   /**
@@ -11,16 +30,18 @@ export class IndexUsers {
    * @param opts Request options
    */
   async fetchUsers(page = 0, take = 25, opts?: RequestOptions) {
-    const resp = await this.instance.request.get<PaginatedResult<IndexUser>>("/users/list2", {
-      ...this.instance.prepareAxiosConfig(opts),
-      params: { page, take },
-    })
+    try {
+      await this.instance.autoLoadApiPath()
 
-    if (typeof resp.data !== "object" || !Array.isArray(resp.data.elements)) {
-      throw new Error("Cannot fetch user's videos")
+      const resp = await this.instance.apiRequest.get<PaginatedResult<IndexUser>>("/users/list2", {
+        ...this.instance.prepareAxiosConfig(opts),
+        params: { page, take },
+      })
+
+      return resp.data
+    } catch (error) {
+      throwSdkError(error)
     }
-
-    return resp.data
   }
 
   /**
@@ -29,15 +50,17 @@ export class IndexUsers {
    * @param opts Request options
    */
   async fetchUser(address: string, opts?: RequestOptions) {
-    const resp = await this.instance.request.get<IndexUser>(`/users/${address}`, {
-      ...this.instance.prepareAxiosConfig(opts),
-    })
+    try {
+      await this.instance.autoLoadApiPath()
 
-    if (typeof resp.data !== "object") {
-      throw new Error("Cannot fetch user")
+      const resp = await this.instance.apiRequest.get<IndexUser>(`/users/${address}`, {
+        ...this.instance.prepareAxiosConfig(opts),
+      })
+
+      return resp.data
+    } catch (error) {
+      throwSdkError(error)
     }
-
-    return resp.data
   }
 
   /**
@@ -48,19 +71,21 @@ export class IndexUsers {
    * @param opts Request options
    */
   async fetchVideos(address: string, page = 0, take = 25, opts?: RequestOptions) {
-    const resp = await this.instance.request.get<PaginatedResult<IndexVideo>>(
-      `/users/${address}/videos3`,
-      {
-        ...this.instance.prepareAxiosConfig(opts),
-        params: { page, take },
-      },
-    )
+    try {
+      await this.instance.autoLoadApiPath()
 
-    if (typeof resp.data !== "object" || !Array.isArray(resp.data.elements)) {
-      throw new Error("Cannot fetch user's videos")
+      const resp = await this.instance.apiRequest.get<PaginatedResult<IndexVideo>>(
+        `/users/${address}/videos3`,
+        {
+          ...this.instance.prepareAxiosConfig(opts),
+          params: { page, take },
+        },
+      )
+
+      return resp.data
+    } catch (error) {
+      throwSdkError(error)
     }
-
-    return resp.data
   }
 
   /**
@@ -68,14 +93,18 @@ export class IndexUsers {
    * @param opts Request options
    */
   async fetchCurrentUser(opts?: RequestOptions) {
-    const resp = await this.instance.request.get<IndexCurrentUser>(`/users/current`, {
-      ...this.instance.prepareAxiosConfig(opts),
-    })
+    try {
+      await this.instance.autoLoadApiPath()
 
-    if (typeof resp.data !== "object") {
-      throw new Error("Cannot fetch user")
+      await this.instance.awaitAccessToken()
+
+      const resp = await this.instance.apiRequest.get<IndexCurrentUser>(`/users/current`, {
+        ...this.instance.prepareAxiosConfig(opts),
+      })
+
+      return resp.data
+    } catch (error) {
+      throwSdkError(error)
     }
-
-    return resp.data
   }
 }

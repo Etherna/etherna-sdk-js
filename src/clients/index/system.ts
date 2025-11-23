@@ -1,8 +1,14 @@
-import type { EthernaIndexClient } from "."
-import type { RequestOptions } from ".."
-import type { IndexParameters } from "./types"
+import { throwSdkError } from "@/classes"
 
-export class IndexSystem {
+import type { EthernaIndexClient } from "."
+import type { IndexParameters } from "./types"
+import type { RequestOptions } from "@/types/clients"
+
+export interface IIndexSystemInterface {
+  fetchParameters(opts?: RequestOptions): Promise<IndexParameters>
+}
+
+export class IndexSystem implements IIndexSystemInterface {
   constructor(private instance: EthernaIndexClient) {}
 
   /**
@@ -10,14 +16,16 @@ export class IndexSystem {
    * @param opts Request options
    */
   async fetchParameters(opts?: RequestOptions) {
-    const resp = await this.instance.request.get<IndexParameters>("/system/parameters", {
-      ...this.instance.prepareAxiosConfig(opts),
-    })
+    try {
+      await this.instance.autoLoadApiPath()
 
-    if (typeof resp.data !== "object") {
-      throw new Error("Cannot fetch parameters")
+      const resp = await this.instance.apiRequest.get<IndexParameters>("/system/parameters", {
+        ...this.instance.prepareAxiosConfig(opts),
+      })
+
+      return resp.data
+    } catch (error) {
+      throwSdkError(error)
     }
-
-    return resp.data
   }
 }

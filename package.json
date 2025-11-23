@@ -1,9 +1,9 @@
 {
   "name": "@etherna/sdk-js",
-  "version": "1.7.2",
+  "version": "2.0.1",
   "description": "Etherna SDKs for operations on the network",
   "author": "Mattia Dalzocchio",
-  "license": "Apache-2.0",
+  "license": "LGPL-3.0-or-later",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/etherna/etherna-sdk-js.git"
@@ -22,63 +22,70 @@
     "deserializer"
   ],
   "bugs": {
-    "url": "https://etherna.atlassian.net/jira/software/c/projects/ESJ/issues"
+    "url": "https://etherna.atlassian.net/projects/ESJ"
   },
-  "homepage": "https://github.com/etherna/clients#readme",
+  "homepage": "https://github.com/etherna/etherna-sdk-js#readme",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "dev": "node bundle.mjs --watch",
-    "build": "node bundle.mjs && pnpm tsc -p tsconfig.build.json",
+    "dev": "pnpm tsup --watch",
+    "build": "pnpm tsup  --minify --clean --sourcemap",
     "test": "pnpm vitest",
     "test-ui": "pnpm vitest --ui",
     "lint": "pnpm eslint --ext .ts --fix .",
     "format": "pnpm prettier --write .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "pnpm tsc --noEmit"
   },
   "peerDependencies": {
-    "axios": ">=1.7",
-    "immer": ">=10.0",
-    "zustand": ">=4.5"
+    "@ffmpeg/ffmpeg": ">=0.12",
+    "@ffmpeg/util": ">=0.12",
+    "axios": ">=1.9",
+    "zod": ">=4.1"
   },
   "dependencies": {
     "@fairdatasociety/bmt-js": "2.1.0",
-    "@noble/hashes": "1.4.0",
-    "@noble/secp256k1": "2.1.0",
-    "axios": "1.7.2",
+    "@ffmpeg.wasm/core-mt": "0.13.2",
+    "@ffmpeg.wasm/main": "0.13.1",
+    "@ffmpeg/ffmpeg": "0.12.15",
+    "@ffmpeg/util": "0.12.2",
+    "@noble/hashes": "1.8.0",
+    "@noble/secp256k1": "2.3.0",
+    "axios": "1.12.2",
     "blurhash": "2.0.5",
-    "cookiejs": "2.1.3",
     "crypto-ts": "1.0.2",
-    "immer": "10.0.4",
     "js-sha3": "0.9.3",
-    "viem": "2.9.16",
-    "zod": "3.22.4",
-    "zustand": "4.5.2"
+    "uuid-random": "1.3.2",
+    "viem": "2.38.4",
+    "zod": "4.1.12"
   },
   "devDependencies": {
-    "@ianvs/prettier-plugin-sort-imports": "4.2.1",
-    "@total-typescript/ts-reset": "0.5.1",
-    "@types/node": "20.12.7",
-    "@typescript-eslint/eslint-plugin": "7.6.0",
-    "@typescript-eslint/parser": "7.6.0",
-    "eslint": "9.0.0",
-    "eslint-config-prettier": "9.1.0",
-    "eslint-plugin-prettier": "5.1.3",
-    "prettier": "3.2.5",
-    "typescript": "5.4.5",
-    "vite": "5.2.8",
-    "vitest": "1.5.0"
+    "@eslint/js": "9.38.0",
+    "@ianvs/prettier-plugin-sort-imports": "4.7.0",
+    "@total-typescript/ts-reset": "0.6.1",
+    "@types/node": "24.9.1",
+    "@types/wicg-file-system-access": "2023.10.7",
+    "eslint": "9.38.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-prettier": "5.5.4",
+    "globals": "16.4.0",
+    "prettier": "3.6.2",
+    "tsup": "8.5.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.46.2",
+    "vite": "7.1.12",
+    "vitest": "4.0.3"
   },
   "optionalDependencies": {
-    "@vitest/ui": "1.5.0",
-    "chokidar": "3.6.0"
+    "@vitest/ui": "4.0.3"
   },
   "pnpm": {
     "peerDependencyRules": {
       "ignoreMissing": []
     }
   },
-  "publishConfig": {
-    "access": "public",
-    "registry": "https://registry.npmjs.org/"
-  },
-  "packageManager": "pnpm@9.12.0+sha512.4abf725084d7bcbafbd728bfc7bee61f2f791f977fd87542b3579dcb23504d170d46337945e4c66485cd12d588a0c0e570ed9c477e7ccdd8507cf05f3f92eaca"
+  "packageManager": "pnpm@10.9.0+sha512.0486e394640d3c1fb3c9d43d49cf92879ff74f8516959c235308f5a8f62e2e19528a65cdc2a3058f587cde71eba3d5b56327c8c33a97e4c4051ca48a10ca2d5f"
 }

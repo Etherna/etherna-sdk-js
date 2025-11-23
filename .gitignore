@@ -1,5 +1,5 @@
 node_modules
 dist
 .vscode
-test*.*
+/test*.*
 .DS_Store

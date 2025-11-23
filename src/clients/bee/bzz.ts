@@ -1,8 +1,10 @@
-import { wrapBytesWithHelpers } from "./utils/bytes"
-import { extractFileUploadHeaders, readFileHeaders } from "./utils/headers"
+// Forked from: https://github.com/ethersphere/bee
+
+import { extractFileUploadHeaders, readFileHeaders, wrapBytesWithHelpers } from "./utils"
+import { EthernaSdkError, throwSdkError } from "@/classes"
 
 import type { BeeClient } from "."
-import type { FileDownloadOptions, FileUploadOptions, ReferenceResponse } from ".."
+import type { FileDownloadOptions, FileUploadOptions, ReferenceResponse } from "./types"
 
 const bzzEndpoint = "/bzz"
 
@@ -25,61 +27,122 @@ export class Bzz {
   }
 
   async download(hash: string, options?: FileDownloadOptions) {
-    return await this.downloadPath(hash, "", options)
+    try {
+      return await this.downloadPath(hash, "", options)
+    } catch (error) {
+      throwSdkError(error)
+    }
   }
 
   async downloadPath(hash: string, path = "", options?: FileDownloadOptions) {
-    const abortController = new AbortController()
-    const signal = abortController.signal
-    if (options?.signal) {
-      options.signal.onabort = () => abortController.abort()
-    }
+    try {
+      if (this.instance.type === "etherna") {
+        await this.instance.awaitAccessToken()
+      }
 
-    const resp = await this.instance.request.get<ArrayBuffer>(
-      `${bzzEndpoint}/${hash}/${path.replace(/^\//, "")}`,
-      {
-        responseType: "arraybuffer",
-        headers: options?.headers,
-        timeout: options?.timeout,
-        signal: signal,
-        onDownloadProgress: (e) => {
-          if (options?.onDownloadProgress) {
-            const progress = Math.round((e.progress ?? 0) * 100)
-            options.onDownloadProgress(progress)
-          }
-          if (options?.maxResponseSize && e.loaded > options.maxResponseSize) {
-            abortController.abort("Response size exceeded")
-          }
+      const abortController = new AbortController()
+      const signal = abortController.signal
+      if (options?.signal) {
+        options.signal.onabort = () => abortController.abort()
+      }
+
+      const resp = await this.instance.request.get<ArrayBuffer>(
+        `${bzzEndpoint}/${hash}/${path.replace(/^\//, "")}`,
+        {
+          responseType: "arraybuffer",
+          ...this.instance.prepareAxiosConfig({
+            ...options,
+            signal,
+          }),
+          onDownloadProgress: (e) => {
+            if (options?.onDownloadProgress) {
+              const progress = Math.round((e.progress ?? 0) * 100)
+              options.onDownloadProgress(progress)
+            }
+            if (options?.maxResponseSize && e.loaded > options.maxResponseSize) {
+              abortController.abort("Response size exceeded")
+            }
+          },
         },
-      },
-    )
+      )
 
-    const file = {
-      ...readFileHeaders(resp.headers),
-      data: wrapBytesWithHelpers(new Uint8Array(resp.data)),
+      const file = {
+        ...readFileHeaders(resp.headers),
+        data: wrapBytesWithHelpers(new Uint8Array(resp.data)),
+      }
+
+      return file
+    } catch (error) {
+      throwSdkError(error)
     }
-
-    return file
   }
 
   async upload(data: Uint8Array | File | string, options: FileUploadOptions) {
-    const resp = await this.instance.request.post<ReferenceResponse>(`${bzzEndpoint}`, data, {
-      headers: {
-        ...extractFileUploadHeaders(options),
-      },
-      timeout: options?.timeout,
-      signal: options?.signal,
-      onUploadProgress: (e) => {
-        if (options?.onUploadProgress) {
-          const progress = Math.round((e.progress ?? 0) * 100)
-          options.onUploadProgress(progress)
-        }
-      },
-    })
+    try {
+      if (this.instance.type === "etherna") {
+        await this.instance.awaitAccessToken()
+      }
 
-    return {
-      reference: resp.data.reference,
-      tagUid: resp.headers["swarm-tag"],
+      const resp = await this.instance.request.post<ReferenceResponse>(`${bzzEndpoint}`, data, {
+        ...this.instance.prepareAxiosConfig({
+          ...options,
+          headers: {
+            ...options.headers,
+            ...extractFileUploadHeaders(options),
+          },
+        }),
+        params: {
+          name: options.filename,
+        },
+        onUploadProgress: (e) => {
+          if (options?.onUploadProgress) {
+            const progress = Math.round((e.progress ?? 0) * 100)
+            options.onUploadProgress(progress)
+          }
+        },
+      })
+
+      return {
+        reference: resp.data.reference,
+        tagUid: resp.headers["swarm-tag"],
+      }
+    } catch (error) {
+      throwSdkError(error)
+    }
+  }
+
+  async head(path: string, options?: FileDownloadOptions) {
+    try {
+      if (this.instance.type === "etherna") {
+        await this.instance.awaitAccessToken()
+      }
+
+      const abortController = new AbortController()
+      const signal = abortController.signal
+      if (options?.signal) {
+        options.signal.onabort = () => abortController.abort()
+      }
+
+      const resp = await this.instance.request.head(`${bzzEndpoint}/${path.replace(/^\//, "")}`, {
+        ...this.instance.prepareAxiosConfig({
+          ...options,
+          signal,
+        }),
+      })
+
+      if (resp.status === 200) {
+        const size = resp.headers["content-length"] as string | undefined
+        const contentType = resp.headers["content-type"] as string | undefined
+
+        return {
+          size,
+          contentType,
+        }
+      }
+
+      throw new EthernaSdkError("NOT_FOUND", "Resource not found")
+    } catch (error) {
+      throwSdkError(error)
     }
   }
 }
