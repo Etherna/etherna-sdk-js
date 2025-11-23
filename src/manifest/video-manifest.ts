@@ -62,7 +62,6 @@ export class VideoManifest extends BaseMantarayManifest {
     aspectRatio: 0,
     sources: [],
     captions: [],
-    batchId: EmptyReference,
   }
 
   /**

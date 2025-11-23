@@ -26,7 +26,8 @@ export class SSOAuth {
         "/connect/token",
         new URLSearchParams({
           grant_type: "password",
-          scope: "profile ether_accounts openid userApi.gateway userApi.sso",
+          scope:
+            "profile ether_accounts openid userApi.gateway userApi.sso userApi.credit userApi.index",
           username,
           password,
         }),
