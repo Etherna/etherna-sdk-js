@@ -230,14 +230,7 @@ export class VideoProcessor extends BaseProcessor {
       ffmpeg = opts.ffmpeg
     }
 
-    let aspectRatio = this._video?.aspectRatio
-
-    if (!aspectRatio) {
-      const { width, height } = await this.getVideoMeta()
-      aspectRatio = width / height
-    }
-
-    const imageData = await this.generateThumbnail(frameTimestamp, aspectRatio)
+    const imageData = await this.generateThumbnail(frameTimestamp)
 
     return new ImageProcessor(imageData)
   }
@@ -466,7 +459,7 @@ export class VideoProcessor extends BaseProcessor {
     }
   }
 
-  private async generateThumbnail(frameTimestamp: number, aspectRatio: number) {
+  private async generateThumbnail(frameTimestamp: number) {
     const thumbFrame = (() => {
       const hours = String(Math.floor(frameTimestamp / 3600))
       const minutes = String(Math.floor((frameTimestamp % 3600) / 60))
@@ -484,7 +477,7 @@ export class VideoProcessor extends BaseProcessor {
       "-vframes",
       "1",
       "-vf",
-      `scale=${Math.round(720 * aspectRatio)}:720`,
+      `scale=-2:720`,
       "-q:v",
       "5",
       "thumb.jpg",
