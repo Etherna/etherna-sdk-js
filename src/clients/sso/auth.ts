@@ -39,9 +39,11 @@ export class SSOAuth {
         },
       )
 
-      this.instance.updateAccessToken(accessToken, Date.now() / 1000 + rest.expires_in)
+      const expiresAt = Date.now() / 1000 + rest.expires_in
 
-      return { accessToken }
+      this.instance.updateAccessToken(accessToken, expiresAt)
+
+      return { accessToken, expiresAt }
     } catch (error) {
       throwSdkError(error)
     }
