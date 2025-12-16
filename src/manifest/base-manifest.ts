@@ -202,6 +202,33 @@ export class BaseMantarayManifest extends BaseManifest {
     return Promise.resolve()
   }
 
+  public override async upload(options?: BaseManifestUploadOptions): Promise<unknown> {
+    await this.prepareForUpload(options?.batchId, options?.batchLabelQuery)
+
+    // after 'prepareForUpload' batchId must be defined
+    const batchId = this.batchId as BatchId
+
+    // update data
+    this.updateNodeDefaultEntries()
+    this.enqueueData(new TextEncoder().encode(JSON.stringify(this._preview)))
+    this.enqueueData(new TextEncoder().encode(JSON.stringify(this._details)))
+
+    // save mantary node
+    this._reference = await this.node
+      .save(async (data) => {
+        return this.enqueueData(data)
+      })
+      .then(bytesReferenceToReference)
+
+    this.chunksUploader.resume({
+      batchId,
+      ...options,
+    })
+    await this.chunksUploader.drain()
+
+    return this.reference
+  }
+
   public async loadNode(cachedNode?: MantarayNode): Promise<void> {
     if (cachedNode) {
       this._node = cachedNode

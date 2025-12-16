@@ -19,7 +19,7 @@ import {
 } from "@/utils"
 
 import type { BeeClient } from "@/clients"
-import type { BatchId } from "@/types/swarm"
+import type { BatchId, BytesReference } from "@/types/swarm"
 
 export interface FolderBuilderConfig {
   beeClient: BeeClient
@@ -38,6 +38,7 @@ export class FolderBuilder {
   protected errored = false
 
   public onProgress?: (percent: number) => void
+  public onEnqueueData?: (data: Uint8Array, queue: Queue) => BytesReference
 
   constructor(protected config: FolderBuilderConfig) {
     this.queue = new Queue({
@@ -80,6 +81,10 @@ export class FolderBuilder {
   }
 
   private enqueueData(data: Uint8Array) {
+    if (this.onEnqueueData) {
+      return this.onEnqueueData(data, this.queue)
+    }
+
     const reference = getReferenceFromData(data)
     this.queue.enqueue(async () => {
       if (this.abortController.signal.aborted) return

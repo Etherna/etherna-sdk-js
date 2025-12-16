@@ -17,7 +17,7 @@ interface ChunksUploadOptions extends RequestUploadOptions {
   deferred?: boolean
 }
 
-interface ChunkWithKey extends Chunk<4096, 8> {
+interface ChunkWithKey extends Chunk {
   key: string
 }
 
@@ -127,9 +127,72 @@ export class ChunksUploader {
 
     const { deferred, ...options } = this.uploadOptions
 
-    // tag is required for deferred uploads of chunks (but not for etherna)
+    // For etherna instances, use bulk upload instead of parallel individual uploads
+    if (this.beeClient.type === "etherna") {
+      // Only proceed if there are chunks and no active bulk upload task
+      if (this.chunks.length === 0 || this.activeTasks > 0 || this.stop) {
+        if (this.chunks.length === 0 && this.activeTasks === 0) {
+          this.doneListeners.forEach((l) => l())
+          this.drainPromiseResolver?.()
+        }
+        return
+      }
+
+      // Collect chunks in batches of concurrentChunks size for bulk upload
+      const chunksToUpload: ChunkWithKey[] = []
+      const batchSize = this.concurrentChunks
+      while (this.chunks.length > 0 && chunksToUpload.length < batchSize && !this.stop) {
+        const chunk = this.chunks.shift()
+        if (chunk) {
+          chunksToUpload.push(chunk)
+        }
+      }
+
+      if (chunksToUpload.length === 0) {
+        if (this.chunks.length === 0 && this.activeTasks === 0) {
+          this.doneListeners.forEach((l) => l())
+          this.drainPromiseResolver?.()
+        }
+        return
+      }
+
+      this.activeTasks++
+      this.beeClient.chunk
+        .bulkUpload(chunksToUpload, options)
+        .then(() => {
+          const progress = ((this.chunksCount - this.chunks.length) / this.chunksCount) * 100
+          this.progressListeners.forEach((l) => l(progress))
+
+          // Continue processing remaining chunks (next batch)
+          if (this.chunks.length > 0) {
+            this._internal_resume()
+          } else if (this.activeTasks === 0) {
+            this.doneListeners.forEach((l) => l())
+            this.drainPromiseResolver?.()
+          }
+        })
+        .catch((err) => {
+          this.stop = true
+
+          // Put chunks back in the queue on error
+          this.chunks.unshift(...chunksToUpload)
+
+          const error = getSdkError(err)
+          this.errorListeners.forEach((l) => l(error))
+          this.drainPromiseRejecter?.(error)
+        })
+        .finally(() => {
+          this.activeTasks--
+          this.resume(options)
+        })
+
+      return
+    }
+
+    // For non-etherna instances, use the original parallel upload logic
+    // tag is required for deferred uploads of chunks
     const tagPromise =
-      deferred && !this.tag && this.beeClient.type !== "etherna"
+      deferred && !this.tag
         ? this.beeClient.tags.create(this.tagReference ?? EmptyReference).then((res) => res.uid)
         : Promise.resolve(this.tag)
 

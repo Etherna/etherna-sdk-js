@@ -69,7 +69,7 @@ export class Chunk {
    * @param options Upload options including required batchId
    * @returns Object containing the reference returned by the API
    */
-  async bulkUpload(chunks: SwarmChunk<4096, 8>[], options: RequestUploadOptions) {
+  async bulkUpload(chunks: SwarmChunk[], options: RequestUploadOptions) {
     try {
       if (this.instance.type !== "etherna") {
         throw new EthernaSdkError(
