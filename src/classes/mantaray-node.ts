@@ -83,8 +83,10 @@ export class MantarayNode {
   public get contentAddress(): BytesReference | undefined {
     return this._contentAddress
   }
-  public set contentAddress(contentAddress: BytesReference) {
-    checkBytesReference(contentAddress)
+  public set contentAddress(contentAddress: BytesReference | undefined) {
+    if (contentAddress) {
+      checkBytesReference(contentAddress)
+    }
 
     this._contentAddress = contentAddress
   }
@@ -92,14 +94,18 @@ export class MantarayNode {
   public get entry(): BytesReference | undefined {
     return this._entry
   }
-  public set entry(entry: BytesReference) {
-    checkBytesReference(entry)
+  public set entry(entry: BytesReference | undefined) {
+    if (entry) {
+      checkBytesReference(entry)
 
-    this._entry = entry
+      this._entry = entry
 
-    if (!bytesEqual(entry, new Uint8Array(entry.length))) this.makeValue()
+      if (!bytesEqual(entry, new Uint8Array(entry.length))) this.makeValue()
 
-    this.makeDirty()
+      this.makeDirty()
+    } else {
+      this._entry = entry
+    }
   }
 
   public get type(): number {
@@ -129,41 +135,46 @@ export class MantarayNode {
     return this._obfuscationKey
   }
 
-  public set obfuscationKey(obfuscationKey: Bytes<32>) {
-    if (!(obfuscationKey instanceof Uint8Array)) {
-      throw new EthernaSdkError(
-        "INVALID_ARGUMENT",
-        "Given obfuscationKey is not an Uint8Array instance.",
-      )
-    }
+  public set obfuscationKey(obfuscationKey: Bytes<32> | undefined) {
+    if (obfuscationKey) {
+      if (!(obfuscationKey instanceof Uint8Array)) {
+        throw new EthernaSdkError(
+          "INVALID_ARGUMENT",
+          "Given obfuscationKey is not an Uint8Array instance.",
+        )
+      }
 
-    if (obfuscationKey.length !== 32) {
-      throw new EthernaSdkError(
-        "INVALID_ARGUMENT",
-        `Wrong obfuscationKey length. Entry only can be 32 length in bytes`,
-      )
-    }
+      if (obfuscationKey.length !== 32) {
+        throw new EthernaSdkError(
+          "INVALID_ARGUMENT",
+          `Wrong obfuscationKey length. Entry only can be 32 length in bytes`,
+        )
+      }
 
-    this._obfuscationKey = obfuscationKey
-    this.makeDirty()
+      this._obfuscationKey = obfuscationKey
+      this.makeDirty()
+    } else {
+      this._obfuscationKey = obfuscationKey
+    }
   }
 
   public get metadata(): MetadataMapping | undefined {
     return this._metadata
   }
 
-  public set metadata(metadata: MetadataMapping) {
+  public set metadata(metadata: MetadataMapping | undefined) {
     this._metadata = metadata
     this.makeWithMetadata()
-
-    // TODO: when the mantaray node is a pointer by its metadata then
-    // the node has to be with `value` type even though it has zero address
-    // should get info why is `withMetadata` as type is not enough
-    if (
-      metadata[MantarayWebsiteIndexDocumentPathKey] ||
-      metadata[MantarayWebsiteErrorDocumentPathKey]
-    ) {
-      this.makeValue()
+    if (metadata) {
+      // TODO: when the mantaray node is a pointer by its metadata then
+      // the node has to be with `value` type even though it has zero address
+      // should get info why is `withMetadata` as type is not enough
+      if (
+        metadata[MantarayWebsiteIndexDocumentPathKey] ||
+        metadata[MantarayWebsiteErrorDocumentPathKey]
+      ) {
+        this.makeValue()
+      }
     }
     this.makeDirty()
   }
@@ -230,7 +241,7 @@ export class MantarayNode {
     }
     const typeMask = this._type & NodeType.value
 
-    return typeMask === NodeType.value
+    return typeMask === (NodeType.value as number)
   }
 
   public isEdgeType(): boolean {
@@ -239,7 +250,7 @@ export class MantarayNode {
     }
     const typeMask = this._type & NodeType.edge
 
-    return typeMask === NodeType.edge
+    return typeMask === (NodeType.edge as number)
   }
 
   public isWithPathSeparatorType(): boolean {
@@ -248,7 +259,7 @@ export class MantarayNode {
     }
     const typeMask = this._type & NodeType.withPathSeparator
 
-    return typeMask === NodeType.withPathSeparator
+    return typeMask === (NodeType.withPathSeparator as number)
   }
 
   public IsWithMetadataType(): boolean {
@@ -257,7 +268,7 @@ export class MantarayNode {
     }
     const typeMask = this._type & NodeType.withMetadata
 
-    return typeMask === NodeType.withMetadata
+    return typeMask === (NodeType.withMetadata as number)
   }
 
   private makeValue() {
@@ -670,7 +681,8 @@ export class MantarayNode {
           throw new Error(`nodeType is not defined`)
         }
 
-        const isWithMetadataType = (nodeTypeByte & NodeType.withMetadata) === NodeType.withMetadata
+        const isWithMetadataType =
+          (nodeTypeByte & NodeType.withMetadata) === (NodeType.withMetadata as number)
         const obfuscationKey =
           this._obfuscationKey ??
           (new Uint8Array(MantarayFork.nodeHeaderSizes.obfuscationKey) as Bytes<32>)

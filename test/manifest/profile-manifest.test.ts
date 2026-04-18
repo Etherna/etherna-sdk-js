@@ -1,7 +1,7 @@
-import { anyReference } from "test/utils/test-consts"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import { mockedAvatarProcessor, mockedCoverProcessor } from "../utils/processor-mocks"
+import { anyReference } from "../utils/test-consts"
 import { BeeClient } from "@/clients"
 import { ProfileManifest } from "@/manifest"
 
@@ -26,7 +26,8 @@ describe("profile manifest read", () => {
     profile.addAvatar(mockedAvatarProcessor)
     profile.addCover(mockedCoverProcessor)
 
-    await profile.upload({ batchId })
+    batchId = (await beeClient.stamps.fetchBestBatchId()) as BatchId
+    await profile.upload({ batchId: batchId })
   })
 
   it("should get the profile address", () => {
@@ -99,37 +100,37 @@ describe("profile manifest write", () => {
       (await beeClient.stamps.create(17, 60 * 60 * 24 * 7)).batchID
   })
 
-  it("should set the profile name", async () => {
+  it("should set the profile name", () => {
     const profile = new ProfileManifest(owner, { beeClient })
     profile.name = "My New Profile"
     expect(profile.name).toBe("My New Profile")
   })
 
-  it("should set the profile description", async () => {
+  it("should set the profile description", () => {
     const profile = new ProfileManifest(owner, { beeClient })
     profile.description = "This is my new profile"
     expect(profile.description).toBe("This is my new profile")
   })
 
-  it("should set the profile website", async () => {
+  it("should set the profile website", () => {
     const profile = new ProfileManifest(owner, { beeClient })
     profile.website = "https://new.example.com"
     expect(profile.website).toBe("https://new.example.com")
   })
 
-  it("should set the profile birthday", async () => {
+  it("should set the profile birthday", () => {
     const profile = new ProfileManifest(owner, { beeClient })
     profile.birthday = "1990-01-02"
     expect(profile.birthday).toBe("1990-01-02")
   })
 
-  it("should set the profile location", async () => {
+  it("should set the profile location", () => {
     const profile = new ProfileManifest(owner, { beeClient })
     profile.location = "Los Angeles"
     expect(profile.location).toBe("Los Angeles")
   })
 
-  it("should set the profile playlists", async () => {
+  it("should set the profile playlists", () => {
     const profile = new ProfileManifest(owner, { beeClient })
     profile.addPlaylist(anyReference)
     expect(profile.playlists).toHaveLength(1)
@@ -158,9 +159,9 @@ describe("profile manifest write", () => {
     expect(profileRead.serialized).toStrictEqual(profileEdit.serialized)
   })
 
-  it("should move a playlist", async () => {
+  it("should move a playlist", () => {
     const profile = new ProfileManifest(owner, { beeClient })
-    const playlistA = anyReference as Reference
+    const playlistA = anyReference
     const playlistB = "b".repeat(64) as Reference
     const playlistC = "c".repeat(64) as Reference
     profile.addPlaylist(playlistA)

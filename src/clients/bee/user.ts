@@ -1,7 +1,7 @@
 import { EthernaSdkError, throwSdkError } from "@/classes"
 
+import type { EthernaGatewayCurrentUser } from "./types"
 import type { BeeClient } from "."
-import type { EthernaGatewayCredit, EthernaGatewayCurrentUser } from "./types"
 import type { RequestOptions } from "@/types/clients"
 
 export class User {

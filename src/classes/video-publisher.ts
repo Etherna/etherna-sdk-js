@@ -40,8 +40,10 @@ export interface VideoPublisherSyncResult {
 
 export type PublishSource = PublishSourcePlaylist | PublishSourceIndex
 
-export interface VideoPublisherUploadOptions
-  extends Omit<RequestUploadOptions, "batchId" | "onUploadProgress"> {}
+export interface VideoPublisherUploadOptions extends Omit<
+  RequestUploadOptions,
+  "batchId" | "onUploadProgress"
+> {}
 
 export class VideoPublisher {
   private video: Video

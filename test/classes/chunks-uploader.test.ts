@@ -45,14 +45,14 @@ describe("ChunksUploader", () => {
     expect(() => uploader.resume({ batchId })).not.toThrow()
   })
 
-  it("should throw when drain is called before resume", async () => {
+  it("should throw when drain is called before resume", () => {
     const uploader = new ChunksUploader({ beeClient })
     uploader.append(
       new Uint8Array([
         0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x77, 0x6f, 0x72, 0x6c, 0x64, 0x21,
       ]),
     )
-    expect(async () => await uploader.drain()).rejects.toThrowError(
+    void expect(async () => await uploader.drain()).rejects.toThrowError(
       "Call .resume() before .drain()",
     )
   })

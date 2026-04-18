@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const MantarayNodeSchema: z.ZodSchema<ReadableMantarayNode> = z.lazy(() => {
+export const MantarayNodeSchema: z.ZodType<ReadableMantarayNode> = z.lazy(() => {
   return z.object({
     type: z.number().optional(),
     entry: z.string().optional(),

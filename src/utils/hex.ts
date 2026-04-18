@@ -34,7 +34,7 @@ export function toHexString(bytes: Uint8Array): string {
  *
  * @param input
  */
-export function makeHexString(input: string | number | Uint8Array | EthAddress): string {
+export function makeHexString(input: (string & {}) | number | Uint8Array | EthAddress): string {
   if (typeof input === "number") {
     return input.toString(16)
   }

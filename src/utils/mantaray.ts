@@ -38,16 +38,16 @@ export const equalNodes = (
   // node metadata comparisation
   if (!a.metadata !== !b.metadata) {
     throw new Error(
-      `One of the nodes do not have metadata defined. \n a: ${a.metadata} \n b: ${b.metadata}`,
+      `One of the nodes do not have metadata defined. \n a: ${JSON.stringify(a.metadata)} \n b: ${JSON.stringify(b.metadata)}`,
     )
   } else if (a.metadata && b.metadata) {
     let aMetadata, bMetadata: string
     try {
       aMetadata = JSON.stringify(a.metadata)
       bMetadata = JSON.stringify(b.metadata)
-    } catch (e) {
+    } catch {
       throw new Error(
-        `Either of the nodes has invalid JSON metadata. \n a: ${a.metadata} \n b: ${b.metadata}`,
+        `Either of the nodes has invalid JSON metadata. \n a: ${JSON.stringify(a.metadata)} \n b: ${JSON.stringify(b.metadata)}`,
       )
     }
 
@@ -58,7 +58,9 @@ export const equalNodes = (
 
   // node entry comparisation
   if (a.entry === b.entry) {
-    throw new Error(`Nodes do not have same entries. \n a: ${a.entry} \n b: ${a.entry}`)
+    throw new Error(
+      `Nodes do not have same entries. \n a: ${JSON.stringify(a.entry)} \n b: ${JSON.stringify(b.entry)}`,
+    )
   }
 
   if (!a.forks) return
@@ -203,7 +205,7 @@ export function serializeVersion(version: MarshalVersion): Bytes<31> {
 }
 
 export function serializeReferenceLength(entry: BytesReference): Bytes<1> {
-  const referenceLength = entry.length
+  const referenceLength = entry.length as number
 
   if (referenceLength !== 32 && referenceLength !== 64) {
     throw new EthernaSdkError(
@@ -268,7 +270,7 @@ export async function getBzzNodeInfo(
       entry: isZero ? referenceToBytesReference(indexEntry as Reference) : fork.node.entry,
       contentType: fork.node.metadata?.[MantarayEntryMetadataContentTypeKey],
     }
-  } catch (error) {
+  } catch {
     return null
   }
 }

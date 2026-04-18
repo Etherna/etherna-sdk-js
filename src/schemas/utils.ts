@@ -6,7 +6,15 @@ import { EmptyReference } from "@/consts"
 import type { EnsAddress, EthAddress } from "@/types/eth"
 import type { BatchId, Reference } from "@/types/swarm"
 
-export const SchemaVersionSchema = z.literal(`${z.string()}.${z.string()}`)
+/** `major.minor` version strings, e.g. `"1.0"`, `"2.1"`. */
+export type SchemaVersion = `${number}.${number}`
+
+export const SchemaVersionSchema = z.custom<SchemaVersion>(
+  (val): val is SchemaVersion => typeof val === "string" && /^\d+\.\d+$/.test(val),
+  {
+    message: 'must be a valid schema version: "<major>.<minor>" (e.g. "1.0", "2.1")',
+  },
+)
 
 export const BirthdaySchema = z
   .string()
@@ -40,7 +48,7 @@ export const EthAddressSchema = z
 
 export const EnsAddressSchema = z
   .string()
-  .regex(/^[a-z0-9_\-\.]+\.eth$/i, {
+  .regex(/^[a-z0-9_\-.]+\.eth$/i, {
     message: "must be a valid ENS name",
   })
   .transform((v) => v as EnsAddress)
@@ -98,5 +106,3 @@ export const TimestampSchema = z
       return dateToTimestamp(new Date(val))
     }),
   )
-// Types
-export type SchemaVersion = z.infer<typeof SchemaVersionSchema>

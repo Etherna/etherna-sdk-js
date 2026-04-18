@@ -1,4 +1,4 @@
-import { ChunkedFile, makeChunkedFile } from "@fairdatasociety/bmt-js"
+import { makeChunkedFile } from "@fairdatasociety/bmt-js"
 
 import {
   ChunksUploader,
@@ -33,6 +33,7 @@ import type { BaseProcessor } from "@/processors"
 import type { ImageProcessor } from "@/processors/image-processor"
 import type { VideoProcessor } from "@/processors/video-processor"
 import type { BatchId, BytesReference, Reference } from "@/types/swarm"
+import type { ChunkedFile } from "@fairdatasociety/bmt-js"
 
 export interface BaseManifestOptions {
   beeClient: BeeClient
@@ -215,8 +216,8 @@ export class BaseMantarayManifest extends BaseManifest {
 
     // save mantary node
     this._reference = await this.node
-      .save(async (data) => {
-        return this.enqueueData(data)
+      .save((data) => {
+        return Promise.resolve(this.enqueueData(data))
       })
       .then(bytesReferenceToReference)
 
@@ -258,10 +259,13 @@ export class BaseMantarayManifest extends BaseManifest {
   protected proxyHandler() {
     return {
       get: (target: Record<string, unknown>, p: string | symbol, receiver: unknown) => {
+        // oxlint-disable-next-line typescript/no-unsafe-assignment
         const value = Reflect.get(target, p, receiver)
         if (value && typeof value === "object") {
+          // oxlint-disable-next-line typescript/no-unsafe-return
           return new Proxy(value, this.proxyHandler())
         } else {
+          // oxlint-disable-next-line typescript/no-unsafe-return
           return value
         }
       },
@@ -294,7 +298,7 @@ export class BaseMantarayManifest extends BaseManifest {
   protected removeFile(path: string) {
     try {
       this.node.removePath(encodePath(path))
-    } catch (error) {
+    } catch {
       //
     }
   }
@@ -318,7 +322,7 @@ export class BaseMantarayManifest extends BaseManifest {
     return this.enqueueChunkedFile(chunkedFile, key)
   }
 
-  protected enqueueChunkedFile(chunkedFile: ChunkedFile<4096, 8>, key?: string): BytesReference {
+  protected enqueueChunkedFile(chunkedFile: ChunkedFile, key?: string): BytesReference {
     // add collisions to the stamp calculator
     chunkedFile
       .bmt()

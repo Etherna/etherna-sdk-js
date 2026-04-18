@@ -94,18 +94,20 @@ export async function getImageMeta(data: Uint8Array | ArrayBuffer) {
       height: number
       type: ReturnType<typeof getImageTypeFromData>
     }>((resolve, reject) => {
-      bufferToDataURL(data).then((dataURL) => {
-        const img = new Image()
-        img.onload = function () {
-          resolve({
-            width: img.width,
-            height: img.height,
-            type: getImageTypeFromData(data),
-          })
-        }
-        img.onerror = reject
-        img.src = dataURL
-      })
+      bufferToDataURL(data)
+        .then((dataURL) => {
+          const img = new Image()
+          img.onload = function () {
+            resolve({
+              width: img.width,
+              height: img.height,
+              type: getImageTypeFromData(data),
+            })
+          }
+          img.onerror = reject
+          img.src = dataURL
+        })
+        .catch(reject)
     })
   } else {
     let width = 0
@@ -190,6 +192,6 @@ function createImage(blob: File | Blob) {
     const image = new Image()
     image.src = URL.createObjectURL(blob)
     image.onload = () => res(image)
-    image.onerror = (error) => rej(error)
+    image.onerror = (error) => rej(error as unknown as Error)
   })
 }

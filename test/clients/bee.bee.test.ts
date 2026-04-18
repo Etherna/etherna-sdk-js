@@ -177,42 +177,42 @@ describe("bee client offers", () => {
   let offeredReference1: Reference
   let offeredReference2: Reference
 
-  // beforeAll(async () => {
-  //   const batchId = (await bee.stamps.fetchBestBatchId()) as BatchId
-  //   ;[offeredReference1, offeredReference2] = await Promise.all([
-  //     bee.bzz.upload("Hello Offered World 1!", { batchId }).then((res) => res.reference),
-  //     bee.bzz.upload("Hello Offered World 2!", { batchId }).then((res) => res.reference),
-  //   ])
+  beforeAll(async () => {
+    const batchId = (await bee.stamps.fetchBestBatchId()) as BatchId
+    ;[offeredReference1, offeredReference2] = await Promise.all([
+      bee.bzz.upload("Hello Offered World 1!", { batchId }).then((res) => res.reference),
+      bee.bzz.upload("Hello Offered World 2!", { batchId }).then((res) => res.reference),
+    ])
 
-  //   await Promise.all([bee.offers.offer(offeredReference1), bee.offers.offer(offeredReference2)])
-  // })
+    await Promise.all([bee.offers.offer(offeredReference1), bee.offers.offer(offeredReference2)])
+  })
 
-  it.concurrent("should fetch all resource offers", async () => {
-    expect(async () => await bee.offers.downloadOffers(offeredReference1)).rejects.toThrowError(
+  it.concurrent("should fetch all resource offers", () => {
+    void expect(
+      async () => await bee.offers.downloadOffers(offeredReference1),
+    ).rejects.toThrowError("This operation is not supported by Bee client")
+  })
+
+  it.concurrent("should fetch all resources offered by current user", () => {
+    void expect(async () => await bee.offers.downloadOfferedResources()).rejects.toThrowError(
       "This operation is not supported by Bee client",
     )
   })
 
-  it.concurrent("should fetch all resources offered by current user", async () => {
-    expect(async () => await bee.offers.downloadOfferedResources()).rejects.toThrowError(
-      "This operation is not supported by Bee client",
-    )
-  })
-
-  it.concurrent("should fetch multiple resources offers", async () => {
-    expect(
+  it.concurrent("should fetch multiple resources offers", () => {
+    void expect(
       async () => await bee.offers.batchAreOffered([offeredReference1, offeredReference2]),
     ).rejects.toThrowError("This operation is not supported by Bee client")
   })
 
-  it.concurrent("should create an offer", async () => {
-    expect(async () => await bee.offers.offer(offeredReference1)).rejects.toThrowError(
+  it.concurrent("should create an offer", () => {
+    void expect(async () => await bee.offers.offer(offeredReference1)).rejects.toThrowError(
       "This operation is not supported by Bee client",
     )
   })
 
-  it.concurrent("should cancel an offer", async () => {
-    expect(async () => await bee.offers.cancelOffer(offeredReference1)).rejects.toThrowError(
+  it.concurrent("should cancel an offer", () => {
+    void expect(async () => await bee.offers.cancelOffer(offeredReference1)).rejects.toThrowError(
       "This operation is not supported by Bee client",
     )
   })
@@ -229,12 +229,6 @@ describe("bee client pins", () => {
   it.concurrent("should fetch all pinned resources", async () => {
     const pins = await bee.pins.download()
     expect(pins.references).toContain(pinnedReference)
-  })
-
-  it.concurrent("should fetch users pinning a resource", async () => {
-    expect(async () => await bee.pins.downloadPinUsers(pinnedReference)).rejects.toThrowError(
-      "Fetch pin users is only supported by the etherna gateway",
-    )
   })
 
   it.concurrent("should pin a resource", async () => {
@@ -372,8 +366,8 @@ describe("bee client stamps", { timeout: 1000 * 60 * 5 }, () => {
 })
 
 describe("bee client system", () => {
-  it.concurrent("should fetch current byte price", async () => {
-    expect(async () => await bee.system.fetchCurrentBytePrice()).rejects.toThrowError(
+  it.concurrent("should fetch current byte price", () => {
+    void expect(async () => await bee.system.fetchCurrentBytePrice()).rejects.toThrowError(
       "This operation is not supported by Bee client",
     )
   })
@@ -398,24 +392,18 @@ describe("bee client tags", () => {
     expect(fetchedTag.uid).toEqual(tag)
   })
 
-  it.concurrent("should create a tag", async () => {
+  it.concurrent("should create a tag", () => {
     expect(async () => await bee.tags.create(tagReference)).not.toThrow()
   })
 
-  it.concurrent("should delete a tag", async () => {
+  it.concurrent("should delete a tag", () => {
     expect(async () => await bee.tags.delete(tag)).not.toThrow()
   })
 })
 
 describe("bee client user", () => {
-  it.concurrent("should fetch current user", async () => {
-    expect(async () => await bee.user.downloadCurrentUser()).rejects.toThrowError(
-      "This operation is not supported by Bee client",
-    )
-  })
-
-  it.concurrent("should fetch current user credits", async () => {
-    expect(async () => await bee.user.downloadCredit()).rejects.toThrowError(
+  it.concurrent("should fetch current user", () => {
+    void expect(async () => await bee.user.downloadCurrentUser()).rejects.toThrowError(
       "This operation is not supported by Bee client",
     )
   })

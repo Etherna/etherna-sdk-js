@@ -134,7 +134,7 @@ export class UserPlaylistsManifest extends BaseManifest {
     }
   }
 
-  public override async resume(options?: BaseManifestUploadOptions): Promise<UserPlaylists> {
+  public override resume(options?: BaseManifestUploadOptions): Promise<UserPlaylists> {
     throw new EthernaSdkError(
       "NOT_IMPLEMENTED",
       ".resume() is not implemented for data manifests with little data",

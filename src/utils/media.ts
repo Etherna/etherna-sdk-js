@@ -18,12 +18,14 @@ export function getVideoMeta(input: string | Uint8Array): Promise<VideoMeta> {
     const video = document.createElement("video")
     video.preload = "metadata"
     video.onerror = (error) => {
-      reject(error)
+      reject(error as unknown as Error)
     }
     video.onloadedmetadata = () => {
       try {
         window.URL.revokeObjectURL(video.src)
-      } catch {}
+      } catch {
+        // ignore
+      }
 
       resolve({
         duration: video.duration,

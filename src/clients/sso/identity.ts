@@ -1,7 +1,7 @@
 import { throwSdkError } from "@/classes"
 
-import type { EthernaSSOClient } from "."
 import type { SSOIdentity as Identity } from "./types"
+import type { EthernaSSOClient } from "."
 
 export class SSOIdentity {
   constructor(private instance: EthernaSSOClient) {}

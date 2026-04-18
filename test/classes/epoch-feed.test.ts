@@ -336,8 +336,9 @@ describe("epoch feed", () => {
   it.each(beforeDateTests)(
     "should find last epoch feed before date ($description)",
     async (test) => {
-      vi.spyOn(bee.chunk, "download").mockImplementation(async (hash: string) => {
-        if (hash in test.mockedChunks) return test.mockedChunks[hash as Reference] as Data
+      vi.spyOn(bee.chunk, "download").mockImplementation((hash: string) => {
+        if (hash in test.mockedChunks)
+          return Promise.resolve(test.mockedChunks[hash as Reference] as Data)
         throw new Error("Chunk not found")
       })
 
@@ -356,7 +357,7 @@ describe("epoch feed", () => {
 
   it.concurrent.each(offlineTests)(
     "should find starting epoch feed offline ($description)",
-    async (test) => {
+    (test) => {
       const result = epochFeed["findStartingEpochOffline"](test.knownNearEpoch, test.at)
 
       expect(result).toEqual(test.expectedResult)
@@ -366,8 +367,9 @@ describe("epoch feed", () => {
   it.each(onlineTests)(
     "should try find starting epoch feed online ($description)",
     async (test) => {
-      vi.spyOn(bee.chunk, "download").mockImplementation(async (hash: string) => {
-        if (hash in test.mockedChunks) return test.mockedChunks[hash as Reference] as Data
+      vi.spyOn(bee.chunk, "download").mockImplementation((hash: string) => {
+        if (hash in test.mockedChunks)
+          return Promise.resolve(test.mockedChunks[hash as Reference] as Data)
         throw new Error("Chunk not found")
       })
 
@@ -391,8 +393,8 @@ describe("epoch feed", () => {
     const data = new Uint8Array([8, 9, 10, 11, 12, 13, 14, 15])
     const payload = makeSocPayload(timestamp, data)
 
-    vi.spyOn(bee.chunk, "download").mockImplementation(async () => {
-      if (exists) return makeChunkPayload(payload) as Data
+    vi.spyOn(bee.chunk, "download").mockImplementation(() => {
+      if (exists) return Promise.resolve(makeChunkPayload(payload) as Data)
       throw new Error("Chunk not found")
     })
 

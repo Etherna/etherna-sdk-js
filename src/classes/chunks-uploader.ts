@@ -87,9 +87,9 @@ export class ChunksUploader {
     return this
   }
 
-  append(chunkedFile: ChunkedFile<4096, 8>, key?: string): Reference
+  append(chunkedFile: ChunkedFile, key?: string): Reference
   append(data: Uint8Array, key?: string): Reference
-  append(input: ChunkedFile<4096, 8> | Uint8Array, key?: string): Reference {
+  append(input: ChunkedFile | Uint8Array, key?: string): Reference {
     const chunkedFile = "payload" in input ? input : makeChunkedFile(input)
     const chunks = chunkedFile.bmt().flat() as ChunkWithKey[]
 

@@ -1,12 +1,8 @@
-import {
-  CallbackPaymentRequestInput,
-  CryptoWallet,
-  PaymentCrypto,
-} from "./types"
 import { throwSdkError } from "@/classes"
-import { RequestOptions } from "@/types/clients"
 
+import type { CryptoWallet, PaymentCrypto } from "./types"
 import type { EthernaCreditClient } from "."
+import type { RequestOptions } from "@/types/clients"
 
 export class CreditPayments {
   constructor(private instance: EthernaCreditClient) {}
@@ -21,7 +17,7 @@ export class CreditPayments {
 
       const resp = await this.instance.apiRequest.get<PaymentCrypto[]>(
         `/payments/crypto/available`,
-        (opts),
+        opts,
       )
 
       return resp.data

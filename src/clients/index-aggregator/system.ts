@@ -1,6 +1,6 @@
-import { EthernaIndexAggregatorClient } from "."
-import { IIndexSystemInterface } from "../index/system"
-import { IndexAggregatorRequestOptions } from "./types"
+import type { IIndexSystemInterface } from "../index/system"
+import type { IndexAggregatorRequestOptions } from "./types"
+import type { EthernaIndexAggregatorClient } from "."
 
 export class IndexAggregatorSystem implements IIndexSystemInterface {
   constructor(private instance: EthernaIndexAggregatorClient) {}

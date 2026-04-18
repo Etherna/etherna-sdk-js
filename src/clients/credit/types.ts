@@ -1,4 +1,4 @@
-import { EthAddress } from "@/types"
+import type { EthAddress } from "@/types"
 
 export interface CreditLog {
   amount: number

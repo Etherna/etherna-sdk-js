@@ -264,8 +264,8 @@ export class ProfileManifest extends BaseMantarayManifest {
 
       // save mantary node
       this._reference = await this.node
-        .save(async (data) => {
-          return this.enqueueData(data)
+        .save((data) => {
+          return Promise.resolve(this.enqueueData(data))
         })
         .then(bytesReferenceToReference)
 
@@ -299,7 +299,7 @@ export class ProfileManifest extends BaseMantarayManifest {
     }
   }
 
-  public override async resume(options?: BaseManifestUploadOptions): Promise<Profile> {
+  public override resume(options?: BaseManifestUploadOptions): Promise<Profile> {
     throw new EthernaSdkError(
       "NOT_IMPLEMENTED",
       ".resume() is not implemented for data manifests with little data",

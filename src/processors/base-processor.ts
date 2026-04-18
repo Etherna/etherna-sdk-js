@@ -1,10 +1,9 @@
-import { ChunkedFile } from "@fairdatasociety/bmt-js"
-
 import { StampCalculator } from "@/classes"
 import { bytesReferenceToReference } from "@/utils"
 
 import type { BeeClient, RequestUploadOptions } from "@/clients"
 import type { BatchId, Reference } from "@/types/swarm"
+import type { ChunkedFile } from "@fairdatasociety/bmt-js"
 
 export interface BaseProcessorUploadOptions extends Omit<RequestUploadOptions, "batchId"> {
   beeClient: BeeClient
@@ -24,7 +23,7 @@ export class BaseProcessor {
   protected _processorOutputs: ProcessorOutput[] = []
   protected _isProcessed = false
   protected _stampCalculator = new StampCalculator()
-  protected _chunkedFiles: ChunkedFile<4096, 8>[] = []
+  protected _chunkedFiles: ChunkedFile[] = []
 
   constructor(input: File | Blob | ArrayBuffer | Uint8Array) {
     this.input = input
@@ -53,7 +52,7 @@ export class BaseProcessor {
     return Promise.resolve([])
   }
 
-  protected appendChunkedFile(chunkedFile: ChunkedFile<4096, 8>) {
+  protected appendChunkedFile(chunkedFile: ChunkedFile) {
     this._chunkedFiles.push(chunkedFile)
     chunkedFile
       .bmt()

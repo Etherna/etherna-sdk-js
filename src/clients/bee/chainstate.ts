@@ -18,7 +18,7 @@ export class ChainState {
     }
 
     try {
-      const resp = await this.instance.request.get(chainstateEndpoint, {
+      const resp = await this.instance.request.get<{ currentPrice?: string }>(chainstateEndpoint, {
         ...(await this.instance.prepareAxiosConfig(options)),
       })
       let price = resp.data.currentPrice ?? FALLBACK_PRICE

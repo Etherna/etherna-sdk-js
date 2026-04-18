@@ -24,13 +24,13 @@ import {
   serializeBytes,
 } from "@/utils"
 
-import type { BeeClient } from "."
 import type {
   ContentAddressedChunk,
   ReferenceResponse,
   RequestUploadOptions,
   SingleOwnerChunk,
 } from "./types"
+import type { BeeClient } from "."
 import type { RequestOptions } from "@/types/clients"
 import type { EthAddress } from "@/types/eth"
 
@@ -41,8 +41,6 @@ export class Soc {
 
   async download(identifier: Uint8Array, ownerAddress: EthAddress, options?: RequestOptions) {
     try {
-
-
       const addressBytes = hexToBytes(makeHexString(ownerAddress))
       const address = this.makeSOCAddress(identifier, addressBytes)
       const data = await this.instance.chunk.download(bytesToHex(address), options)
@@ -55,8 +53,6 @@ export class Soc {
 
   async upload(identifier: Uint8Array, data: Uint8Array, options: RequestUploadOptions) {
     try {
-
-
       const cac = makeContentAddressedChunk(data)
       const soc = await this.makeSingleOwnerChunk(cac, identifier)
 

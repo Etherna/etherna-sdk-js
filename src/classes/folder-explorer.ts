@@ -1,9 +1,10 @@
 import { MantarayNode } from "./mantaray-node"
 import { EthernaSdkError } from "./sdk-error"
-import { BeeClient } from "@/clients"
-import { Reference } from "@/types"
 import { getAllPaths } from "@/utils"
 import { bytesReferenceToReference, referenceToBytesReference } from "@/utils/reference"
+
+import type { BeeClient } from "@/clients"
+import type { Reference } from "@/types"
 
 export interface FolderExplorerOptions {
   beeClient: BeeClient

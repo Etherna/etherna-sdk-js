@@ -1,5 +1,4 @@
-import { RedundancyLevels, RedundancyStrategies } from "@/consts"
-
+import type { RedundancyLevels, RedundancyStrategies } from "@/consts"
 import type { RequestOptions } from "@/types/clients"
 import type { BatchId, PostageBatch, Reference } from "@/types/swarm"
 import type { HexString } from "@/types/utils"
@@ -124,7 +123,7 @@ export interface RequestDownloadOptions extends RequestOptions {
   gasPrice?: number
 
   /** Download progress, ranging 0 to 100 */
-  onDownloadProgress?(completion: number): void
+  onDownloadProgress?: (completion: number) => void
 }
 
 export interface FileUploadOptions extends RequestUploadOptions {

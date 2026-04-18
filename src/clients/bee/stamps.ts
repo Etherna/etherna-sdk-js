@@ -7,12 +7,8 @@ import {
 } from "@/consts"
 import { calcExpandAmount, getBatchPercentUtilization, ttlToAmount } from "@/utils"
 
+import type { EthernaGatewayBatchPreview, EthernaGatewayWelcomeStatus } from "./types"
 import type { BeeClient } from "."
-import type {
-  EthernaGatewayBatch,
-  EthernaGatewayBatchPreview,
-  EthernaGatewayWelcomeStatus,
-} from "./types"
 import type { BucketCollisions } from "@/classes"
 import type { RequestOptions } from "@/types/clients"
 import type { BatchId, PostageBatch, PostageBatchBucketsData } from "@/types/swarm"
@@ -140,22 +136,29 @@ export class Stamps {
           let timeout: NodeJS.Timeout
 
           const waitBatchCreation = () => {
+            // oxlint-disable-next-line typescript/no-unsafe-argument
             clearTimeout(timeout)
 
             if (opts?.signal?.aborted) {
-              return rejecter(
+              rejecter(
                 new EthernaSdkError("ABORTED_BY_USER", "The operation was aborted by the user"),
               )
+              return
             }
 
             timeout = setTimeout(() => {
-              this.instance.system.fetchPostageBatchRef(referenceId).then((batchId) => {
-                if (batchId) {
-                  resolver(batchId)
-                } else {
-                  waitBatchCreation()
-                }
-              })
+              this.instance.system
+                .fetchPostageBatchRef(referenceId)
+                .then((batchId) => {
+                  if (batchId) {
+                    resolver(batchId)
+                  } else {
+                    waitBatchCreation()
+                  }
+                })
+                .catch((err) => {
+                  rejecter(getSdkError(err))
+                })
             }, 5000)
           }
 
@@ -390,7 +393,7 @@ export class Stamps {
         return await this.waitBatchValid(batchId, (batch) => batch.depth === depth, opts)
       }
 
-      return this.download(batchId)
+      return await this.download(batchId)
     } catch (error) {
       throwSdkError(error)
     }
@@ -487,34 +490,43 @@ export class Stamps {
       let rejecter: (err: EthernaSdkError) => void
       let timeout: NodeJS.Timeout
 
-      const waitBatch = async () => {
+      const waitBatch = () => {
+        // oxlint-disable-next-line typescript/no-unsafe-argument
         clearTimeout(timeout)
 
         if (opts?.signal?.aborted) {
-          return rejecter(
-            new EthernaSdkError("ABORTED_BY_USER", "The operation was aborted by the user"),
-          )
+          rejecter(new EthernaSdkError("ABORTED_BY_USER", "The operation was aborted by the user"))
+          return
         }
 
         if (Date.now() - start > maxDuration) {
-          return rejecter(
-            new EthernaSdkError("TIMEOUT", "The operation has timed out. Please try again."),
-          )
+          rejecter(new EthernaSdkError("TIMEOUT", "The operation has timed out. Please try again."))
+          return
         }
 
         timeout = setTimeout(() => {
-          this.downloadAll(ETHERNA_WELCOME_POSTAGE_LABEL).then((batches) => {
-            const welcomeBatch = batches[0]
-            if (welcomeBatch) {
-              if ("amount" in welcomeBatch) {
-                resolver(welcomeBatch)
+          this.downloadAll(ETHERNA_WELCOME_POSTAGE_LABEL)
+            .then((batches) => {
+              const welcomeBatch = batches[0]
+              if (welcomeBatch) {
+                if ("amount" in welcomeBatch) {
+                  resolver(welcomeBatch)
+                } else {
+                  this.download(welcomeBatch.batchId)
+                    .then((batch) => {
+                      resolver(batch)
+                    })
+                    .catch((err) => {
+                      rejecter(getSdkError(err))
+                    })
+                }
               } else {
-                this.download(welcomeBatch.batchId).then(resolver)
+                waitBatch()
               }
-            } else {
-              waitBatch()
-            }
-          })
+            })
+            .catch((err) => {
+              rejecter(getSdkError(err))
+            })
           waitBatch()
         }, 5000)
       }
@@ -538,13 +550,13 @@ export class Stamps {
     let rejecter: (err: EthernaSdkError) => void
     let timeout: NodeJS.Timeout
 
-    const waitBatchValid = async () => {
+    const waitBatchValid = () => {
+      // oxlint-disable-next-line typescript/no-unsafe-argument
       clearTimeout(timeout)
 
       if (options?.signal?.aborted) {
-        return rejecter(
-          new EthernaSdkError("ABORTED_BY_USER", "The operation was aborted by the user"),
-        )
+        rejecter(new EthernaSdkError("ABORTED_BY_USER", "The operation was aborted by the user"))
+        return
       }
 
       timeout = setTimeout(() => {
@@ -559,7 +571,7 @@ export class Stamps {
           .catch((err) => {
             const error = getSdkError(err)
             const data = error.axiosError?.response?.data as { message?: string } | undefined
-            const msg = data?.message as string | undefined
+            const msg = data?.message
             const isNotUsableError =
               error.axiosError?.response?.status === 400 &&
               msg?.toLowerCase().includes("not usable")

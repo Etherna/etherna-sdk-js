@@ -3,8 +3,8 @@
 import { extractFileUploadHeaders, wrapBytesWithHelpers } from "./utils"
 import { throwSdkError } from "@/classes"
 
-import type { BeeClient } from "."
 import type { ReferenceResponse, RequestDownloadOptions, RequestUploadOptions } from "./types"
+import type { BeeClient } from "."
 
 const bytesEndpoint = "/bytes"
 
@@ -17,7 +17,6 @@ export class Bytes {
 
   async download(hash: string, options?: RequestDownloadOptions) {
     try {
-
       const resp = await this.instance.request.get<ArrayBuffer>(`${bytesEndpoint}/${hash}`, {
         responseType: "arraybuffer",
         ...(await this.instance.prepareAxiosConfig(options)),
@@ -37,7 +36,6 @@ export class Bytes {
 
   async upload(data: Uint8Array, options: RequestUploadOptions) {
     try {
-
       const resp = await this.instance.request.post<ReferenceResponse>(`${bytesEndpoint}`, data, {
         ...(await this.instance.prepareAxiosConfig({
           ...options,
@@ -57,7 +55,7 @@ export class Bytes {
 
       return {
         reference: resp.data.reference,
-        tagUid: resp.headers["swarm-tag"],
+        tagUid: resp.headers["swarm-tag"] as string | undefined,
       }
     } catch (error) {
       throwSdkError(error)

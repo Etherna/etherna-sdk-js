@@ -3,8 +3,8 @@
 import { extractUploadHeaders, wrapBytesWithHelpers } from "./utils"
 import { EthernaSdkError, throwSdkError } from "@/classes"
 
-import type { BeeClient } from "."
 import type { ReferenceResponse, RequestUploadOptions } from "./types"
+import type { BeeClient } from "."
 import type { RequestOptions } from "@/types/clients"
 import type { Chunk as SwarmChunk } from "@fairdatasociety/bmt-js"
 
@@ -15,8 +15,6 @@ export class Chunk {
 
   async download(hash: string, options?: RequestOptions) {
     try {
-
-
       const resp = await this.instance.request.get<ArrayBuffer>(`${chunkEndpoint}/${hash}`, {
         responseType: "arraybuffer",
         ...(await this.instance.prepareAxiosConfig(options)),
@@ -30,8 +28,6 @@ export class Chunk {
 
   async upload(data: Uint8Array, options: RequestUploadOptions) {
     try {
-
-
       const resp = await this.instance.request.post<ReferenceResponse>(`${chunkEndpoint}`, data, {
         ...(await this.instance.prepareAxiosConfig({
           ...options,

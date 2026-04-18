@@ -41,8 +41,8 @@ export function prepareData(
 export function readFileHeaders(
   headers: RawAxiosResponseHeaders | AxiosResponseHeaders | Partial<Record<string, string>>,
 ) {
-  const name = readContentDispositionFilename(headers["content-disposition"])
-  const tagUid = readTagUid(headers["swarm-tag-uid"])
+  const name = readContentDispositionFilename(headers["content-disposition"] as string | undefined)
+  const tagUid = readTagUid(headers["swarm-tag-uid"] as string | undefined)
   const contentType = headers["content-type"] as string | undefined
 
   return {

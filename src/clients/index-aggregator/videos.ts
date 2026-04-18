@@ -1,10 +1,11 @@
-import { ZodError } from "zod"
+import { EthernaSdkError } from "@/classes"
 
-import { EthernaIndexAggregatorClient } from "."
-import { IndexVideo, VoteValue } from "../index/types"
-import { IIndexVideosInterface } from "../index/videos"
-import { IndexAggregatorRequestOptions } from "./types"
-import { ErrorCode, EthernaSdkError } from "@/classes"
+import type { IndexVideo, VoteValue } from "../index/types"
+import type { IIndexVideosInterface } from "../index/videos"
+import type { IndexAggregatorRequestOptions } from "./types"
+import type { EthernaIndexAggregatorClient } from "."
+import type { ErrorCode } from "@/classes"
+import type { ZodError } from "zod"
 
 export class IndexAggregatorVideos implements IIndexVideosInterface {
   abortController?: AbortController
@@ -270,6 +271,6 @@ export class IndexAggregatorVideos implements IIndexVideosInterface {
     opts: IndexAggregatorRequestOptions,
   ) {
     const client = this.instance.getIndexClientByRequest(opts)
-    return await client.videos.reportVideo(id, manifestReference, description, opts)
+    await client.videos.reportVideo(id, manifestReference, description, opts)
   }
 }

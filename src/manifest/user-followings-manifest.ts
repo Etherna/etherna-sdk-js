@@ -1,13 +1,14 @@
 import { BaseManifest } from "./base-manifest"
 import { EthernaSdkError, throwSdkError } from "@/classes"
 import { EmptyAddress } from "@/consts"
-import { UserFollowings, UserFollowingsSchema } from "@/schemas/followings-schema"
+import { UserFollowingsSchema } from "@/schemas/followings-schema"
 
 import type {
   BaseManifestDownloadOptions,
   BaseManifestOptions,
   BaseManifestUploadOptions,
 } from "./base-manifest"
+import type { UserFollowings } from "@/schemas/followings-schema"
 import type { EthAddress } from "@/types/eth"
 import type { BatchId } from "@/types/swarm"
 
@@ -133,7 +134,7 @@ export class UserFollowingsManifest extends BaseManifest {
     }
   }
 
-  public override async resume(options?: BaseManifestUploadOptions): Promise<UserFollowings> {
+  public override resume(options?: BaseManifestUploadOptions): Promise<UserFollowings> {
     throw new EthernaSdkError(
       "NOT_IMPLEMENTED",
       ".resume() is not implemented for data manifests with little data",

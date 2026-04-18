@@ -1,12 +1,14 @@
-import { EthernaIndexClient, IIndexClientInterface, PaginatedResult } from "../index"
+import { EthernaIndexClient } from "../index"
 import { IndexAggregatorComments } from "./comments"
 import { IndexAggregatorModeration } from "./moderation"
 import { IndexAggregatorSearch } from "./search"
 import { IndexAggregatorSystem } from "./system"
-import { AggregatedPaginatedResult, IndexAggregatorRequestOptions } from "./types"
 import { IndexAggregatorUsers } from "./users"
 import { IndexAggregatorVideos } from "./videos"
 import { EthernaSdkError } from "@/classes"
+
+import type { IIndexClientInterface, PaginatedResult } from "../index"
+import type { AggregatedPaginatedResult, IndexAggregatorRequestOptions } from "./types"
 
 export interface IndexAggregatorClientOptions {
   indexes: {

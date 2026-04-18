@@ -22,7 +22,7 @@ export function isEthAddress(address: string): address is EthAddress {
  * @returns A boolean indicating whether the address is a valid ENS address.
  */
 export function isEnsAddress(address: string): address is EnsAddress {
-  return /^[a-z0-9_\-\.]+\.eth$/i.test(address)
+  return /^[a-z0-9_\-.]+\.eth$/i.test(address)
 }
 
 /**

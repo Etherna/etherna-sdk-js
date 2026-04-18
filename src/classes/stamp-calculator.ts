@@ -63,9 +63,15 @@ export class StampCalculator {
       })
     } else {
       Object.entries(collisionsMap).forEach(([id, count]) => {
-        const bucketId = Number(id) as BucketId
-        this.bucketCollisions.set(bucketId, (this.bucketCollisions.get(bucketId) ?? 0) + count)
-        this.dirtyCollisions.set(bucketId, (this.dirtyCollisions.get(bucketId) ?? 0) + count)
+        const bucketId = Number(id)
+        this.bucketCollisions.set(
+          bucketId,
+          (this.bucketCollisions.get(bucketId) ?? 0) + Number(count),
+        )
+        this.dirtyCollisions.set(
+          bucketId,
+          (this.dirtyCollisions.get(bucketId) ?? 0) + Number(count),
+        )
       })
 
       this._isFresh = false

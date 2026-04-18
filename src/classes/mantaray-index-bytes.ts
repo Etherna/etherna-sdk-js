@@ -33,7 +33,7 @@ export class MantarayIndexBytes {
     const index = Math.floor(byte / 8)
 
     if (this.bytes[index] !== undefined) {
-      this.bytes[index] |= 1 << byte % 8
+      this.bytes[index] |= 1 << (byte % 8)
     }
   }
 
@@ -46,7 +46,7 @@ export class MantarayIndexBytes {
     const index = Math.floor(byte / 8)
 
     if (this.bytes[index] !== undefined) {
-      return ((this.bytes[index] >> byte % 8) & 1) > 0
+      return ((this.bytes[index] >> (byte % 8)) & 1) > 0
     }
 
     return false

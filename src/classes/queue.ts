@@ -65,7 +65,7 @@ export class Queue {
       const { task } = filteredTasks.shift() ?? {}
       if (task) {
         this.activeTasks++
-        task().finally(() => {
+        void task().finally(() => {
           this.activeTasks--
           this.runTasks(key)
         })

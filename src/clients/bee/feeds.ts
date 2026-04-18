@@ -34,7 +34,6 @@ import {
   writeUint64BigEndian,
 } from "@/utils"
 
-import type { BeeClient } from "."
 import type {
   FeedInfo,
   FeedType,
@@ -43,6 +42,7 @@ import type {
   ReferenceResponse,
   RequestUploadOptions,
 } from "./types"
+import type { BeeClient } from "."
 import type { RequestOptions } from "@/types/clients"
 import type { EthAddress } from "@/types/eth"
 import type { FeedUpdateHeaders, Index, Reference } from "@/types/swarm"
@@ -187,8 +187,6 @@ export class Feed {
         return epochRoot.reference
       }
 
-
-
       const response = await this.instance.request.post<ReferenceResponse>(
         `${feedEndpoint}/${feed.owner}/${feed.topic}`,
         null,
@@ -222,8 +220,8 @@ export class Feed {
     node.getForkAtPath(encodePath("/")).node["makeValue"]()
     node.getForkAtPath(encodePath("/")).node.entry = ZeroHashReference
 
-    const reference = await node.save(async (data) => {
-      return referenceToBytesReference(getReferenceFromData(data))
+    const reference = await node.save((data) => {
+      return Promise.resolve(referenceToBytesReference(getReferenceFromData(data)))
     })
 
     return {
@@ -248,7 +246,7 @@ export class Feed {
           headers: opts?.headers,
         })
         return data
-      } catch (error) {
+      } catch {
         const node = new MantarayNode()
         node.entry = ZeroHashReference
         return node.serialize()
@@ -317,15 +315,15 @@ export class Feed {
         }
       }
 
-      throw throwSdkError(err)
+      throwSdkError(err)
     }
   }
 
   private readFeedUpdateHeaders(
     headers: RawAxiosResponseHeaders | AxiosResponseHeaders | Partial<Record<string, string>>,
   ): FeedUpdateHeaders {
-    const feedIndex = headers["swarm-feed-index"]
-    const feedIndexNext = headers["swarm-feed-index-next"]
+    const feedIndex = headers["swarm-feed-index"] as string | undefined
+    const feedIndexNext = headers["swarm-feed-index-next"] as string | undefined
 
     if (!feedIndex) {
       throw new EthernaSdkError(

@@ -1,5 +1,5 @@
-import { PaginatedResult } from "../index/types"
-import { RequestOptions } from "@/types/clients"
+import type { PaginatedResult } from "../index/types"
+import type { RequestOptions } from "@/types/clients"
 
 export interface IndexAggregatorRequestOptions extends RequestOptions {
   indexUrl?: string

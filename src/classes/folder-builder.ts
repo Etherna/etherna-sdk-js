@@ -68,8 +68,8 @@ export class FolderBuilder {
       this.node.addFork(encodePath(MantarayRootPath), ZeroHashReference, metadata)
     }
 
-    const reference = await this.node.save(async (data) => {
-      return this.enqueueData(data)
+    const reference = await this.node.save((data) => {
+      return Promise.resolve(this.enqueueData(data))
     })
     await this.queue.drain()
 

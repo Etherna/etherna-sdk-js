@@ -1,6 +1,7 @@
-import { IndexVideoComment } from "./types"
 import { throwSdkError } from "@/classes"
+import { axiosHeadersToPlainObject } from "@/utils/axios"
 
+import type { IndexVideoComment } from "./types"
 import type { EthernaIndexClient } from "."
 import type { RequestOptions } from "@/types/clients"
 
@@ -29,7 +30,7 @@ export class IndexComments implements IIndexCommentsInterface {
         {
           ...config,
           headers: {
-            ...config.headers,
+            ...axiosHeadersToPlainObject(config.headers),
             accept: "text/plain",
             "Content-Type": "application/json",
           },

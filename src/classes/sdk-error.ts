@@ -61,19 +61,26 @@ export function getSdkError(err: unknown): EthernaSdkError {
 
   if (err instanceof AxiosError) {
     const code = err.response?.status ?? 500
-    const message = (() => {
+    const message = ((): string => {
       if (typeof err.response?.data === "string") {
         return err.response?.data
       }
 
       if (
         typeof err.response?.data === "object" &&
+        // oxlint-disable-next-line typescript/no-unsafe-member-access
         typeof err.response?.data?.message === "string"
       ) {
+        // oxlint-disable-next-line typescript/no-unsafe-return typescript/no-unsafe-member-access
         return err.response?.data?.message
       }
 
-      if (typeof err.response?.data === "object" && typeof err.response?.data?.error === "string") {
+      if (
+        typeof err.response?.data === "object" &&
+        // oxlint-disable-next-line typescript/no-unsafe-member-access
+        typeof err.response?.data?.error === "string"
+      ) {
+        // oxlint-disable-next-line typescript/no-unsafe-return typescript/no-unsafe-member-access
         return err.response?.data?.error
       }
 

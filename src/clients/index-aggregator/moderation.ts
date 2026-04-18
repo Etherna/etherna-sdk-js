@@ -1,6 +1,5 @@
-import { IIndexModerationInterface } from "../index/moderation"
-import { IndexAggregatorRequestOptions } from "./types"
-
+import type { IIndexModerationInterface } from "../index/moderation"
+import type { IndexAggregatorRequestOptions } from "./types"
 import type { EthernaIndexAggregatorClient } from "."
 
 export class IndexAggregatorModeration implements IIndexModerationInterface {

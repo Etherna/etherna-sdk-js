@@ -15,11 +15,11 @@ import { System } from "./system"
 import { Tags } from "./tags"
 import { User } from "./user"
 import { CHAIN_BLOCK_TIME } from "@/consts"
-import { EthAddress } from "@/types"
 import { isEthAddress, makeInjectedWalletSigner, makePrivateKeySigner } from "@/utils"
 
 import type { BaseClientOptions } from "../base-client"
 import type { BeeChain } from "@/consts"
+import type { EthAddress } from "@/types"
 import type { Signer } from "@/types/signer"
 
 export interface BeeClientOptions extends BaseClientOptions {
@@ -78,7 +78,7 @@ export class BeeClient extends BaseClient {
     this.system = new System(this)
   }
 
-  updateSigner(signer: Signer | EthAddress | string | undefined) {
+  updateSigner(signer: Signer | EthAddress | (string & {}) | undefined) {
     this.signer =
       typeof signer === "string"
         ? isEthAddress(signer)

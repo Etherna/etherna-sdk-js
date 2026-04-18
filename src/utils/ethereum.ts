@@ -17,20 +17,20 @@ declare global {
     selectedAddress?: string
     on?(event: "accountsChanged", callback: (accounts: string[]) => void): void
     on?(event: "chainChanged", callback: (chainId: string) => void): void
-    on?(event: "connect", callback: (connectInfo: any) => void): void
+    on?(event: "connect", callback: (connectInfo: unknown) => void): void
     on?(event: "disconnect", callback: (error: ProviderRpcError) => void): void
-    removeListener?(event: string, callback: Function): void
+    removeListener?(event: string, callback: (...args: unknown[]) => void): void
     isConnected?(): Promise<boolean>
     enable?(): Promise<string[]>
     sendAsync?: (
-      request: { method: string; params?: Array<any> },
-      callback: (error: any, response: any) => void,
+      request: { method: string; params?: Array<unknown> },
+      callback: (error: unknown, response: unknown) => void,
     ) => void
     send?: (
-      request: { method: string; params?: Array<any> },
-      callback: (error: any, response: any) => void,
+      request: { method: string; params?: Array<unknown> },
+      callback: (error: unknown, response: unknown) => void,
     ) => void
-    request?: (request: { method: string; params?: Array<any> }) => Promise<any>
+    request?: (request: { method: string; params?: Array<unknown> }) => Promise<unknown>
   }
 
   interface ProviderRpcError extends Error {
@@ -67,7 +67,7 @@ export const signMessage = async (
       "You have an old version of your wallet. Try to update MetaMask.",
     )
 
-  const accounts = await window.ethereum.request({ method: "eth_requestAccounts" })
+  const accounts = (await window.ethereum.request({ method: "eth_requestAccounts" })) as string[]
 
   if (!accounts || !accounts.length)
     throw new EthernaSdkError("LOCKED_WALLET", "Unlock your wallet.")
@@ -78,7 +78,7 @@ export const signMessage = async (
     method: "personal_sign",
     params: [address, hexDigest],
   })
-  return data
+  return data as string
 }
 
 /**
@@ -118,8 +118,13 @@ export const shortenEthAddr = (address: string | null | undefined) => {
  *
  * @param provider Web3 provider
  */
-export const checkUsingInjectedProvider = (provider: any) => {
-  const { isFortmatic, isPortis, isWalletConnect, isSquarelink, isAuthereum } = provider
+export const checkUsingInjectedProvider = (provider: unknown) => {
+  if (typeof provider !== "object" || provider === null) return false
+
+  const { isFortmatic, isPortis, isWalletConnect, isSquarelink, isAuthereum } = provider as Record<
+    string,
+    boolean
+  >
 
   if (isFortmatic || isPortis || isWalletConnect || isSquarelink || isAuthereum) return false
   return true

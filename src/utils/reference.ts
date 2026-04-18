@@ -33,7 +33,7 @@ export function isEmptyReference(ref: Reference): boolean {
  * @returns True if the reference is invalid
  */
 export function isInvalidReference(ref: string): boolean {
-  return !isValidReference(ref) || isEmptyReference(ref as Reference)
+  return !isValidReference(ref) || isEmptyReference(ref)
 }
 
 /**

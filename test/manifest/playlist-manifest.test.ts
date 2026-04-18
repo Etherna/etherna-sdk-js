@@ -1,7 +1,7 @@
-import { anyReference } from "test/utils/test-consts"
 import uuid from "uuid-random"
 import { beforeAll, describe, expect, it } from "vitest"
 
+import { anyReference } from "../utils/test-consts"
 import { BeeClient } from "@/clients"
 import { EmptyAddress } from "@/consts"
 import { PlaylistManifest } from "@/manifest"
@@ -18,7 +18,7 @@ const mockVideo: Video = {
     ownerAddress: EmptyAddress,
     createdAt: 0,
   },
-  details: { description: "", aspectRatio: 1, sources: [] },
+  details: { description: "", aspectRatio: 1, sources: [], captions: [] },
 }
 
 describe("playlist manifest read", () => {
@@ -47,9 +47,10 @@ describe("playlist manifest read", () => {
     protectedPlaylist.description = "This is my protected playlist"
     protectedPlaylist.addVideo(mockVideo)
 
+    batchId = (await beeClient.stamps.fetchBestBatchId()) as BatchId
     await Promise.all([
-      publicPlaylist.upload({ batchId }),
-      protectedPlaylist.upload({ batchId, password: protectedPassword }),
+      publicPlaylist.upload({ batchId: batchId }),
+      protectedPlaylist.upload({ batchId: batchId, password: protectedPassword }),
     ])
   })
 

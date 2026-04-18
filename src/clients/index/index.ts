@@ -1,12 +1,18 @@
 import { BaseClient } from "../base-client"
-import { IIndexCommentsInterface, IndexComments } from "./comments"
-import { IIndexModerationInterface, IndexModeration } from "./moderation"
-import { IIndexSearchInterface, IndexSearch } from "./search"
-import { IIndexSystemInterface, IndexSystem } from "./system"
-import { IIndexUsersInterface, IndexUsers } from "./users"
-import { IIndexVideosInterface, IndexVideos } from "./videos"
+import { IndexComments } from "./comments"
+import { IndexModeration } from "./moderation"
+import { IndexSearch } from "./search"
+import { IndexSystem } from "./system"
+import { IndexUsers } from "./users"
+import { IndexVideos } from "./videos"
 
 import type { BaseClientOptions } from "../base-client"
+import type { IIndexCommentsInterface } from "./comments"
+import type { IIndexModerationInterface } from "./moderation"
+import type { IIndexSearchInterface } from "./search"
+import type { IIndexSystemInterface } from "./system"
+import type { IIndexUsersInterface } from "./users"
+import type { IIndexVideosInterface } from "./videos"
 
 export interface IndexClientOptions extends BaseClientOptions {}
 

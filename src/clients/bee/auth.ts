@@ -1,7 +1,7 @@
 import { stringToBase64 } from "@/utils"
 
-import type { BeeClient } from "."
 import type { AuthenticationOptions } from "./types"
+import type { BeeClient } from "."
 
 const authEndpoint = "/auth"
 const authRefreshEndpoint = "/refresh"
@@ -87,7 +87,7 @@ export class Auth {
       this.instance.accessToken = resp.data.key
 
       return resp.data.key
-    } catch (error) {
+    } catch {
       return null
     }
   }

@@ -182,8 +182,8 @@ await playlistManifest.upload({ batchId })
 
 ### Create a password protected playlist
 
-_Password protected playlists encrypt playlists details but not the preview._
-_To hide the playlist name you can set `previewName` as un-encrypted name and `name` as encrypted name._
+_Password protected playlists encrypt playlists details but not the preview._ _To hide the playlist
+name you can set `previewName` as un-encrypted name and `name` as encrypted name._
 
 ```ts
 // ...
@@ -301,11 +301,12 @@ const { error, success } = publishResult[0]
 
 ## Issue reports
 
-If you've discovered a bug, or have an idea for a new feature, please report it to our issue manager based on Jira https://etherna.atlassian.net/projects/ESJ.
+If you've discovered a bug, or have an idea for a new feature, please report it to our issue manager
+based on Jira https://etherna.atlassian.net/projects/ESJ.
 
 ## License
 
 ![LGPL Logo](https://www.gnu.org/graphics/lgplv3-with-text-154x68.png)
 
-We use the GNU Lesser General Public License v3 (LGPL-3.0) for this project.
-If you require a custom license, you can contact us at [license@etherna.io](mailto:license@etherna.io).
+We use the GNU Lesser General Public License v3 (LGPL-3.0) for this project. If you require a custom
+license, you can contact us at [license@etherna.io](mailto:license@etherna.io).

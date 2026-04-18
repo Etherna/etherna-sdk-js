@@ -56,7 +56,7 @@ export async function defaultSign(
   // fix nodejs crypto
   if (typeof window === "undefined") {
     const hmac = await import("@noble/hashes/hmac").then((mod) => mod.hmac)
-    const sha256 = await import("@noble/hashes/sha256").then((mod) => mod.sha256)
+    const sha256 = await import("@noble/hashes/sha2").then((mod) => mod.sha256)
 
     const hmacSha256Sync = (k: Uint8Array, ...m: Uint8Array[]) =>
       hmac(sha256, k, etc.concatBytes(...m))

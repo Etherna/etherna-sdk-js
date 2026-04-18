@@ -3,8 +3,8 @@
 import { extractFileUploadHeaders, readFileHeaders, wrapBytesWithHelpers } from "./utils"
 import { EthernaSdkError, throwSdkError } from "@/classes"
 
-import type { BeeClient } from "."
 import type { FileDownloadOptions, FileUploadOptions, ReferenceResponse } from "./types"
+import type { BeeClient } from "."
 
 const bzzEndpoint = "/bzz"
 
@@ -36,8 +36,6 @@ export class Bzz {
 
   async downloadPath(hash: string, path = "", options?: FileDownloadOptions) {
     try {
-
-
       const abortController = new AbortController()
       const signal = abortController.signal
       if (options?.signal) {
@@ -77,8 +75,6 @@ export class Bzz {
 
   async upload(data: Uint8Array | File | string, options: FileUploadOptions) {
     try {
-
-
       const resp = await this.instance.request.post<ReferenceResponse>(`${bzzEndpoint}`, data, {
         ...(await this.instance.prepareAxiosConfig({
           ...options,
@@ -100,7 +96,7 @@ export class Bzz {
 
       return {
         reference: resp.data.reference,
-        tagUid: resp.headers["swarm-tag"],
+        tagUid: resp.headers["swarm-tag"] as string | undefined,
       }
     } catch (error) {
       throwSdkError(error)
@@ -109,8 +105,6 @@ export class Bzz {
 
   async head(path: string, options?: FileDownloadOptions) {
     try {
-
-
       const abortController = new AbortController()
       const signal = abortController.signal
       if (options?.signal) {

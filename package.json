@@ -36,8 +36,9 @@
     "build": "pnpm tsup  --minify --clean --sourcemap",
     "test": "pnpm vitest",
     "test-ui": "pnpm vitest --ui",
-    "lint": "pnpm eslint --ext .ts --fix .",
-    "format": "pnpm prettier --write .",
+    "lint": "pnpm oxlint",
+    "format": "pnpm oxfmt",
+    "format:check": "pnpm oxfmt --check",
     "typecheck": "pnpm tsc --noEmit"
   },
   "peerDependencies": {
@@ -63,20 +64,16 @@
     "zod": "4.2.1"
   },
   "devDependencies": {
-    "@eslint/js": "9.38.0",
-    "@ianvs/prettier-plugin-sort-imports": "4.7.0",
     "@total-typescript/ts-reset": "0.6.1",
     "@types/node": "24.9.1",
     "@types/wicg-file-system-access": "2023.10.7",
-    "eslint": "9.38.0",
-    "eslint-config-prettier": "10.1.8",
-    "eslint-plugin-prettier": "5.5.4",
     "globals": "16.4.0",
-    "prettier": "3.6.2",
+    "oxfmt": "0.44.0",
+    "oxlint": "1.59.0",
+    "oxlint-tsgolint": "0.20.0",
     "tsup": "8.5.0",
-    "tsx": "^4.21.0",
-    "typescript": "5.9.3",
-    "typescript-eslint": "8.46.2",
+    "tsx": "4.21.0",
+    "typescript": "6.0.3",
     "vite": "7.1.12",
     "vitest": "4.0.3"
   },

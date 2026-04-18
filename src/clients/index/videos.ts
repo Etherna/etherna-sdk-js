@@ -1,6 +1,6 @@
 import { throwSdkError } from "@/classes"
+import { axiosHeadersToPlainObject } from "@/utils/axios"
 
-import type { EthernaIndexClient } from "."
 import type {
   IndexVideo,
   IndexVideoComment,
@@ -10,6 +10,7 @@ import type {
   PaginatedResult,
   VoteValue,
 } from "./types"
+import type { EthernaIndexClient } from "."
 import type { RequestOptions } from "@/types/clients"
 
 export interface IIndexVideosInterface {
@@ -336,7 +337,7 @@ export class IndexVideos implements IIndexVideosInterface {
         {
           ...config,
           headers: {
-            ...config.headers,
+            ...axiosHeadersToPlainObject(config.headers),
             accept: "text/plain",
             "Content-Type": "application/json",
           },
@@ -393,7 +394,7 @@ export class IndexVideos implements IIndexVideosInterface {
     try {
       await this.instance.autoLoadApiPath()
 
-      const resp = await this.instance.apiRequest.post(
+      const _resp = await this.instance.apiRequest.post(
         `/videos/${id}/manifest/${manifestReference}/reports`,
         null,
         {
@@ -401,8 +402,6 @@ export class IndexVideos implements IIndexVideosInterface {
           params: { description },
         },
       )
-
-      return resp.data
     } catch (error) {
       throwSdkError(error)
     }

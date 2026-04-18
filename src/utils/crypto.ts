@@ -30,7 +30,7 @@ export function decryptData(data: string, password: string): string {
   try {
     const decryptedData = AES.decrypt(data, password).toString(enc.Utf8)
     return decryptedData
-  } catch (error) {
+  } catch {
     throw new EthernaSdkError(
       "DECRYPTION_ERROR",
       "Cannot unlock playlist. Make sure the password is correct.",

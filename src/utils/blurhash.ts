@@ -39,7 +39,8 @@ function parsePixels(pixels: Uint8ClampedArray, width: number, height: number) {
   const pngString = generatePng(width, height, pixelsString)
   const dataURL =
     typeof Buffer !== "undefined"
-      ? Buffer.from(getPngArray(pngString)).toString("base64")
+      ? // oxlint-disable-next-line typescript/no-unsafe-call typescript/no-unsafe-member-access
+        (Buffer.from(getPngArray(pngString)).toString("base64") as string)
       : window.btoa(pngString)
   return "data:image/png;base64," + dataURL
 }
@@ -178,7 +179,7 @@ function generatePng(width: number, height: number, rgbaString: string) {
         scanline += String.fromCharCode(+rgbaString[y + x]! & 0xff)
       }
     } else {
-      scanline += rgbaString.substr(y, width * 4)
+      scanline += rgbaString.substring(y, y + width * 4)
     }
     scanlines += scanline
   }
@@ -199,7 +200,9 @@ async function getImageData(imageData: Uint8Array, width: number, height: number
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const ctx = canvas.getContext("2d")!
     const image = await loadImage(imageData)
-    image && ctx.drawImage(image, 0, 0)
+    if (image) {
+      ctx.drawImage(image, 0, 0)
+    }
     return ctx.getImageData(0, 0, width, height).data
   } else {
     const ffmpeg = await loadNodeFFmpeg(imageData, "image")
@@ -215,10 +218,10 @@ async function getImageData(imageData: Uint8Array, width: number, height: number
 }
 
 async function loadImage(data: Uint8Array) {
-  return new Promise<HTMLImageElement | null>((resolve, reject) => {
+  return new Promise<HTMLImageElement | null>((resolve) => {
     const img = new Image()
     img.onload = () => resolve(img)
-    img.onerror = () => reject(null)
+    img.onerror = () => resolve(null)
     img.src = URL.createObjectURL(new Blob([data as BlobPart]))
   })
 }

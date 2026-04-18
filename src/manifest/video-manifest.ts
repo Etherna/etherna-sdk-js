@@ -275,8 +275,8 @@ export class VideoManifest extends BaseMantarayManifest {
 
       // save mantary node
       this._reference = await this.node
-        .save(async (data) => {
-          return this.enqueueData(data)
+        .save((data) => {
+          return Promise.resolve(this.enqueueData(data))
         })
         .then(bytesReferenceToReference)
 

@@ -81,8 +81,8 @@ export class BaseClient {
 
     const authHeader = this.accessToken
       ? {
-        Authorization: `Bearer ${this.accessToken}`,
-      }
+          Authorization: `Bearer ${this.accessToken}`,
+        }
       : {}
     return {
       headers: {
@@ -115,11 +115,12 @@ export class BaseClient {
   }
 
   async fetchSwaggerUrls() {
-    const bundleResponse = await this.request.get(`${this.baseUrl}/swagger/index.js`, {
+    const bundleResponse = await this.request.get<string>(`${this.baseUrl}/swagger/index.js`, {
       responseType: "text",
     })
     const bundle = bundleResponse.data
-    const configJsonText = bundle.match(/configObject *\= *JSON\.parse\(\s*'([\s\S]*?)'\s*\)/m)?.[1]
+    const configJsonText =
+      bundle.match(/configObject *= *JSON\.parse\(\s*'([\s\S]*?)'\s*\)/m)?.[1] ?? "{}"
 
     try {
       const configJson = z
@@ -134,7 +135,7 @@ export class BaseClient {
         .parse(JSON.parse(configJsonText))
 
       return configJson.urls
-    } catch (error) {
+    } catch {
       return null
     }
   }
@@ -194,7 +195,10 @@ export class BaseClient {
     }
 
     const keys = Object.keys(parsed.data.paths).sort()
-    const fromPaths = keys.reduce<string | null>((acc, path) => path.match(API_PREFIX_RE)?.[1] ?? acc, null)
+    const fromPaths = keys.reduce<string | null>(
+      (acc, path) => path.match(API_PREFIX_RE)?.[1] ?? acc,
+      null,
+    )
 
     if (fromPaths) {
       return fromPaths
@@ -231,7 +235,10 @@ export class BaseClient {
       return m ? parseFloat(m[1] ?? "0") : 0
     }
 
-    return resolved.sort((a, b) => apiPathVersionForSort(b) - apiPathVersionForSort(a))[0] ?? fallbackApiPath
+    return (
+      resolved.sort((a, b) => apiPathVersionForSort(b) - apiPathVersionForSort(a))[0] ??
+      fallbackApiPath
+    )
   }
 
   /**

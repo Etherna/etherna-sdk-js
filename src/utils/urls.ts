@@ -26,7 +26,7 @@ export function safeURL(url: string | null | undefined, path?: string) {
       baseUrl = `https://${baseUrl}`
     }
     return new URL(path ?? "", baseUrl)
-  } catch (error) {
+  } catch {
     return null
   }
 }
@@ -46,7 +46,7 @@ export function isSafeURL(url: string | null | undefined, path?: string) {
     }
     new URL(path ?? "", baseUrl)
     return true
-  } catch (error) {
+  } catch {
     return false
   }
 }

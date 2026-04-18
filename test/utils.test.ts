@@ -9,7 +9,7 @@ describe("signer", () => {
   const validSignature =
     "b3e70d91fc4a21751d9b0f0bf9e9e935d45a774c80311982d3f6c4ac254613845f53de01356a8791cccfc1b22949469982e6e7e5231ea96d23d681cf28d756741c"
 
-  it("should generate the correct address from the private key", async () => {
+  it("should generate the correct address from the private key", () => {
     const signer = makePrivateKeySigner(privateKey)
 
     expect(signer.address.toLowerCase()).toEqual(address.toLowerCase())

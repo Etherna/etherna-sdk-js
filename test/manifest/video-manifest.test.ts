@@ -1,7 +1,7 @@
-import { anyReference } from "test/utils/test-consts"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import { mockedThumbnailProcessor, mockedVideoProcessor } from "../utils/processor-mocks"
+import { anyReference } from "../utils/test-consts"
 import { BeeClient } from "@/clients"
 import { EmptyAddress } from "@/consts"
 import { VideoManifest } from "@/manifest"
@@ -26,7 +26,8 @@ describe("video manifest read", () => {
     video.addCaption(anyReference, "en-US", "English")
     video.addCaption(anyReference, "it", "Italian")
 
-    videoReference = (await video.upload({ batchId })).reference
+    batchId = (await beeClient.stamps.fetchBestBatchId()) as BatchId
+    videoReference = (await video.upload({ batchId: batchId })).reference
   })
 
   it("should get the video address", () => {
@@ -163,19 +164,19 @@ describe("video manifest write", () => {
       (await beeClient.stamps.create(17, 60 * 60 * 24 * 7)).batchID
   })
 
-  it("should set the video title", async () => {
+  it("should set the video title", () => {
     const video = new VideoManifest({ beeClient })
     video.title = "My New Video"
     expect(video.title).toBe("My New Video")
   })
 
-  it("should set the video description", async () => {
+  it("should set the video description", () => {
     const video = new VideoManifest({ beeClient })
     video.description = "This is my new video"
     expect(video.description).toBe("This is my new video")
   })
 
-  it("should add a caption", async () => {
+  it("should add a caption", () => {
     const video = new VideoManifest({ beeClient })
     video.addCaption(anyReference, "en-US", "English")
     video.addCaption(anyReference, "it", "Italian")
@@ -188,7 +189,7 @@ describe("video manifest write", () => {
     })
   })
 
-  it("should remove a caption", async () => {
+  it("should remove a caption", () => {
     const video = new VideoManifest({ beeClient })
     video.addCaption(anyReference, "en-US", "English")
     video.addCaption(anyReference, "it", "Italian")
@@ -206,7 +207,7 @@ describe("video manifest write", () => {
     expect(nodeHasPath).toBe(false)
   })
 
-  it("should set the thumbnail", async () => {
+  it("should set the thumbnail", () => {
     const video = new VideoManifest({ beeClient })
     video.addThumbnail(mockedThumbnailProcessor)
 
@@ -228,7 +229,7 @@ describe("video manifest write", () => {
     })
   })
 
-  it("should set the video", async () => {
+  it("should set the video", () => {
     const video = new VideoManifest({ beeClient })
     video.addVideo(mockedVideoProcessor)
 

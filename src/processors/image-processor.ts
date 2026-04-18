@@ -57,7 +57,7 @@ export class ImageProcessor extends BaseProcessor {
   }
 
   public override async process(options: ImageProcessorOptions): Promise<ProcessorOutput[]> {
-    super.process()
+    await super.process()
 
     const originalImageData = new Uint8Array(
       this.input instanceof File || this.input instanceof Blob

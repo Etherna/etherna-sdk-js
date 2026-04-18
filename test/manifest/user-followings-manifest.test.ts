@@ -51,14 +51,14 @@ describe("users followings manifest write", () => {
       (await beeClient.stamps.create(17, 60 * 60 * 24 * 7)).batchID
   })
 
-  it("should add a following", async () => {
+  it("should add a following", () => {
     const userFollowings = new UserFollowingsManifest({ beeClient })
     userFollowings.addFollowing("0x0000000000000000000000000000000000000000" as EthAddress)
 
     expect(userFollowings.followings).toStrictEqual(["0x0000000000000000000000000000000000000000"])
   })
 
-  it("should remove a following", async () => {
+  it("should remove a following", () => {
     const userFollowings = new UserFollowingsManifest({ beeClient })
     userFollowings.addFollowing("0x0000000000000000000000000000000000000000" as EthAddress)
     userFollowings.addFollowing("0x0000000000000000000000000000000000000001" as EthAddress)
@@ -71,7 +71,7 @@ describe("users followings manifest write", () => {
     ])
   })
 
-  it("should upload the user followings", async () => {
+  it("should upload the user followings", () => {
     const userFollowings = new UserFollowingsManifest({ beeClient })
     userFollowings.addFollowing("0x0000000000000000000000000000000000000000" as EthAddress)
     userFollowings.addFollowing("0x0000000000000000000000000000000000000001" as EthAddress)

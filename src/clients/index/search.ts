@@ -1,7 +1,7 @@
 import { throwSdkError } from "@/classes"
 
-import type { EthernaIndexClient } from "."
 import type { IndexVideoPreview, PaginatedResult } from "./types"
+import type { EthernaIndexClient } from "."
 import type { RequestOptions } from "@/types/clients"
 
 export interface IIndexSearchInterface {

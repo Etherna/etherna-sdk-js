@@ -69,7 +69,8 @@ export function bufferToDataURL(buffer: ArrayBuffer | Uint8Array) {
  */
 export function stringToBase64(str: string): string {
   if (typeof window === "undefined") {
-    return Buffer.from(str).toString("base64")
+    // oxlint-disable-next-line typescript/no-unsafe-call typescript/no-unsafe-member-access
+    return Buffer.from(str).toString("base64") as string
   } else {
     return window.btoa(str)
   }

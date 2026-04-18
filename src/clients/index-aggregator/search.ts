@@ -1,7 +1,5 @@
-import { IIndexSearchInterface } from "../index/search"
-import { IndexVideo, IndexVideoPreview, PaginatedResult } from "../index/types"
-import { AggregatedPaginatedResult, IndexAggregatorRequestOptions } from "./types"
-
+import type { IIndexSearchInterface } from "../index/search"
+import type { IndexAggregatorRequestOptions } from "./types"
 import type { EthernaIndexAggregatorClient } from "."
 
 export class IndexAggregatorSearch implements IIndexSearchInterface {

@@ -1,7 +1,5 @@
-import { IIndexCommentsInterface } from "../index/comments"
-import { IndexAggregatorRequestOptions } from "./types"
-import { EthernaSdkError } from "@/classes"
-
+import type { IIndexCommentsInterface } from "../index/comments"
+import type { IndexAggregatorRequestOptions } from "./types"
 import type { EthernaIndexAggregatorClient } from "."
 
 export class IndexAggregatorComments implements IIndexCommentsInterface {

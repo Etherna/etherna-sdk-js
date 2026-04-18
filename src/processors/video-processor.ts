@@ -204,6 +204,7 @@ export class VideoProcessor extends BaseProcessor {
             .then((entries) => entries.filter(([_, h]) => h.kind === "file").map(([name]) => name)),
       })
     } else if (typeof window === "undefined" && typeof directory === "string") {
+      // oxlint-disable typescript/no-unsafe-assignment typescript/no-unsafe-call typescript/no-unsafe-member-access typescript/no-unsafe-return
       const fs = await import("fs/promises")
       await this.processOutput({
         basePath: opts?.basePath,
@@ -217,6 +218,7 @@ export class VideoProcessor extends BaseProcessor {
             .readdir(`${directory}/${path}`, { withFileTypes: true })
             .then((files) => files.filter((f) => f.isFile()).map((f) => f.name)),
       })
+      // oxlint-enable typescript/no-unsafe-assignment typescript/no-unsafe-call typescript/no-unsafe-member-access typescript/no-unsafe-return
     }
 
     this._isProcessed = true
@@ -242,7 +244,7 @@ export class VideoProcessor extends BaseProcessor {
       listDirFilesFn: (path: string) => Promise<string[]>
     },
   ) {
-    super.process()
+    await super.process()
 
     const { width, height, duration } = await this.getVideoMeta()
     const aspectRatio = width / height

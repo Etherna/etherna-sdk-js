@@ -1,8 +1,8 @@
-import { CreditBalance, CreditLog } from "./types"
 import { throwSdkError } from "@/classes"
-import { RequestOptions } from "@/types/clients"
 
+import type { CreditBalance, CreditLog } from "./types"
 import type { EthernaCreditClient } from "."
+import type { RequestOptions } from "@/types/clients"
 
 export class CreditUser {
   constructor(private instance: EthernaCreditClient) {}

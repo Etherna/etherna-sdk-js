@@ -17,7 +17,8 @@ describe("users playlists manifest read", () => {
     userPlaylists.addPlaylist("0".repeat(64) as Reference)
     userPlaylists.addPlaylist("1".repeat(64) as Reference)
     userPlaylists.addPlaylist("2".repeat(64) as Reference)
-    await userPlaylists.upload({ batchId })
+    batchId = (await beeClient.stamps.fetchBestBatchId()) as BatchId
+    await userPlaylists.upload({ batchId: batchId })
   })
 
   it("should get the user playlists owner", () => {
@@ -44,14 +45,14 @@ describe("users playlists manifest write", () => {
       (await beeClient.stamps.create(17, 60 * 60 * 24 * 7)).batchID
   })
 
-  it("should add a playlist", async () => {
+  it("should add a playlist", () => {
     const userPlaylists = new UserPlaylistsManifest({ beeClient })
     userPlaylists.addPlaylist("0".repeat(64) as Reference)
 
     expect(userPlaylists.playlists).toStrictEqual(["0".repeat(64)])
   })
 
-  it("should remove a playlist", async () => {
+  it("should remove a playlist", () => {
     const userPlaylists = new UserPlaylistsManifest({ beeClient })
     userPlaylists.addPlaylist("0".repeat(64) as Reference)
     userPlaylists.addPlaylist("1".repeat(64) as Reference)
@@ -61,7 +62,7 @@ describe("users playlists manifest write", () => {
     expect(userPlaylists.playlists).toStrictEqual(["2".repeat(64), "0".repeat(64)])
   })
 
-  it("should upload the user playlists", async () => {
+  it("should upload the user playlists", () => {
     const userPlaylists = new UserPlaylistsManifest({ beeClient })
     userPlaylists.addPlaylist("0".repeat(64) as Reference)
     userPlaylists.addPlaylist("1".repeat(64) as Reference)
