@@ -17,6 +17,9 @@
     "noImplicitOverride": true,
     "skipDefaultLibCheck": true,
     "skipLibCheck": true,
+    "types": ["node", "wicg-file-system-access"],
+    // PATCH: tsup injects baseUrl
+    "ignoreDeprecations": "6.0",
     "paths": {
       "@/*": ["./src/*"]
     }
