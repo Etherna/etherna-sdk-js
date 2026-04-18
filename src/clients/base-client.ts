@@ -12,7 +12,22 @@ export interface BaseClientOptions {
   accessToken?: string
   accessTokenExpiresAt?: number
   disableAccessTokenTimeout?: boolean
+  /** How to discover the API prefix when `apiPath` is not set. Defaults to Swagger. */
+  apiDocType?: "swagger" | "scalar"
 }
+
+const scalarSourceSchema = z.object({
+  title: z.string(),
+  url: z.string(),
+})
+
+const openApiForApiPathSchema = z.object({
+  info: z.object({ version: z.string().optional() }).optional(),
+  paths: z.record(z.string(), z.unknown()),
+})
+
+const API_PREFIX_RE = /^(\/api\/v\d+\.\d+)(?:\/|$)/
+const API_PATH_VERSION_RE = /^\/api\/v(\d+\.\d+)/i
 
 export class BaseClient {
   baseUrl: string
@@ -23,6 +38,7 @@ export class BaseClient {
   private _apiPath?: string
   private accessTokenExpiresAt?: number
   private pendingResolvers: ((value: string) => void)[] = []
+  private apiDocType: "swagger" | "scalar"
 
   /**
    * @param options Client options
@@ -30,6 +46,7 @@ export class BaseClient {
   constructor(baseUrl: string, options?: BaseClientOptions) {
     this.baseUrl = baseUrl
     this._apiPath = options?.apiPath
+    this.apiDocType = options?.apiDocType ?? "swagger"
     this.request = axios.create({ baseURL: this.baseUrl })
     this.apiRequest = axios.create({ baseURL: this.apiUrl })
     this.accessToken = options?.accessToken
@@ -64,8 +81,8 @@ export class BaseClient {
 
     const authHeader = this.accessToken
       ? {
-          Authorization: `Bearer ${this.accessToken}`,
-        }
+        Authorization: `Bearer ${this.accessToken}`,
+      }
       : {}
     return {
       headers: {
@@ -122,7 +139,105 @@ export class BaseClient {
     }
   }
 
-  async fetchApiPath() {
+  /**
+   * Load Scalar HTML (e.g. /scalar/) and read the embedded `sources` list (OpenAPI document URLs).
+   */
+  async fetchScalarSources() {
+    const pageResponse = await this.request.get(`${this.baseUrl}/scalar/`, {
+      responseType: "text",
+      validateStatus: (s) => s >= 200 && s < 400,
+    })
+    const html = pageResponse.data as string
+    const marker = '"sources":'
+    const idx = html.indexOf(marker)
+    if (idx === -1) {
+      return null
+    }
+    const bracketStart = html.indexOf("[", idx + marker.length)
+    if (bracketStart === -1) {
+      return null
+    }
+    let depth = 0
+    for (let i = bracketStart; i < html.length; i++) {
+      const c = html[i]
+      if (c === "[") {
+        depth++
+      } else if (c === "]") {
+        depth--
+        if (depth === 0) {
+          try {
+            const raw = html.slice(bracketStart, i + 1)
+            return z.array(scalarSourceSchema).parse(JSON.parse(raw))
+          } catch {
+            return null
+          }
+        }
+      }
+    }
+    return null
+  }
+
+  /**
+   * Resolve `/api/vX.Y` from a served OpenAPI document (paths keys or `servers`).
+   */
+  async fetchApiPathFromOpenApiHref(openApiHref: string) {
+    const res = await this.request.get(openApiHref, {
+      responseType: "json",
+      validateStatus: () => true,
+    })
+    if (res.status !== 200) {
+      return null
+    }
+    const parsed = openApiForApiPathSchema.safeParse(res.data)
+    if (!parsed.success) {
+      return null
+    }
+
+    const keys = Object.keys(parsed.data.paths).sort()
+    const fromPaths = keys.reduce<string | null>((acc, path) => path.match(API_PREFIX_RE)?.[1] ?? acc, null)
+
+    if (fromPaths) {
+      return fromPaths
+    }
+
+    const servers = (res.data as { servers?: { url?: string }[] }).servers
+    const first = servers?.[0]?.url
+    if (!first) {
+      return null
+    }
+    try {
+      const u = new URL(first, "http://placeholder.local")
+      const m = u.pathname.match(API_PREFIX_RE)
+      return m?.[1] ?? null
+    } catch {
+      return null
+    }
+  }
+
+  async fetchApiPathFromScalar() {
+    const fallbackApiPath = "/api/v0.1"
+    const sources = (await this.fetchScalarSources()) ?? []
+    const resolved: string[] = []
+    for (const source of sources) {
+      const openApiHref = composeUrl(this.baseUrl, source.url)
+      const apiPath = await this.fetchApiPathFromOpenApiHref(openApiHref)
+      if (apiPath) {
+        resolved.push(apiPath)
+      }
+    }
+
+    const apiPathVersionForSort = (apiPath: string): number => {
+      const m = apiPath.match(API_PATH_VERSION_RE)
+      return m ? parseFloat(m[1] ?? "0") : 0
+    }
+
+    return resolved.sort((a, b) => apiPathVersionForSort(b) - apiPathVersionForSort(a))[0] ?? fallbackApiPath
+  }
+
+  /**
+   * Resolve `/api/vX.Y` from Swagger UI config (`/swagger/index.js` urls list).
+   */
+  async fetchApiPathFromSwagger() {
     const versionMatch = /v(\d+\.\d+)/i
     const urls = await this.fetchSwaggerUrls()
     const mainVersion = urls
@@ -134,6 +249,15 @@ export class BaseClient {
       })?.[0]
 
     return `/api/v${mainVersion?.name.match(versionMatch)?.[1] || "0.1"}`
+  }
+
+  async fetchApiPath() {
+    switch (this.apiDocType) {
+      case "scalar":
+        return this.fetchApiPathFromScalar()
+      case "swagger":
+        return this.fetchApiPathFromSwagger()
+    }
   }
 
   autoLoadApiPath() {
