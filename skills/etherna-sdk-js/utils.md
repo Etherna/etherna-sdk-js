@@ -174,6 +174,8 @@ Only files re-exported by `src/utils/index.ts` are part of the public root utili
 - `toHexString()`
 - `makeHexString()`
 
+`bytesToHex` and `hexToBytes` are re-exported from `@noble/hashes/utils.js` (Noble 2.x), so callers can rely on one implementation instead of mixing `etc.bytesToHex` / `etc.hexToBytes` from `@noble/secp256k1`.
+
 ### When to use
 
 - Swarm reference conversion.

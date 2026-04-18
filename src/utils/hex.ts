@@ -1,11 +1,9 @@
-import { etc } from "@noble/secp256k1"
+import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js"
 import { keccak256 } from "js-sha3"
 
 import type { EthAddress } from "@/types/eth"
 import type { Bytes } from "@/types/utils"
 import type { Message } from "js-sha3"
-
-const { bytesToHex, hexToBytes } = etc
 
 export { bytesToHex, hexToBytes }
 
@@ -40,7 +38,7 @@ export function makeHexString(input: (string & {}) | number | Uint8Array | EthAd
   }
 
   if (input instanceof Uint8Array) {
-    return etc.bytesToHex(input)
+    return bytesToHex(input)
   }
 
   if (typeof input === "string") {

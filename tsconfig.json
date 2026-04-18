@@ -24,6 +24,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "test", "test*.*", "env.d.ts"],
+  "include": ["src", "test", "scripts", "test*.*", "env.d.ts"],
   "exclude": ["node_modules", "dist"]
 }

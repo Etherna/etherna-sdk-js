@@ -1,9 +1,8 @@
-import { etc } from "@noble/secp256k1"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import { BeeClient } from "@/clients"
 import { makeContentAddressedChunk } from "@/clients/bee/utils"
-import { getReferenceFromData, keccak256Hash } from "@/utils"
+import { bytesToHex, getReferenceFromData, keccak256Hash } from "@/utils"
 
 import type { BatchId, EthAddress, Reference } from "@/types"
 
@@ -261,13 +260,13 @@ describe("bee client soc", () => {
     const identifier = keccak256Hash("etherna")
     const soc = await bee.soc.makeSingleOwnerChunk(cac, identifier)
 
-    expect(etc.bytesToHex(soc.data)).toEqual(
+    expect(bytesToHex(soc.data)).toEqual(
       "08b086a7f24adfa7c484ac56869d9463c873a5b182d147ba2c0041ae9fb015f63d" +
         "3b74bc4d87b75e610b4654efa6220404ebe0f3ec329e4a03e0f3a9375a839f02d9" +
         "14b03cbf6caef4599856103f4aeeac60295c5b8804d6c8724aeb9db579f01b1300" +
         "00000000000045746865726e6120697320617765736f6d6521",
     )
-    expect(etc.bytesToHex(soc.signature())).toEqual(
+    expect(bytesToHex(soc.signature())).toEqual(
       "3d3b74bc4d87b75e610b4654efa6220404ebe0f3ec329e4a03e0f3a9375a839f02d914b03cbf6caef4599856103f4aeeac60295c5b8804d6c8724aeb9db579f01b",
     )
   })
@@ -287,7 +286,7 @@ describe("bee client soc", () => {
     const socData = await bee.soc.download(identifier, owner)
 
     expect(chunkData).toEqual(socData.data)
-    expect(etc.bytesToHex(socData.payload())).toEqual(etc.bytesToHex(messageData))
+    expect(bytesToHex(socData.payload())).toEqual(bytesToHex(messageData))
   })
 })
 

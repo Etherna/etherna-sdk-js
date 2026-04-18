@@ -1,7 +1,5 @@
 // Forked from: https://github.com/ethersphere/bee
 
-import { etc } from "@noble/secp256k1"
-
 import { extractUploadHeaders, makeContentAddressedChunk } from "./utils"
 import { EthernaSdkError, throwSdkError } from "@/classes"
 import {
@@ -104,9 +102,9 @@ export class Soc {
     const chunkAddress = chunk.address()
 
     const digest = keccak256Hash(identifier, chunkAddress)
-    const signature = etc.hexToBytes(makeHexString(await this.instance.signer.sign(digest)))
+    const signature = hexToBytes(makeHexString(await this.instance.signer.sign(digest)))
     const data = serializeBytes(identifier, signature, chunk.span(), chunk.payload())
-    const signerAddress = etc.hexToBytes(makeHexString(this.instance.signer.address))
+    const signerAddress = hexToBytes(makeHexString(this.instance.signer.address))
     const address = this.makeSOCAddress(identifier, signerAddress)
 
     return {

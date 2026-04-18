@@ -1,7 +1,7 @@
 // Forked from: https://github.com/ethersphere/bee
 
 import { makeSpan } from "@fairdatasociety/bmt-js"
-import { etc } from "@noble/secp256k1"
+import { bytesToHex } from "@noble/hashes/utils.js"
 
 import { EthernaSdkError } from "@/classes"
 import { CAC_PAYLOAD_OFFSET } from "@/consts"
@@ -166,7 +166,7 @@ export function wrapBytesWithHelpers<T extends Record<string, unknown> = Record<
     json<J = T>() {
       return JSON.parse(new TextDecoder("utf-8").decode(data)) as J
     },
-    hex: () => etc.bytesToHex(data),
+    hex: () => bytesToHex(data),
   })
 }
 

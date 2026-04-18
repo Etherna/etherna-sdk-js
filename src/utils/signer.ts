@@ -1,5 +1,5 @@
-import { bytesToHex } from "@noble/hashes/utils"
-import { etc, getPublicKey, signAsync, Signature } from "@noble/secp256k1"
+import { bytesToHex } from "@noble/hashes/utils.js"
+import { getPublicKey, hashes, Point, recoverPublicKey, signAsync } from "@noble/secp256k1"
 
 import { signMessage } from "./ethereum"
 import { hexToBytes, keccak256Hash, makeHexString } from "./hex"
@@ -9,17 +9,36 @@ import type { Signer } from "@/types/signer"
 
 const UNCOMPRESSED_RECOVERY_ID = 27
 
+let nobleHashesWiredForNode: Promise<void> | undefined
+
+async function ensureNobleHashesForNodeSigner(): Promise<void> {
+  if (typeof window !== "undefined") {
+    return
+  }
+  nobleHashesWiredForNode ??= (async () => {
+    const [{ hmac }, { sha256 }] = await Promise.all([
+      import("@noble/hashes/hmac.js"),
+      import("@noble/hashes/sha2.js"),
+    ])
+    hashes.sha256 = sha256
+    hashes.hmacSha256 = (key, msg) => hmac(sha256, key, msg)
+    hashes.hmacSha256Async = (key, msg) => Promise.resolve(hmac(sha256, key, msg))
+  })()
+  await nobleHashesWiredForNode
+}
+
 /**
  * Creates a singer object that can be used when the private key is known.
  *
  * @param privateKey The private key
  */
 export function makePrivateKeySigner(privateKey: string): Signer {
-  const pubKey = getPublicKey(privateKey, false)
+  const privBytes = hexToBytes(makeHexString(privateKey))
+  const pubKey = getPublicKey(privBytes, false)
   const address = publicKeyToAddress(pubKey)
 
   return {
-    sign: (digest) => defaultSign(digest, hexToBytes(privateKey)),
+    sign: (digest) => defaultSign(digest, privBytes),
     address,
   }
 }
@@ -53,25 +72,17 @@ export async function defaultSign(
   data: Uint8Array | string,
   privateKey: Uint8Array,
 ): Promise<string> {
-  // fix nodejs crypto
-  if (typeof window === "undefined") {
-    const hmac = await import("@noble/hashes/hmac").then((mod) => mod.hmac)
-    const sha256 = await import("@noble/hashes/sha2").then((mod) => mod.sha256)
-
-    const hmacSha256Sync = (k: Uint8Array, ...m: Uint8Array[]) =>
-      hmac(sha256, k, etc.concatBytes(...m))
-
-    etc.hmacSha256Sync = hmacSha256Sync
-    etc.hmacSha256Async = (k, ...m) => Promise.resolve(hmacSha256Sync(k, ...m))
-  }
+  await ensureNobleHashesForNodeSigner()
 
   const hashedDigest = hashWithEthereumPrefix(
     typeof data === "string" ? new TextEncoder().encode(data) : data,
   )
-  const sig = await signAsync(hashedDigest, privateKey, {})
-  const rawSig = sig.toCompactRawBytes()
-
-  const signature = new Uint8Array([...rawSig, sig.recovery + UNCOMPRESSED_RECOVERY_ID])
+  const sigBytes = await signAsync(hashedDigest, privateKey, { prehash: false, format: "recovered" })
+  const recovery = sigBytes[0] ?? 0
+  const compact = sigBytes.subarray(1, 65)
+  const signature = new Uint8Array(65)
+  signature.set(compact, 0)
+  signature[64] = recovery + UNCOMPRESSED_RECOVERY_ID
 
   return bytesToHex(signature)
 }
@@ -90,11 +101,13 @@ export async function defaultSign(
 export function recoverAddress(signature: Uint8Array, digest: Uint8Array): Uint8Array {
   const recoveryParam = (signature[64] ?? 0) - UNCOMPRESSED_RECOVERY_ID
   const hash = hashWithEthereumPrefix(digest)
-  const r = etc.bytesToNumberBE(signature.slice(0, 32))
-  const s = etc.bytesToNumberBE(signature.slice(32, 64))
-  const sign = new Signature(r, s, recoveryParam)
-  const recPubKey = sign.recoverPublicKey(hash)
-  const address = makeHexString(publicKeyToAddress(recPubKey.toRawBytes(false)))
+  const recSig = new Uint8Array(65)
+  recSig[0] = recoveryParam
+  recSig.set(signature.subarray(0, 32), 1)
+  recSig.set(signature.subarray(32, 64), 33)
+  const pubCompressed = recoverPublicKey(recSig, hash, { prehash: false })
+  const pubKey = Point.fromBytes(pubCompressed).toBytes(false)
+  const address = makeHexString(publicKeyToAddress(pubKey))
 
   return hexToBytes(address)
 }

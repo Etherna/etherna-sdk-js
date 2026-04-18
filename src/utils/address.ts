@@ -1,4 +1,4 @@
-import { etc } from "@noble/secp256k1"
+import { bytesToHex } from "@noble/hashes/utils.js"
 import { createPublicClient, http } from "viem"
 import { mainnet } from "viem/chains"
 import { normalize } from "viem/ens"
@@ -35,7 +35,7 @@ export function toEthAccount(bytes: Uint8Array | string): EthAddress {
   if (typeof bytes === "string") {
     return `0x${bytes.replace(/^0x/, "").toLowerCase()}`
   }
-  return `0x${etc.bytesToHex(bytes)}`
+  return `0x${bytesToHex(bytes)}`
 }
 
 /**

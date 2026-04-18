@@ -1,6 +1,4 @@
-import { etc } from "@noble/secp256k1"
-
-import { fromHexString, makeHexString, toHexString } from "./hex"
+import { fromHexString, hexToBytes, makeHexString, toHexString } from "./hex"
 import { EthernaSdkError } from "@/classes"
 
 import type { BytesReference, Reference } from "@/types/swarm"
@@ -83,7 +81,7 @@ export function bytesReferenceToReference(ref: BytesReference | ChunkAddress): R
  */
 export function makeBytesReference(reference: string): Uint8Array {
   const hexReference = makeHexString(reference)
-  return etc.hexToBytes(hexReference)
+  return hexToBytes(hexReference)
 }
 
 /**
