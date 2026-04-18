@@ -259,9 +259,10 @@ export class VideoManifest extends BaseMantarayManifest {
 
       // after 'prepareForUpload' batchId must be defined
 
-      // WIP: remove batchId since it mutates the final buckets collisions
-      // const batchId = this.batchId as BatchId
-      // this._details.batchId = batchId
+      // remove batchId since it mutates the final buckets collisions
+      if (this._details.batchId) {
+        delete this._details.batchId
+      }
 
       // ensure data is not malformed
       this._preview = VideoPreviewSchema.parse(this._preview)

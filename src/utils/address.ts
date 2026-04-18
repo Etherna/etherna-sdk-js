@@ -64,14 +64,19 @@ export async function fetchAddressFromEns(ensAddress: EnsAddress): Promise<EthAd
  * @returns A Promise that resolves to the ENS address associated with the Ethereum address, or null if not found.
  */
 export async function fetchEnsFromAddress(address: EthAddress): Promise<EnsAddress | null> {
-  const publicClient = createPublicClient({
-    chain: mainnet,
-    transport: http(),
-  })
+  try {
+    const publicClient = createPublicClient({
+      chain: mainnet,
+      transport: http(),
+    })
 
-  const ens = (await publicClient.getEnsName({
-    address,
-  })) as EnsAddress | null
+    const ens = (await publicClient.getEnsName({
+      address,
+    })) as EnsAddress | null
 
-  return ens
+    return ens
+  } catch (error) {
+    console.error(error)
+    return null
+  }
 }

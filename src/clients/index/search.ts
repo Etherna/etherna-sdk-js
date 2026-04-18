@@ -30,7 +30,7 @@ export class IndexSearch implements IIndexSearchInterface {
       const resp = await this.instance.apiRequest.get<PaginatedResult<IndexVideoPreview>>(
         "/search/query2",
         {
-          ...this.instance.prepareAxiosConfig(opts),
+          ...(await this.instance.prepareAxiosConfig(opts)),
           params: { query, page, take },
         },
       )

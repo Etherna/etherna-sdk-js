@@ -20,6 +20,7 @@ export const ErrorCodes = [
   "ABORTED_BY_USER",
   "INVALID_ARGUMENT",
   "INVALID_API_KEY",
+  "RATE_LIMITED",
   "NOT_IMPLEMENTED",
   "UNSUPPORTED_OPERATION",
   "TIMEOUT",
@@ -90,6 +91,8 @@ export function getSdkError(err: unknown): EthernaSdkError {
         return new EthernaSdkError("PERMISSION_DENIED", message, err)
       case 404:
         return new EthernaSdkError("NOT_FOUND", message, err)
+      case 429:
+        return new EthernaSdkError("RATE_LIMITED", message, err)
       default:
         return new EthernaSdkError(code ? "SERVER_ERROR" : "BAD_REQUEST", message, err)
     }

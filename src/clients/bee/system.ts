@@ -26,7 +26,7 @@ export class System {
           await this.instance.autoLoadApiPath()
 
           const resp = await this.instance.apiRequest.get<string>(`/system/byteprice2`, {
-            ...this.instance.prepareAxiosConfig(opts),
+            ...(await this.instance.prepareAxiosConfig(opts)),
           })
 
           if (typeof resp.data !== "string") {
@@ -62,7 +62,7 @@ export class System {
           const resp = await this.instance.apiRequest.get<BatchId>(
             `/system/postagebatchref/${referenceId}`,
             {
-              ...this.instance.prepareAxiosConfig(opts),
+              ...(await this.instance.prepareAxiosConfig(opts)),
             },
           )
 

@@ -137,6 +137,7 @@ export class EpochFeed {
         const payload = chunk.slice(SOC_PAYLOAD_OFFSET)
         return new EpochFeedChunk(index, payload, reference)
       } catch (err) {
+        console.log("Error downloading chunk", err)
         return null
       }
     }

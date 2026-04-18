@@ -14,7 +14,7 @@ export class Tags {
       switch (this.instance.type) {
         case "bee": {
           const resp = await this.instance.request.get<{ tags: Tag[] }>(tagsEndpoint, {
-            ...this.instance.prepareAxiosConfig(options),
+            ...(await this.instance.prepareAxiosConfig(options)),
             params: {
               offset,
               limit,
@@ -39,7 +39,7 @@ export class Tags {
       switch (this.instance.type) {
         case "bee": {
           const resp = await this.instance.request.get<Tag>(`${tagsEndpoint}/${uid}`, {
-            ...this.instance.prepareAxiosConfig(options),
+            ...(await this.instance.prepareAxiosConfig(options)),
           })
           return resp.data
         }
@@ -65,7 +65,7 @@ export class Tags {
               address,
             },
             {
-              ...this.instance.prepareAxiosConfig(options),
+              ...(await this.instance.prepareAxiosConfig(options)),
             },
           )
           return resp.data
@@ -87,7 +87,7 @@ export class Tags {
       switch (this.instance.type) {
         case "bee": {
           return await this.instance.request.delete(`${tagsEndpoint}/${uid}`, {
-            ...this.instance.prepareAxiosConfig(options),
+            ...(await this.instance.prepareAxiosConfig(options)),
           })
         }
         case "etherna": {

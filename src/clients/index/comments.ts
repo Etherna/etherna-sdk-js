@@ -22,13 +22,14 @@ export class IndexComments implements IIndexCommentsInterface {
     try {
       await this.instance.autoLoadApiPath()
       await this.instance.awaitAccessToken()
+      const config = await this.instance.prepareAxiosConfig(opts)
       const resp = await this.instance.apiRequest.put<IndexVideoComment>(
         `/videos/comments/${id}`,
         JSON.stringify(newText),
         {
-          ...this.instance.prepareAxiosConfig(opts),
+          ...config,
           headers: {
-            ...this.instance.prepareAxiosConfig(opts).headers,
+            ...config.headers,
             accept: "text/plain",
             "Content-Type": "application/json",
           },
@@ -52,7 +53,7 @@ export class IndexComments implements IIndexCommentsInterface {
       await this.instance.awaitAccessToken()
 
       await this.instance.apiRequest.delete(`/comments/${id}`, {
-        ...this.instance.prepareAxiosConfig(opts),
+        ...(await this.instance.prepareAxiosConfig(opts)),
       })
 
       return true

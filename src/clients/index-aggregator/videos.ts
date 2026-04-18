@@ -19,14 +19,9 @@ export class IndexAggregatorVideos implements IIndexVideosInterface {
    * @param opts Request options
    * @returns Video id
    */
-  async createVideo(
-    hash: string,
-    opts: IndexAggregatorRequestOptions & {
-      encryptionKey?: string
-    },
-  ) {
+  async createVideo(hash: string, batchId: string, opts: IndexAggregatorRequestOptions) {
     const client = this.instance.getIndexClientByRequest(opts)
-    return await client.videos.createVideo(hash, opts)
+    return await client.videos.createVideo(hash, batchId, opts)
   }
 
   /**

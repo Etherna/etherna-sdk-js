@@ -59,7 +59,9 @@ export class BaseClient {
     }
   }
 
-  prepareAxiosConfig(opts?: RequestOptions): AxiosRequestConfig {
+  async prepareAxiosConfig(opts?: RequestOptions): Promise<AxiosRequestConfig> {
+    await this.awaitAccessToken()
+
     const authHeader = this.accessToken
       ? {
           Authorization: `Bearer ${this.accessToken}`,
@@ -143,38 +145,31 @@ export class BaseClient {
     })
   }
 
+  /**
+   * Wait for the access token to be usable
+   * @returns The access token
+   */
   awaitAccessToken() {
-    if (this.disableAccessTokenTimeout) {
-      return Promise.resolve(this.accessToken)
-    }
-
-    if (this.accessToken && !this.accessTokenExpiresAt) {
-      throw new EthernaSdkError("JWT_MISSING_OR_EXPIRED", "Access token is missing or expired")
-    }
-
     if (
+      !this.disableAccessTokenTimeout &&
       this.accessToken &&
       this.accessTokenExpiresAt &&
-      this.accessTokenExpiresAt * 1000 < Date.now()
+      this.accessTokenExpiresAt * 1000 <= Date.now()
     ) {
-      throw new EthernaSdkError("JWT_MISSING_OR_EXPIRED", "Access token is missing or expired")
+      return Promise.race([
+        new Promise((resolve) => {
+          this.pendingResolvers.push(resolve)
+        }),
+        new Promise((_, reject) => {
+          setTimeout(() => {
+            reject(
+              new EthernaSdkError("TIMEOUT", "Access token not renewed within the timeout limit"),
+            )
+          }, 30_000)
+        }),
+      ])
     }
 
-    if (this.accessToken) {
-      return Promise.resolve(this.accessToken)
-    }
-
-    return Promise.race([
-      new Promise((resolve) => {
-        this.pendingResolvers.push(resolve)
-      }),
-      new Promise((_, reject) => {
-        setTimeout(() => {
-          reject(
-            new EthernaSdkError("TIMEOUT", "Access token not received within the timeout limit"),
-          )
-        }, 30_000)
-      }),
-    ])
+    return Promise.resolve(this.accessToken)
   }
 }

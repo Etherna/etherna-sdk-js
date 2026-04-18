@@ -15,13 +15,11 @@ export class Chunk {
 
   async download(hash: string, options?: RequestOptions) {
     try {
-      if (this.instance.type === "etherna") {
-        await this.instance.awaitAccessToken()
-      }
+
 
       const resp = await this.instance.request.get<ArrayBuffer>(`${chunkEndpoint}/${hash}`, {
         responseType: "arraybuffer",
-        ...this.instance.prepareAxiosConfig(options),
+        ...(await this.instance.prepareAxiosConfig(options)),
       })
 
       return wrapBytesWithHelpers(new Uint8Array(resp.data))
@@ -32,19 +30,17 @@ export class Chunk {
 
   async upload(data: Uint8Array, options: RequestUploadOptions) {
     try {
-      if (this.instance.type === "etherna") {
-        await this.instance.awaitAccessToken()
-      }
+
 
       const resp = await this.instance.request.post<ReferenceResponse>(`${chunkEndpoint}`, data, {
-        ...this.instance.prepareAxiosConfig({
+        ...(await this.instance.prepareAxiosConfig({
           ...options,
           headers: {
             ...options.headers,
             "Content-Type": "application/octet-stream",
             ...extractUploadHeaders(options),
           },
-        }),
+        })),
       })
 
       return {
@@ -116,14 +112,14 @@ export class Chunk {
         "/ev1/chunks/bulk-upload",
         concatenated,
         {
-          ...this.instance.prepareAxiosConfig({
+          ...(await this.instance.prepareAxiosConfig({
             ...options,
             headers: {
               ...options.headers,
               "Content-Type": "application/octet-stream",
               ...extractUploadHeaders(options),
             },
-          }),
+          })),
         },
       )
 

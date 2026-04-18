@@ -20,7 +20,7 @@ export class IndexSystem implements IIndexSystemInterface {
       await this.instance.autoLoadApiPath()
 
       const resp = await this.instance.apiRequest.get<IndexParameters>("/system/parameters", {
-        ...this.instance.prepareAxiosConfig(opts),
+        ...(await this.instance.prepareAxiosConfig(opts)),
       })
 
       return resp.data

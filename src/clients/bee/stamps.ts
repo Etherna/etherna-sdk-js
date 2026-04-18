@@ -106,7 +106,7 @@ export class Stamps {
               params: {
                 label,
               },
-              ...this.instance.prepareAxiosConfig(opts),
+              ...(await this.instance.prepareAxiosConfig(opts)),
             },
           )
           batchId = resp.data.batchID
@@ -123,7 +123,7 @@ export class Stamps {
           }
 
           const resp = await this.instance.apiRequest.post<string>(`/users/current/batches`, null, {
-            ...this.instance.prepareAxiosConfig(opts),
+            ...(await this.instance.prepareAxiosConfig(opts)),
             params: {
               depth,
               amount,
@@ -152,10 +152,10 @@ export class Stamps {
               this.instance.system.fetchPostageBatchRef(referenceId).then((batchId) => {
                 if (batchId) {
                   resolver(batchId)
+                } else {
+                  waitBatchCreation()
                 }
               })
-
-              waitBatchCreation()
             }, 5000)
           }
 
@@ -194,7 +194,7 @@ export class Stamps {
         const postageResp = await this.instance.request.get<PostageBatch>(
           `${stampsEndpoint}/${batchId}`,
           {
-            ...this.instance.prepareAxiosConfig(opts),
+            ...(await this.instance.prepareAxiosConfig(opts)),
           },
         )
         return postageResp.data
@@ -215,14 +215,10 @@ export class Stamps {
     options?: RequestOptions,
   ): Promise<(PostageBatch | EthernaGatewayBatchPreview)[]> {
     try {
-      if (this.instance.type === "etherna") {
-        await this.instance.awaitAccessToken()
-      }
-
       const postageResp = await this.instance.request.get<{ stamps: PostageBatch[] }>(
         stampsEndpoint,
         {
-          ...this.instance.prepareAxiosConfig(options),
+          ...(await this.instance.prepareAxiosConfig(options)),
         },
       )
       return postageResp.data.stamps
@@ -240,14 +236,10 @@ export class Stamps {
     options?: RequestOptions,
   ): Promise<PostageBatchBucketsData> {
     try {
-      if (this.instance.type === "etherna") {
-        await this.instance.awaitAccessToken()
-      }
-
       const postageResp = await this.instance.request.get<PostageBatchBucketsData>(
         `${stampsEndpoint}/${batchId}/buckets`,
         {
-          ...this.instance.prepareAxiosConfig(options),
+          ...(await this.instance.prepareAxiosConfig(options)),
         },
       )
       return postageResp.data
@@ -358,15 +350,11 @@ export class Stamps {
     const initialAmount = options.initialAmount ?? postage.amount
 
     try {
-      if (this.instance.type === "etherna") {
-        await this.instance.awaitAccessToken()
-      }
-
       await this.instance.request.patch<{ batchID: BatchId }>(
         `${stampsEndpoint}/topup/${batchId}/${amount}`,
         null,
         {
-          ...this.instance.prepareAxiosConfig(opts),
+          ...(await this.instance.prepareAxiosConfig(opts)),
         },
       )
 
@@ -390,15 +378,11 @@ export class Stamps {
     const { depth, waitUntilUpdated, ...opts } = options
 
     try {
-      if (this.instance.type === "etherna") {
-        await this.instance.awaitAccessToken()
-      }
-
       await this.instance.request.patch<{ batchID: BatchId }>(
         `${stampsEndpoint}/dilute/${batchId}/${depth}`,
         null,
         {
-          ...this.instance.prepareAxiosConfig(opts),
+          ...(await this.instance.prepareAxiosConfig(opts)),
         },
       )
 
@@ -466,7 +450,7 @@ export class Stamps {
           const resp = await this.instance.apiRequest.get<EthernaGatewayWelcomeStatus>(
             "/users/current/welcome",
             {
-              ...this.instance.prepareAxiosConfig(opts),
+              ...(await this.instance.prepareAxiosConfig(opts)),
             },
           )
           return resp.data.isFreePostageBatchConsumed
@@ -490,7 +474,7 @@ export class Stamps {
         await this.instance.awaitAccessToken()
 
         await this.instance.apiRequest.post(`/users/current/welcome`, null, {
-          ...this.instance.prepareAxiosConfig(opts),
+          ...(await this.instance.prepareAxiosConfig(opts)),
         })
       }
 

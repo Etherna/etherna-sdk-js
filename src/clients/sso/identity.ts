@@ -15,7 +15,7 @@ export class SSOIdentity {
       await this.instance.awaitAccessToken()
 
       const resp = await this.instance.apiRequest.get<Identity>(`/identity`, {
-        ...this.instance.prepareAxiosConfig(),
+        ...(await this.instance.prepareAxiosConfig()),
       })
 
       return resp.data

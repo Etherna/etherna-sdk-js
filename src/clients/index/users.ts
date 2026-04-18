@@ -34,7 +34,7 @@ export class IndexUsers implements IIndexUsersInterface {
       await this.instance.autoLoadApiPath()
 
       const resp = await this.instance.apiRequest.get<PaginatedResult<IndexUser>>("/users/list2", {
-        ...this.instance.prepareAxiosConfig(opts),
+        ...(await this.instance.prepareAxiosConfig(opts)),
         params: { page, take },
       })
 
@@ -54,7 +54,7 @@ export class IndexUsers implements IIndexUsersInterface {
       await this.instance.autoLoadApiPath()
 
       const resp = await this.instance.apiRequest.get<IndexUser>(`/users/${address}`, {
-        ...this.instance.prepareAxiosConfig(opts),
+        ...(await this.instance.prepareAxiosConfig(opts)),
       })
 
       return resp.data
@@ -77,7 +77,7 @@ export class IndexUsers implements IIndexUsersInterface {
       const resp = await this.instance.apiRequest.get<PaginatedResult<IndexVideo>>(
         `/users/${address}/videos3`,
         {
-          ...this.instance.prepareAxiosConfig(opts),
+          ...(await this.instance.prepareAxiosConfig(opts)),
           params: { page, take },
         },
       )
@@ -99,7 +99,7 @@ export class IndexUsers implements IIndexUsersInterface {
       await this.instance.awaitAccessToken()
 
       const resp = await this.instance.apiRequest.get<IndexCurrentUser>(`/users/current`, {
-        ...this.instance.prepareAxiosConfig(opts),
+        ...(await this.instance.prepareAxiosConfig(opts)),
       })
 
       return resp.data

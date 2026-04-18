@@ -30,7 +30,7 @@ export class Offers {
           const resp = await this.instance.apiRequest.get<EthAddress[]>(
             `/resources/${reference}/offers`,
             {
-              ...this.instance.prepareAxiosConfig(opts),
+              ...(await this.instance.prepareAxiosConfig(opts)),
             },
           )
 
@@ -63,7 +63,7 @@ export class Offers {
           const resp = await this.instance.apiRequest.get<Reference[]>(
             `/users/current/offeredResources`,
             {
-              ...this.instance.prepareAxiosConfig(opts),
+              ...(await this.instance.prepareAxiosConfig(opts)),
             },
           )
 
@@ -98,7 +98,7 @@ export class Offers {
             `/resources/areoffered`,
             references,
             {
-              ...this.instance.prepareAxiosConfig(opts),
+              ...(await this.instance.prepareAxiosConfig(opts)),
             },
           )
 
@@ -131,7 +131,7 @@ export class Offers {
           await this.instance.awaitAccessToken()
 
           await this.instance.apiRequest.post(`/resources/${reference}/offers`, undefined, {
-            ...this.instance.prepareAxiosConfig(opts),
+            ...(await this.instance.prepareAxiosConfig(opts)),
           })
 
           return true
@@ -163,7 +163,7 @@ export class Offers {
           await this.instance.awaitAccessToken()
 
           await this.instance.apiRequest.delete(`/resources/${reference}/offers`, {
-            ...this.instance.prepareAxiosConfig(opts),
+            ...(await this.instance.prepareAxiosConfig(opts)),
           })
           return true
         }

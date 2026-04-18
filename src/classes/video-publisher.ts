@@ -135,9 +135,13 @@ export class VideoPublisher {
 
             return { id: source.indexVideoId }
           } else {
-            const videoId = await indexClient.videos.createVideo(this.video.reference, {
-              ...options,
-            })
+            const videoId = await indexClient.videos.createVideo(
+              this.video.reference,
+              this.batchId,
+              {
+                ...options,
+              },
+            )
 
             return { id: videoId }
           }

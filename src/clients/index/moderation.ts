@@ -22,7 +22,7 @@ export class IndexModeration implements IIndexModerationInterface {
       await this.instance.awaitAccessToken()
 
       await this.instance.apiRequest.delete(`/moderation/comments/${id}`, {
-        ...this.instance.prepareAxiosConfig(opts),
+        ...(await this.instance.prepareAxiosConfig(opts)),
       })
 
       return true
@@ -42,7 +42,7 @@ export class IndexModeration implements IIndexModerationInterface {
       await this.instance.awaitAccessToken()
 
       await this.instance.apiRequest.delete(`/moderation/videos/${id}`, {
-        ...this.instance.prepareAxiosConfig(opts),
+        ...(await this.instance.prepareAxiosConfig(opts)),
       })
 
       return true

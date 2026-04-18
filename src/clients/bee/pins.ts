@@ -2,12 +2,10 @@
 
 import { AxiosError } from "axios"
 
-import { EthernaSdkError, throwSdkError } from "@/classes"
+import { throwSdkError } from "@/classes"
 
 import type { BeeClient } from "."
-import type { EthernaGatewayPin } from "./types"
 import type { RequestOptions } from "@/types/clients"
-import type { EthAddress } from "@/types/eth"
 import type { Reference } from "@/types/swarm"
 
 const pinsEndpoint = "/pins"
@@ -17,15 +15,14 @@ export class Pins {
 
   async isPinned(reference: string, options?: RequestOptions) {
     try {
-      if (this.instance.type === "etherna") {
-        await this.instance.awaitAccessToken()
-      }
+      const resp = await this.instance.request.get<{ reference: string }>(
+        `${pinsEndpoint}/${reference}`,
+        {
+          ...(await this.instance.prepareAxiosConfig(options)),
+        },
+      )
 
-      const resp = await this.instance.request.get<string>(`${pinsEndpoint}/${reference}`, {
-        ...this.instance.prepareAxiosConfig(options),
-      })
-
-      return resp.data === reference
+      return resp.data.reference === reference
     } catch (error) {
       if (error instanceof AxiosError && error.response?.status === 404) {
         return false
@@ -37,12 +34,8 @@ export class Pins {
 
   async download(options?: RequestOptions) {
     try {
-      if (this.instance.type === "etherna") {
-        await this.instance.awaitAccessToken()
-      }
-
       const resp = await this.instance.request.get<{ references: Reference[] }>(`${pinsEndpoint}`, {
-        ...this.instance.prepareAxiosConfig(options),
+        ...(await this.instance.prepareAxiosConfig(options)),
       })
       return resp.data
     } catch (error) {
@@ -52,12 +45,8 @@ export class Pins {
 
   async pin(reference: string, options?: RequestOptions) {
     try {
-      if (this.instance.type === "etherna") {
-        await this.instance.awaitAccessToken()
-      }
-
       return await this.instance.request.post(`${pinsEndpoint}/${reference}`, null, {
-        ...this.instance.prepareAxiosConfig(options),
+        ...(await this.instance.prepareAxiosConfig(options)),
       })
     } catch (error) {
       throwSdkError(error)
@@ -66,12 +55,8 @@ export class Pins {
 
   async unpin(reference: string, options?: RequestOptions) {
     try {
-      if (this.instance.type === "etherna") {
-        await this.instance.awaitAccessToken()
-      }
-
       return await this.instance.request.delete(`${pinsEndpoint}/${reference}`, {
-        ...this.instance.prepareAxiosConfig(options),
+        ...(await this.instance.prepareAxiosConfig(options)),
       })
     } catch (error) {
       throwSdkError(error)
@@ -91,12 +76,12 @@ export class Pins {
     try {
       const controller = new AbortController()
       await this.instance.request.get(pinsEndpoint, {
-        ...this.instance.prepareAxiosConfig({
+        ...(await this.instance.prepareAxiosConfig({
           signal: controller.signal,
           headers: {
             Range: "bytes=0-1",
           },
-        }),
+        })),
         onDownloadProgress: () => {
           controller.abort()
         },

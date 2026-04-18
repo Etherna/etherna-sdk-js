@@ -106,7 +106,7 @@ export class Feed {
                   type: feed.type,
                   at: at.getTime(),
                 },
-                ...instance.prepareAxiosConfig(options),
+                ...(await instance.prepareAxiosConfig(options)),
               },
             )
 
@@ -187,9 +187,7 @@ export class Feed {
         return epochRoot.reference
       }
 
-      if (this.instance.type === "etherna") {
-        await this.instance.awaitAccessToken()
-      }
+
 
       const response = await this.instance.request.post<ReferenceResponse>(
         `${feedEndpoint}/${feed.owner}/${feed.topic}`,
@@ -198,13 +196,13 @@ export class Feed {
           params: {
             type: feed.type,
           },
-          ...this.instance.prepareAxiosConfig({
+          ...(await this.instance.prepareAxiosConfig({
             ...options,
             headers: {
               ...options?.headers,
               ...extractUploadHeaders(options),
             },
-          }),
+          })),
         },
       )
 
@@ -297,7 +295,7 @@ export class Feed {
         params: {
           type: feed.type,
         },
-        ...this.instance.prepareAxiosConfig(),
+        ...(await this.instance.prepareAxiosConfig()),
       },
     )
 

@@ -16,7 +16,7 @@ export class CreditUser {
       await this.instance.awaitAccessToken()
 
       const resp = await this.instance.apiRequest.get<CreditBalance>(`/user/credit`, {
-        ...this.instance.prepareAxiosConfig(opts),
+        ...(await this.instance.prepareAxiosConfig(opts)),
       })
 
       return resp.data
@@ -34,7 +34,7 @@ export class CreditUser {
       await this.instance.awaitAccessToken()
 
       const resp = await this.instance.apiRequest.get<CreditLog[]>(`/user/logs`, {
-        ...this.instance.prepareAxiosConfig(opts),
+        ...(await this.instance.prepareAxiosConfig(opts)),
         params: { page, take },
       })
 

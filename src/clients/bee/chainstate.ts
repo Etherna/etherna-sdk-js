@@ -18,12 +18,8 @@ export class ChainState {
     }
 
     try {
-      if (this.instance.type === "etherna") {
-        await this.instance.awaitAccessToken()
-      }
-
       const resp = await this.instance.request.get(chainstateEndpoint, {
-        ...this.instance.prepareAxiosConfig(options),
+        ...(await this.instance.prepareAxiosConfig(options)),
       })
       let price = resp.data.currentPrice ?? FALLBACK_PRICE
       if (price === "0") {

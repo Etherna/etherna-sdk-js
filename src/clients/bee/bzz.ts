@@ -36,9 +36,7 @@ export class Bzz {
 
   async downloadPath(hash: string, path = "", options?: FileDownloadOptions) {
     try {
-      if (this.instance.type === "etherna") {
-        await this.instance.awaitAccessToken()
-      }
+
 
       const abortController = new AbortController()
       const signal = abortController.signal
@@ -50,10 +48,10 @@ export class Bzz {
         `${bzzEndpoint}/${hash}/${path.replace(/^\//, "")}`,
         {
           responseType: "arraybuffer",
-          ...this.instance.prepareAxiosConfig({
+          ...(await this.instance.prepareAxiosConfig({
             ...options,
             signal,
-          }),
+          })),
           onDownloadProgress: (e) => {
             if (options?.onDownloadProgress) {
               const progress = Math.round((e.progress ?? 0) * 100)
@@ -79,18 +77,16 @@ export class Bzz {
 
   async upload(data: Uint8Array | File | string, options: FileUploadOptions) {
     try {
-      if (this.instance.type === "etherna") {
-        await this.instance.awaitAccessToken()
-      }
+
 
       const resp = await this.instance.request.post<ReferenceResponse>(`${bzzEndpoint}`, data, {
-        ...this.instance.prepareAxiosConfig({
+        ...(await this.instance.prepareAxiosConfig({
           ...options,
           headers: {
             ...options.headers,
             ...extractFileUploadHeaders(options),
           },
-        }),
+        })),
         params: {
           name: options.filename,
         },
@@ -113,9 +109,7 @@ export class Bzz {
 
   async head(path: string, options?: FileDownloadOptions) {
     try {
-      if (this.instance.type === "etherna") {
-        await this.instance.awaitAccessToken()
-      }
+
 
       const abortController = new AbortController()
       const signal = abortController.signal
@@ -124,10 +118,10 @@ export class Bzz {
       }
 
       const resp = await this.instance.request.head(`${bzzEndpoint}/${path.replace(/^\//, "")}`, {
-        ...this.instance.prepareAxiosConfig({
+        ...(await this.instance.prepareAxiosConfig({
           ...options,
           signal,
-        }),
+        })),
       })
 
       if (resp.status === 200) {

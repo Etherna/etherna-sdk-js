@@ -27,7 +27,7 @@ export class User {
           const resp = await this.instance.apiRequest.get<EthernaGatewayCurrentUser>(
             `/users/current`,
             {
-              ...this.instance.prepareAxiosConfig(opts),
+              ...(await this.instance.prepareAxiosConfig(opts)),
             },
           )
 

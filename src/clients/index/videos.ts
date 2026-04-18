@@ -13,12 +13,7 @@ import type {
 import type { RequestOptions } from "@/types/clients"
 
 export interface IIndexVideosInterface {
-  createVideo(
-    hash: string,
-    opts?: RequestOptions & {
-      encryptionKey?: string
-    },
-  ): Promise<string>
+  createVideo(hash: string, batchId: string, opts?: RequestOptions): Promise<string>
   fetchVideoFromId(id: string, opts?: RequestOptions): Promise<IndexVideo>
   fetchVideoFromHash(hash: string, opts?: RequestOptions): Promise<IndexVideo>
   fetchLatestVideos(
@@ -64,25 +59,19 @@ export class IndexVideos implements IIndexVideosInterface {
    * @param opts Request options
    * @returns Video id
    */
-  async createVideo(
-    hash: string,
-    opts?: RequestOptions & {
-      encryptionKey?: string
-    },
-  ) {
+  async createVideo(hash: string, batchId: string, opts?: RequestOptions) {
     try {
       await this.instance.autoLoadApiPath()
       await this.instance.awaitAccessToken()
 
       const resp = await this.instance.apiRequest.post<string>(
-        `/videos`,
+        `/videos/create2`,
         {
-          manifestHash: hash,
-          encryptionKey: opts?.encryptionKey,
-          encryptionType: opts?.encryptionKey ? "AES256" : "Plain",
+          manifestReference: hash,
+          batchId,
         },
         {
-          ...this.instance.prepareAxiosConfig(opts),
+          ...(await this.instance.prepareAxiosConfig(opts)),
         },
       )
 
@@ -103,7 +92,7 @@ export class IndexVideos implements IIndexVideosInterface {
     try {
       await this.instance.autoLoadApiPath()
       const resp = await this.instance.apiRequest.get<IndexVideo>(`/videos/${id}/find2`, {
-        ...this.instance.prepareAxiosConfig(opts),
+        ...(await this.instance.prepareAxiosConfig(opts)),
       })
 
       return resp.data
@@ -123,7 +112,7 @@ export class IndexVideos implements IIndexVideosInterface {
     try {
       await this.instance.autoLoadApiPath()
       const resp = await this.instance.apiRequest.get<IndexVideo>(`/videos/manifest2/${hash}`, {
-        ...this.instance.prepareAxiosConfig(opts),
+        ...(await this.instance.prepareAxiosConfig(opts)),
       })
 
       return resp.data
@@ -146,7 +135,7 @@ export class IndexVideos implements IIndexVideosInterface {
       const resp = await this.instance.apiRequest.get<PaginatedResult<IndexVideoPreview>>(
         `/videos/latest3`,
         {
-          ...this.instance.prepareAxiosConfig(opts),
+          ...(await this.instance.prepareAxiosConfig(opts)),
           params: { page, take },
         },
       )
@@ -170,7 +159,7 @@ export class IndexVideos implements IIndexVideosInterface {
       const resp = await this.instance.apiRequest.get<IndexVideoValidation[]>(
         `/videos/${id}/validation2`,
         {
-          ...this.instance.prepareAxiosConfig(opts),
+          ...(await this.instance.prepareAxiosConfig(opts)),
         },
       )
 
@@ -193,7 +182,7 @@ export class IndexVideos implements IIndexVideosInterface {
       const resp = await this.instance.apiRequest.get<IndexVideoValidation>(
         `/videos/manifest/${hash}/validation`,
         {
-          ...this.instance.prepareAxiosConfig(opts),
+          ...(await this.instance.prepareAxiosConfig(opts)),
         },
       )
 
@@ -217,7 +206,7 @@ export class IndexVideos implements IIndexVideosInterface {
         `/videos/manifest/bulkvalidation`,
         hashes,
         {
-          ...this.instance.prepareAxiosConfig(opts),
+          ...(await this.instance.prepareAxiosConfig(opts)),
         },
       )
 
@@ -241,7 +230,7 @@ export class IndexVideos implements IIndexVideosInterface {
         `/videos/bulkvalidation2`,
         ids,
         {
-          ...this.instance.prepareAxiosConfig(opts),
+          ...(await this.instance.prepareAxiosConfig(opts)),
         },
       )
 
@@ -268,7 +257,7 @@ export class IndexVideos implements IIndexVideosInterface {
         `/videos/${id}/update2`,
         null,
         {
-          ...this.instance.prepareAxiosConfig(opts),
+          ...(await this.instance.prepareAxiosConfig(opts)),
           params: { newHash },
         },
       )
@@ -292,7 +281,7 @@ export class IndexVideos implements IIndexVideosInterface {
       await this.instance.awaitAccessToken()
 
       await this.instance.apiRequest.delete(`/videos/${id}`, {
-        ...this.instance.prepareAxiosConfig(opts),
+        ...(await this.instance.prepareAxiosConfig(opts)),
       })
 
       return true
@@ -316,7 +305,7 @@ export class IndexVideos implements IIndexVideosInterface {
       const resp = await this.instance.apiRequest.get<PaginatedResult<IndexVideoComment>>(
         `/videos/${id}/comments3`,
         {
-          ...this.instance.prepareAxiosConfig(opts),
+          ...(await this.instance.prepareAxiosConfig(opts)),
           params: { page, take },
         },
       )
@@ -340,13 +329,14 @@ export class IndexVideos implements IIndexVideosInterface {
       await this.instance.autoLoadApiPath()
       await this.instance.awaitAccessToken()
 
+      const config = await this.instance.prepareAxiosConfig(opts)
       const resp = await this.instance.apiRequest.post<IndexVideoComment>(
         `/videos/${id}/comments2`,
         JSON.stringify(message),
         {
-          ...this.instance.prepareAxiosConfig(opts),
+          ...config,
           headers: {
-            ...this.instance.prepareAxiosConfig(opts).headers,
+            ...config.headers,
             accept: "text/plain",
             "Content-Type": "application/json",
           },
@@ -375,7 +365,7 @@ export class IndexVideos implements IIndexVideosInterface {
         `/videos/${id}/votes`,
         null,
         {
-          ...this.instance.prepareAxiosConfig(opts),
+          ...(await this.instance.prepareAxiosConfig(opts)),
           params: { value: vote },
         },
       )
@@ -407,7 +397,7 @@ export class IndexVideos implements IIndexVideosInterface {
         `/videos/${id}/manifest/${manifestReference}/reports`,
         null,
         {
-          ...this.instance.prepareAxiosConfig(opts),
+          ...(await this.instance.prepareAxiosConfig(opts)),
           params: { description },
         },
       )

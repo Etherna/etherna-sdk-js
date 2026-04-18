@@ -17,12 +17,10 @@ export class Bytes {
 
   async download(hash: string, options?: RequestDownloadOptions) {
     try {
-      if (this.instance.type === "etherna") {
-        await this.instance.awaitAccessToken()
-      }
+
       const resp = await this.instance.request.get<ArrayBuffer>(`${bytesEndpoint}/${hash}`, {
         responseType: "arraybuffer",
-        ...this.instance.prepareAxiosConfig(options),
+        ...(await this.instance.prepareAxiosConfig(options)),
         onDownloadProgress: (e) => {
           if (options?.onDownloadProgress) {
             const progress = Math.round((e.progress ?? 0) * 100)
@@ -39,18 +37,16 @@ export class Bytes {
 
   async upload(data: Uint8Array, options: RequestUploadOptions) {
     try {
-      if (this.instance.type === "etherna") {
-        await this.instance.awaitAccessToken()
-      }
+
       const resp = await this.instance.request.post<ReferenceResponse>(`${bytesEndpoint}`, data, {
-        ...this.instance.prepareAxiosConfig({
+        ...(await this.instance.prepareAxiosConfig({
           ...options,
           headers: {
             "Content-Type": "application/octet-stream",
             ...options.headers,
             ...extractFileUploadHeaders(options),
           },
-        }),
+        })),
         onUploadProgress: (e) => {
           if (options?.onUploadProgress) {
             const progress = Math.round((e.progress ?? 0) * 100)
