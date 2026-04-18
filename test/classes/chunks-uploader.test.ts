@@ -52,7 +52,7 @@ describe("ChunksUploader", () => {
         0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x77, 0x6f, 0x72, 0x6c, 0x64, 0x21,
       ]),
     )
-    void expect(async () => await uploader.drain()).rejects.toThrowError(
+    void expect(async () => await uploader.drain()).rejects.toThrow(
       "Call .resume() before .drain()",
     )
   })

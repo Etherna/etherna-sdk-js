@@ -39,8 +39,7 @@ function parsePixels(pixels: Uint8ClampedArray, width: number, height: number) {
   const pngString = generatePng(width, height, pixelsString)
   const dataURL =
     typeof Buffer !== "undefined"
-      ? // oxlint-disable-next-line typescript/no-unsafe-call typescript/no-unsafe-member-access
-        (Buffer.from(getPngArray(pngString)).toString("base64") as string)
+      ? Buffer.from(getPngArray(pngString)).toString("base64")
       : window.btoa(pngString)
   return "data:image/png;base64," + dataURL
 }

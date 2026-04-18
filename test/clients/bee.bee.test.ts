@@ -188,13 +188,13 @@ describe("bee client offers", () => {
   })
 
   it.concurrent("should fetch all resource offers", () => {
-    void expect(
-      async () => await bee.offers.downloadOffers(offeredReference1),
-    ).rejects.toThrowError("This operation is not supported by Bee client")
+    void expect(async () => await bee.offers.downloadOffers(offeredReference1)).rejects.toThrow(
+      "This operation is not supported by Bee client",
+    )
   })
 
   it.concurrent("should fetch all resources offered by current user", () => {
-    void expect(async () => await bee.offers.downloadOfferedResources()).rejects.toThrowError(
+    void expect(async () => await bee.offers.downloadOfferedResources()).rejects.toThrow(
       "This operation is not supported by Bee client",
     )
   })
@@ -202,17 +202,17 @@ describe("bee client offers", () => {
   it.concurrent("should fetch multiple resources offers", () => {
     void expect(
       async () => await bee.offers.batchAreOffered([offeredReference1, offeredReference2]),
-    ).rejects.toThrowError("This operation is not supported by Bee client")
+    ).rejects.toThrow("This operation is not supported by Bee client")
   })
 
   it.concurrent("should create an offer", () => {
-    void expect(async () => await bee.offers.offer(offeredReference1)).rejects.toThrowError(
+    void expect(async () => await bee.offers.offer(offeredReference1)).rejects.toThrow(
       "This operation is not supported by Bee client",
     )
   })
 
   it.concurrent("should cancel an offer", () => {
-    void expect(async () => await bee.offers.cancelOffer(offeredReference1)).rejects.toThrowError(
+    void expect(async () => await bee.offers.cancelOffer(offeredReference1)).rejects.toThrow(
       "This operation is not supported by Bee client",
     )
   })
@@ -367,7 +367,7 @@ describe("bee client stamps", { timeout: 1000 * 60 * 5 }, () => {
 
 describe("bee client system", () => {
   it.concurrent("should fetch current byte price", () => {
-    void expect(async () => await bee.system.fetchCurrentBytePrice()).rejects.toThrowError(
+    void expect(async () => await bee.system.fetchCurrentBytePrice()).rejects.toThrow(
       "This operation is not supported by Bee client",
     )
   })
@@ -403,7 +403,7 @@ describe("bee client tags", () => {
 
 describe("bee client user", () => {
   it.concurrent("should fetch current user", () => {
-    void expect(async () => await bee.user.downloadCurrentUser()).rejects.toThrowError(
+    void expect(async () => await bee.user.downloadCurrentUser()).rejects.toThrow(
       "This operation is not supported by Bee client",
     )
   })

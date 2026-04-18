@@ -163,7 +163,7 @@ describe("playlist manifest write", () => {
 
   it("should throw when setting preview name on a public playlist", () => {
     const playlist = new PlaylistManifest({ id: playlistId, owner }, { beeClient })
-    expect(() => (playlist.previewName = "My Playlist")).toThrowError(
+    expect(() => (playlist.previewName = "My Playlist")).toThrow(
       "Only private and protected playlists can have a preview name",
     )
   })
