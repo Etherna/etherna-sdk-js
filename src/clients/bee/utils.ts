@@ -1,10 +1,10 @@
 // Forked from: https://github.com/ethersphere/bee
 
-import { makeSpan } from "@fairdatasociety/bmt-js"
 import { bytesToHex } from "@noble/hashes/utils.js"
 
 import { EthernaSdkError } from "@/classes"
 import { CAC_PAYLOAD_OFFSET } from "@/consts"
+import { makeSpan } from "@/utils"
 import { bmtHash } from "@/utils/bmt"
 import { serializeBytes } from "@/utils/bytes"
 

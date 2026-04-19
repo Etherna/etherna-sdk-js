@@ -2,7 +2,7 @@ import { fromHexString, hexToBytes, makeHexString, toHexString } from "./hex"
 import { EthernaSdkError } from "@/classes"
 
 import type { BytesReference, Reference } from "@/types/swarm"
-import type { ChunkAddress } from "@fairdatasociety/bmt-js"
+import type { ChunkAddress } from "@/utils/bmt"
 
 /**
  * Check if the given string is a valid swarm reference

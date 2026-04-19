@@ -1,12 +1,10 @@
-import { makeChunkedFile } from "@fairdatasociety/bmt-js"
-
 import { EthernaSdkError, getSdkError } from "./sdk-error"
 import { EmptyReference } from "@/consts"
-import { bytesReferenceToReference } from "@/utils"
+import { bytesReferenceToReference, makeChunkedFile } from "@/utils"
 
 import type { BeeClient, RequestUploadOptions } from "@/clients"
 import type { BytesReference, Reference } from "@/types/swarm"
-import type { Chunk, ChunkedFile } from "@fairdatasociety/bmt-js"
+import type { Chunk, ChunkedFile } from "@/utils/bmt"
 
 export interface ChunksUploaderOptions {
   beeClient: BeeClient

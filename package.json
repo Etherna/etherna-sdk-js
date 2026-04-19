@@ -1,6 +1,6 @@
 {
   "name": "@etherna/sdk-js",
-  "version": "2.0.5",
+  "version": "2.0.4",
   "description": "Etherna SDKs for operations on the network",
   "author": "Mattia Dalzocchio",
   "license": "LGPL-3.0-or-later",
@@ -48,7 +48,6 @@
     "zod": ">=4.1"
   },
   "dependencies": {
-    "@fairdatasociety/bmt-js": "2.1.0",
     "@ffmpeg.wasm/core-mt": "0.13.2",
     "@ffmpeg.wasm/main": "0.13.1",
     "@ffmpeg/ffmpeg": "0.12.15",
@@ -85,5 +84,5 @@
       "ignoreMissing": []
     }
   },
-  "packageManager": "pnpm@10.9.0+sha512.0486e394640d3c1fb3c9d43d49cf92879ff74f8516959c235308f5a8f62e2e19528a65cdc2a3058f587cde71eba3d5b56327c8c33a97e4c4051ca48a10ca2d5f"
+  "packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319"
 }

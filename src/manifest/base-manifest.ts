@@ -1,5 +1,3 @@
-import { makeChunkedFile } from "@fairdatasociety/bmt-js"
-
 import {
   ChunksUploader,
   EthernaSdkError,
@@ -18,6 +16,7 @@ import {
   STAMPS_DEPTH_MIN,
   ZeroHashReference,
 } from "@/consts"
+import { makeChunkedFile } from "@/utils"
 import {
   bytesReferenceToReference,
   encodePath,
@@ -33,7 +32,7 @@ import type { BaseProcessor } from "@/processors"
 import type { ImageProcessor } from "@/processors/image-processor"
 import type { VideoProcessor } from "@/processors/video-processor"
 import type { BatchId, BytesReference, Reference } from "@/types/swarm"
-import type { ChunkedFile } from "@fairdatasociety/bmt-js"
+import type { ChunkedFile } from "@/utils/bmt"
 
 export interface BaseManifestOptions {
   beeClient: BeeClient

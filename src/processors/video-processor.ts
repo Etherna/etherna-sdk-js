@@ -1,8 +1,7 @@
-import { makeChunkedFile } from "@fairdatasociety/bmt-js"
-
 import { BaseProcessor } from "./base-processor"
 import { ImageProcessor } from "./image-processor"
 import { EthernaSdkError } from "@/classes"
+import { makeChunkedFile } from "@/utils"
 import { bytesReferenceToReference, fileToBuffer, getHlsBitrate } from "@/utils"
 import { loadNodeFFmpeg } from "@/utils/ffmpeg"
 

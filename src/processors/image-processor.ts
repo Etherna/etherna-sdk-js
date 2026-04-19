@@ -1,7 +1,6 @@
-import { makeChunkedFile } from "@fairdatasociety/bmt-js"
-
 import { BaseProcessor } from "./base-processor"
 import { ImageTypeSchema } from "@/schemas/image-schema"
+import { makeChunkedFile } from "@/utils"
 import {
   bufferToDataURL,
   fileToBuffer,

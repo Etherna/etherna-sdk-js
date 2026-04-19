@@ -1,5 +1,3 @@
-import { makeChunkedFile } from "@fairdatasociety/bmt-js"
-
 import { bytesEqual } from "./bytes"
 import { keccak256Hash, toHexString } from "./hex"
 import { referenceToBytesReference } from "./reference"
@@ -9,6 +7,7 @@ import {
   MantarayRootPath,
   MantarayWebsiteIndexDocumentPathKey,
 } from "@/consts"
+import { makeChunkedFile } from "@/utils"
 
 import type { MantarayFork, MarshalVersion } from "@/classes"
 import type { BeeClient } from "@/clients"

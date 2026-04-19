@@ -6,7 +6,7 @@ import { EthernaSdkError, throwSdkError } from "@/classes"
 import type { ReferenceResponse, RequestUploadOptions } from "./types"
 import type { BeeClient } from "."
 import type { RequestOptions } from "@/types/clients"
-import type { Chunk as SwarmChunk } from "@fairdatasociety/bmt-js"
+import type { Chunk as SwarmChunk } from "@/utils/bmt"
 
 const chunkEndpoint = "/chunks"
 

@@ -1,8 +1,8 @@
-import { makeChunkedFile } from "@fairdatasociety/bmt-js"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import { ChunksUploader } from "@/classes"
 import { BeeClient } from "@/clients"
+import { makeChunkedFile } from "@/utils/bmt"
 
 import type { BatchId } from "@/types"
 

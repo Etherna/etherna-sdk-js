@@ -3,7 +3,7 @@ import { bytesReferenceToReference } from "@/utils"
 
 import type { BeeClient, RequestUploadOptions } from "@/clients"
 import type { BatchId, Reference } from "@/types/swarm"
-import type { ChunkedFile } from "@fairdatasociety/bmt-js"
+import type { ChunkedFile } from "@/utils/bmt"
 
 export interface BaseProcessorUploadOptions extends Omit<RequestUploadOptions, "batchId"> {
   beeClient: BeeClient
