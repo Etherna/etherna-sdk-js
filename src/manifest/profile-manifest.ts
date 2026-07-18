@@ -236,6 +236,10 @@ export class ProfileManifest extends BaseMantarayManifest {
 
       return this.serialized
     } catch (error) {
+      if (error instanceof EthernaSdkError && error.code === "NOT_FOUND") {
+        return this.serialized
+      }
+
       throwSdkError(error)
     }
   }

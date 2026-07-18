@@ -137,7 +137,12 @@ export class EpochFeed {
         const payload = chunk.slice(SOC_PAYLOAD_OFFSET)
         return new EpochFeedChunk(index, payload, reference)
       } catch (err) {
-        console.log("Error downloading chunk", err)
+        if (err instanceof EthernaSdkError && err.code === "NOT_FOUND") {
+          return null
+        }
+
+        console.error("Error downloading chunk", err)
+
         return null
       }
     }
