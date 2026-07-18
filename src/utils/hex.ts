@@ -1,18 +1,33 @@
-import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js"
-import { keccak256 } from "js-sha3"
+import { keccak_256 as keccak256 } from "@noble/hashes/sha3.js"
+import { bytesToHex, hexToBytes, type TArg } from "@noble/hashes/utils.js"
 
 import type { EthAddress } from "@/types/eth"
 import type { Bytes } from "@/types/utils"
-import type { Message } from "js-sha3"
 
 export { bytesToHex, hexToBytes }
 
-export function keccak256Hash(...messages: Message[]): Bytes<32> {
-  const hasher = keccak256.create()
+export type Keccak256Message = string | number[] | ArrayBuffer | Uint8Array
 
-  messages.forEach((bytes) => hasher.update(bytes))
+function keccak256MessageToBytes(message: Keccak256Message): TArg<Uint8Array> {
+  if (typeof message === "string") {
+    const utf8 = new TextEncoder()
+    return utf8.encode(message)
+  }
+  if (message instanceof ArrayBuffer) {
+    return new Uint8Array(message)
+  }
+  if (Array.isArray(message)) {
+    return Uint8Array.from(message)
+  }
+  return message
+}
 
-  return Uint8Array.from(hasher.digest()) as Bytes<32>
+export function keccak256Hash(...messages: Keccak256Message[]): Bytes<32> {
+  const h = keccak256.create()
+  for (const m of messages) {
+    h.update(keccak256MessageToBytes(m))
+  }
+  return h.digest() as Bytes<32>
 }
 
 export function fromHexString(hexString: string): Uint8Array {

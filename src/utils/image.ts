@@ -1,5 +1,8 @@
+import imageSize from "image-size"
+
 import { bufferToDataURL } from "./buffer"
 import { loadNodeFFmpeg } from "./ffmpeg"
+import { resizeImageWithJimp } from "./image-jimp"
 import { EthernaSdkError } from "@/classes"
 
 import type { ImageType } from "../schemas/image-schema"
@@ -52,12 +55,24 @@ export async function resizeImage(
 
     throw new EthernaSdkError("SERVER_ERROR", "Cannot create blob from canvas")
   } else {
-    const ffmpeg = await loadNodeFFmpeg(imageBlob, "image")
-    await ffmpeg.run(`-i`, "image", `-vf`, `"scale=${toWidth}:-1"`, `output`)
-    const data = ffmpeg.fs.readFile("output")
-    const type = getImageTypeFromData(data)
+    try {
+      return await resizeImageWithJimp(imageBlob, toWidth, quality)
+    } catch {
+      const ffmpeg = await loadNodeFFmpeg(imageBlob, "image")
+      // Cap decode resolution before targeting output width — large sources OOM ffmpeg.wasm before scale applies.
+      const maxDecodeSide = 2048
+      await ffmpeg.run(
+        "-i",
+        "image",
+        "-vf",
+        `scale=${maxDecodeSide}:${maxDecodeSide}:force_original_aspect_ratio=decrease,scale=${toWidth}:-2`,
+        "output",
+      )
+      const data = ffmpeg.fs.readFile("output")
+      const type = getImageTypeFromData(data)
 
-    return new Blob([data as BlobPart], { type })
+      return new Blob([data as BlobPart], { type })
+    }
   }
 }
 
@@ -110,31 +125,32 @@ export async function getImageMeta(data: Uint8Array | ArrayBuffer) {
         .catch(reject)
     })
   } else {
-    let width = 0
-    let height = 0
+    const bytes =
+      data instanceof ArrayBuffer
+        ? new Uint8Array(data)
+        : new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
 
-    const ffmpeg = await loadNodeFFmpeg(data, "image")
-    ffmpeg.setLogging(true)
-    ffmpeg.setLogger((_, message) => {
-      if (!message || typeof message !== "string") return
-      // check resolution
-      const parsedSize = message.match(/\d{3,}x\d{3,}/)?.[0]
+    let dimensions: { width?: number; height?: number }
 
-      if (parsedSize) {
-        const [w, h] = parsedSize.split("x").map(Number)
-        if (w && h && !isNaN(w) && !isNaN(h)) {
-          height = h
-          width = w
-        }
-      }
-    })
+    try {
+      dimensions = imageSize(bytes)
+    } catch {
+      throw new EthernaSdkError("ENCODING_ERROR", "Failed to read image dimensions")
+    }
 
-    await ffmpeg.run(`-i`, "image", `-f`, `null`)
-
-    if (width && height) {
-      return { width, height, type: getImageTypeFromData(data) }
-    } else {
+    if (
+      dimensions.width === undefined ||
+      dimensions.height === undefined ||
+      dimensions.width <= 0 ||
+      dimensions.height <= 0
+    ) {
       throw new EthernaSdkError("ENCODING_ERROR", "Failed to load image metadata")
+    }
+
+    return {
+      width: dimensions.width,
+      height: dimensions.height,
+      type: getImageTypeFromData(bytes),
     }
   }
 }
@@ -155,10 +171,18 @@ export function getImageTypeFromData(data: Uint8Array | ArrayBuffer) {
     svg: [0x3c, 0x73, 0x76, 0x67],
   } as const
 
-  const header = new Uint8Array(data instanceof ArrayBuffer ? data : data.buffer, 0, 8)
+  const maxMagicLength = Math.max(...Object.values(formats).map((m) => m.length))
+  const scanLength = Math.min(maxMagicLength, data.byteLength)
+  const header =
+    data instanceof ArrayBuffer
+      ? new Uint8Array(data, 0, scanLength)
+      : new Uint8Array(data.buffer, data.byteOffset, scanLength)
   const headerArray = Array.from(header)
 
   for (const [format, magic] of Object.entries(formats)) {
+    if (magic.length > headerArray.length) {
+      continue
+    }
     if (magic.every((v, i) => v === headerArray[i])) {
       return format as keyof typeof formats
     }

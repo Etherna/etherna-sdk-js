@@ -2,7 +2,8 @@
 
 ## Overview
 
-The `utils` barrel exports pure helpers and thin environment-aware wrappers. Import them from the package root:
+The `utils` barrel exports pure helpers and thin environment-aware wrappers. Import them from the
+package root:
 
 ```ts
 import {
@@ -125,7 +126,8 @@ Only files re-exported by `src/utils/index.ts` are part of the public root utili
 
 ### Caveat
 
-- `checkBytes()` is typed generically, but the current implementation effectively enforces a 32-byte length check.
+- `checkBytes()` is typed generically, but the current implementation effectively enforces a 32-byte
+  length check.
 
 ## Crypto
 
@@ -174,7 +176,9 @@ Only files re-exported by `src/utils/index.ts` are part of the public root utili
 - `toHexString()`
 - `makeHexString()`
 
-`bytesToHex` and `hexToBytes` are re-exported from `@noble/hashes/utils.js` (Noble 2.x), so callers can rely on one implementation instead of mixing `etc.bytesToHex` / `etc.hexToBytes` from `@noble/secp256k1`.
+`bytesToHex` and `hexToBytes` are re-exported from `@noble/hashes/utils.js` (Noble 2.x), so callers
+can rely on one implementation instead of mixing `etc.bytesToHex` / `etc.hexToBytes` from
+`@noble/secp256k1`.
 
 ### When to use
 
@@ -199,7 +203,8 @@ Only files re-exported by `src/utils/index.ts` are part of the public root utili
 
 ### Caveat
 
-- Some helpers are browser-only, while Node image flows rely on internal FFmpeg support.
+- Some helpers are browser-only. Node still-image resize/blurhash decode uses Jimp
+  (`src/utils/image-jimp.ts`); FFmpeg remains for video/frame paths.
 
 ## Mantaray And Content References
 
@@ -227,7 +232,8 @@ Only files re-exported by `src/utils/index.ts` are part of the public root utili
 
 ### Caveat
 
-- This file contains some reference-related helpers that are easy to miss if you only look at `reference.ts`.
+- This file contains some reference-related helpers that are easy to miss if you only look at
+  `reference.ts`.
 
 ## Media
 
@@ -332,7 +338,8 @@ Only files re-exported by `src/utils/index.ts` are part of the public root utili
 
 ### Caveat
 
-- The uint64 helpers are intentionally limited in a few code paths and should be treated as protocol helpers rather than general-purpose bigint utilities.
+- The uint64 helpers are intentionally limited in a few code paths and should be treated as protocol
+  helpers rather than general-purpose bigint utilities.
 
 ## URLs
 
@@ -355,6 +362,7 @@ Only files re-exported by `src/utils/index.ts` are part of the public root utili
 These files exist in `src/utils`, but they are not re-exported by the public root barrel:
 
 - `src/utils/ffmpeg.ts`
+- `src/utils/image-jimp.ts`
 - `src/utils/axios.ts`
 
 Read them only when the task explicitly needs source-level implementation details.

@@ -24,7 +24,7 @@ export async function fileToUint8Array(file: File | Blob) {
  * @param file File to convert
  * @returns The base64 data URL
  */
-export function fileToDataURL(file: File | Blob) {
+export function fileToDataURL(file: File | Blob): Promise<string> {
   if (typeof window !== "undefined") {
     return new Promise<string>((resolve, reject) => {
       const fr = new FileReader()
@@ -35,9 +35,15 @@ export function fileToDataURL(file: File | Blob) {
       fr.onerror = reject
       fr.readAsDataURL(file)
     })
-  } else {
-    throw new Error("Not implemented")
   }
+
+  return (async () => {
+    const bytes = new Uint8Array(await file.arrayBuffer())
+    const mime =
+      file.type && file.type.length > 0 ? file.type : "application/octet-stream"
+    const base64 = Buffer.from(bytes).toString("base64")
+    return `data:${mime};base64,${base64}`
+  })()
 }
 
 /**
@@ -57,8 +63,14 @@ export function bufferToFile(buffer: ArrayBuffer | Uint8Array, contentType?: str
  * @param buffer Buffer to convert
  * @returns The base64 data URL
  */
-export function bufferToDataURL(buffer: ArrayBuffer | Uint8Array) {
-  return fileToDataURL(bufferToFile(buffer))
+export function bufferToDataURL(buffer: ArrayBuffer | Uint8Array): Promise<string> {
+  if (typeof window !== "undefined") {
+    return fileToDataURL(bufferToFile(buffer))
+  }
+
+  const bytes = buffer instanceof ArrayBuffer ? new Uint8Array(buffer) : buffer
+  const base64 = Buffer.from(bytes).toString("base64")
+  return Promise.resolve(`data:application/octet-stream;base64,${base64}`)
 }
 
 /**

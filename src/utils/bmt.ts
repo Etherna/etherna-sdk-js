@@ -193,11 +193,9 @@ export function makeChunkedFile<
   const span = () => makeSpan(payload.length, spanLength)
   const address = () => bmtRootChunk(leafChunks()).address()
   const rootChunk = () => bmtRootChunk(leafChunks())
-  const bmtFn = () =>
-    bmt(leafChunks() as unknown as Uint8Array) as unknown as Chunk<
-      MaxChunkPayloadLength,
-      SpanLength
-    >[][]
+  const bmtFn = (): Chunk<MaxChunkPayloadLength, SpanLength>[][] => [
+    collectChunkedFileChunks(leafChunks()),
+  ]
 
   return {
     payload,
@@ -379,6 +377,55 @@ function assertFlexBytes<Min extends number, Max extends number = Min>(
       `Parameter is not valid FlexBytes of  min: ${min}, max: ${max}, length: ${(b as Uint8Array).length}`,
     )
   }
+}
+
+/**
+ * Lists every {@link Chunk} in a chunked file's Swarm BMT (leaves and intermediate nodes)
+ * in an order suitable for upload. A chunk may appear at multiple tree levels as a carrier;
+ * it is only included once (by object identity).
+ */
+function collectChunkedFileChunks<
+  MaxChunkPayloadLength extends number = typeof MAX_CHUNK_PAYLOAD_SIZE,
+  SpanLength extends number = typeof SPAN_SIZE,
+>(leafLevelChunks: Chunk<MaxChunkPayloadLength, SpanLength>[]): Chunk<
+  MaxChunkPayloadLength,
+  SpanLength
+>[] {
+  if (leafLevelChunks.length === 0) {
+    throw new Error("given chunk array is empty")
+  }
+
+  const collected: Chunk<MaxChunkPayloadLength, SpanLength>[] = []
+  const seen = new Set<Chunk<MaxChunkPayloadLength, SpanLength>>()
+
+  const addUnique = (chunk: Chunk<MaxChunkPayloadLength, SpanLength>) => {
+    if (!seen.has(chunk)) {
+      seen.add(chunk)
+      collected.push(chunk)
+    }
+  }
+
+  let levelChunks = leafLevelChunks
+  let carrierChunk = popCarrierChunk(levelChunks)
+
+  while (levelChunks.length !== 1 || carrierChunk) {
+    for (const chunk of levelChunks) {
+      addUnique(chunk)
+    }
+    if (carrierChunk) {
+      addUnique(carrierChunk)
+    }
+
+    const { nextLevelChunks, nextLevelCarrierChunk } = nextBmtLevel(levelChunks, carrierChunk)
+    levelChunks = nextLevelChunks
+    carrierChunk = nextLevelCarrierChunk
+  }
+
+  for (const chunk of levelChunks) {
+    addUnique(chunk)
+  }
+
+  return collected
 }
 
 function bmtRootChunk<

@@ -1,6 +1,7 @@
 import { decode, encode, isBlurhashValid } from "blurhash"
 
 import { loadNodeFFmpeg } from "./ffmpeg"
+import { getBlurhashImageDataWithJimp } from "./image-jimp"
 
 // Credit: https://gist.github.com/mattiaz9/53cb67040fa135cb395b1d015a200aff
 
@@ -30,8 +31,8 @@ export function blurHashToDataURL(hash: string | null | undefined): string {
  * @returns Blurhash string
  */
 export async function imageToBlurhash(image: Uint8Array, imageWidth: number, imageHeight: number) {
-  const data = await getImageData(image, imageWidth, imageHeight)
-  return encode(data, imageWidth, imageHeight, 4, 4)
+  const { data, width, height } = await getImageData(image, imageWidth, imageHeight)
+  return encode(data, width, height, 4, 4)
 }
 
 function parsePixels(pixels: Uint8ClampedArray, width: number, height: number) {
@@ -191,7 +192,43 @@ function generatePng(width: number, height: number, rgbaString: string) {
   return pngString
 }
 
-async function getImageData(imageData: Uint8Array, width: number, height: number) {
+/**
+ * Recover width/height from packed RGBA size using aspect ratio (scaled ffmpeg rawvideo output).
+ */
+function inferRgbPlaneDimensions(
+  pixelCount: number,
+  aspectRatio: number,
+): { width: number; height: number } {
+  if (pixelCount <= 0 || !Number.isFinite(aspectRatio) || aspectRatio <= 0) {
+    throw new Error("Invalid RGBA plane or aspect ratio")
+  }
+
+  let bestW = 1
+  let bestH = pixelCount
+  let bestErr = Infinity
+  const sqrt = Math.floor(Math.sqrt(pixelCount))
+
+  for (let w = 1; w <= sqrt; w++) {
+    if (pixelCount % w !== 0) {
+      continue
+    }
+    const h = pixelCount / w
+    const err = Math.abs(w / h - aspectRatio)
+    if (err < bestErr) {
+      bestErr = err
+      bestW = w
+      bestH = h
+    }
+  }
+
+  return { width: bestW, height: bestH }
+}
+
+async function getImageData(
+  imageData: Uint8Array,
+  width: number,
+  height: number,
+): Promise<{ data: Uint8ClampedArray; width: number; height: number }> {
   if (typeof window !== "undefined") {
     const canvas = document.createElement("canvas")
     canvas.width = width
@@ -202,17 +239,39 @@ async function getImageData(imageData: Uint8Array, width: number, height: number
     if (image) {
       ctx.drawImage(image, 0, 0)
     }
-    return ctx.getImageData(0, 0, width, height).data
+    const data = ctx.getImageData(0, 0, width, height).data
+    return { data, width, height }
   } else {
-    const ffmpeg = await loadNodeFFmpeg(imageData, "image")
-    await ffmpeg.run("-i", "image", "-f", "rawvideo", "-pix_fmt", "rgba", "output")
-    const rgba = ffmpeg.fs.readFile("output")
+    try {
+      return await getBlurhashImageDataWithJimp(imageData)
+    } catch {
+      const ffmpeg = await loadNodeFFmpeg(imageData, "image")
+      // Full-frame rawvideo scales as W×H×4 and blows the ffmpeg.wasm heap on large photos (e.g. JPEG).
+      // Blurhash only needs a small bitmap; scale before rawvideo.
+      const maxSide = 128
+      await ffmpeg.run(
+        "-i",
+        "image",
+        "-vf",
+        `scale=${maxSide}:${maxSide}:force_original_aspect_ratio=decrease`,
+        "-f",
+        "rawvideo",
+        "-pix_fmt",
+        "rgba",
+        "output",
+      )
+      const rgba = ffmpeg.fs.readFile("output")
+      const pixels = rgba.byteLength / 4
+      const aspectRatio = width / height
+      const { width: outW, height: outH } = inferRgbPlaneDimensions(pixels, aspectRatio)
 
-    if (rgba.length !== width * height * 4) {
-      throw new Error("Array length doesn't match width and height for RGBA data")
+      if (outW * outH !== pixels) {
+        throw new Error("Could not infer scaled RGBA dimensions for blurhash")
+      }
+
+      const data = new Uint8ClampedArray(rgba.buffer, rgba.byteOffset, rgba.byteLength)
+      return { data, width: outW, height: outH }
     }
-
-    return new Uint8ClampedArray(rgba.buffer, rgba.byteOffset, rgba.byteLength)
   }
 }
 

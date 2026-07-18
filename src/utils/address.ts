@@ -45,16 +45,20 @@ export function toEthAccount(bytes: Uint8Array | string): EthAddress {
  * @returns A Promise that resolves to the Ethereum address associated with the ENS address, or null if not found.
  */
 export async function fetchAddressFromEns(ensAddress: EnsAddress): Promise<EthAddress | null> {
-  const publicClient = createPublicClient({
-    chain: mainnet,
-    transport: http(),
-  })
+  try {
+    const publicClient = createPublicClient({
+      chain: mainnet,
+      transport: http(),
+    })
 
-  const address = await publicClient.getEnsAddress({
-    name: normalize(ensAddress),
-  })
+    const address = await publicClient.getEnsAddress({
+      name: normalize(ensAddress),
+    })
 
-  return address
+    return address
+  } catch {
+    return null
+  }
 }
 
 /**
@@ -75,8 +79,7 @@ export async function fetchEnsFromAddress(address: EthAddress): Promise<EnsAddre
     })) as EnsAddress | null
 
     return ens
-  } catch (error) {
-    console.error(error)
+  } catch {
     return null
   }
 }

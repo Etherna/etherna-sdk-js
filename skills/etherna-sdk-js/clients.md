@@ -14,7 +14,10 @@ import {
 } from "@etherna/sdk-js"
 ```
 
-The `clients` barrel only re-exports the top-level client classes and their `types.ts` files. Most concrete helpers such as `Bzz`, `Stamps`, `IndexVideos`, or `CreditUser` are source-level classes that you usually access through instance properties instead of importing directly from the root package.
+The `clients` barrel only re-exports the top-level client classes and their `types.ts` files. Most
+concrete helpers such as `Bzz`, `Stamps`, `IndexVideos`, or `CreditUser` are source-level classes
+that you usually access through instance properties instead of importing directly from the root
+package.
 
 ## Bee Client
 
@@ -25,7 +28,8 @@ The `clients` barrel only re-exports the top-level client classes and their `typ
 
 ### Role
 
-`BeeClient` is the main Swarm/Bee and Etherna gateway HTTP client. Use it for raw bytes, BZZ paths, feeds, chunks, postage batches, pins, SOCs, and Etherna-specific gateway endpoints.
+`BeeClient` is the main Swarm/Bee and Etherna gateway HTTP client. Use it for raw bytes, BZZ paths,
+feeds, chunks, postage batches, pins, SOCs, and Etherna-specific gateway endpoints.
 
 ### Basic usage
 
@@ -90,13 +94,16 @@ const data = await beeClient.bzz.download("reference")
 - Use `BeeClient` whenever the task needs Swarm reads or writes.
 - Use `beeClient.stamps` before large uploads or manifest writes.
 - Use `beeClient.feed` for profile, playlist, followings, and user-playlists topic resolution.
-- Use `beeClient.bzz` and `beeClient.bytes` when working directly with manifest content or Mantaray data.
+- Use `beeClient.bzz` and `beeClient.bytes` when working directly with manifest content or Mantaray
+  data.
 
 ### Caveats
 
 - `BeeClientOptions.type` controls behavior: some modules are Etherna-only and some are Bee-only.
-- `updateSigner()` accepts a signer object, address, or private key string and normalizes through root-exported signer utilities.
-- `src/clients/bee/utils.ts` exports helpers such as `prepareData()` and `makeContentAddressedChunk()`, but they are not part of the public root barrel.
+- `updateSigner()` accepts a signer object, address, or private key string and normalizes through
+  root-exported signer utilities.
+- `src/clients/bee/utils.ts` exports helpers such as `prepareData()` and
+  `makeContentAddressedChunk()`, but they are not part of the public root barrel.
 
 ## Etherna Index Client
 
@@ -108,7 +115,8 @@ const data = await beeClient.bzz.download("reference")
 
 ### Role
 
-`EthernaIndexClient` is the main client for a single Etherna Index API. Use it for videos, users, comments, moderation, search, and system parameters.
+`EthernaIndexClient` is the main client for a single Etherna Index API. Use it for videos, users,
+comments, moderation, search, and system parameters.
 
 ### Basic usage
 
@@ -156,7 +164,8 @@ const results = await indexClient.search.fetchVideos({ text: "etherna" })
 
 ### Caveats
 
-- `IndexVideos`, `IndexUsers`, `IndexSearch`, and related classes exist in source but are normally used through the `EthernaIndexClient` instance.
+- `IndexVideos`, `IndexUsers`, `IndexSearch`, and related classes exist in source but are normally
+  used through the `EthernaIndexClient` instance.
 - Some index DTOs depend on schema-level shapes from the root `schemas` export.
 
 ## Etherna Index Aggregator Client
@@ -170,7 +179,8 @@ const results = await indexClient.search.fetchVideos({ text: "etherna" })
 
 ### Role
 
-`EthernaIndexAggregatorClient` fans requests out across multiple index servers while still exposing the same high-level interface shape as `EthernaIndexClient`.
+`EthernaIndexAggregatorClient` fans requests out across multiple index servers while still exposing
+the same high-level interface shape as `EthernaIndexClient`.
 
 ### Basic usage
 
@@ -196,7 +206,8 @@ const page = await aggregator.videos.fetchVideos()
 ### Important methods
 
 - `getIndexClientByRequest(opts)`: resolve the concrete index client for a targeted request.
-- `fetchAggregatedPaginatedData(page, take, fetcher, opts?)`: merge paginated results from multiple indexes.
+- `fetchAggregatedPaginatedData(page, take, fetcher, opts?)`: merge paginated results from multiple
+  indexes.
 
 ### When to use
 
@@ -205,7 +216,8 @@ const page = await aggregator.videos.fetchVideos()
 
 ### Caveats
 
-- Aggregated methods do not all behave the same way. Some merge multiple results, while others effectively route to one chosen client.
+- Aggregated methods do not all behave the same way. Some merge multiple results, while others
+  effectively route to one chosen client.
 - `comments.editComment()` and `comments.deleteComment()` need a targeted request with `indexUrl`.
 
 ## Etherna Credit Client
@@ -290,10 +302,14 @@ const me = await ssoClient.identity.fetchCurrentIdentity()
 
 ### Caveats
 
-- There is also a source-level class named `SSOIdentity` in `src/clients/sso/identity.ts`. The public root export named `SSOIdentity` is the interface from `types.ts`.
+- There is also a source-level class named `SSOIdentity` in `src/clients/sso/identity.ts`. The
+  public root export named `SSOIdentity` is the interface from `types.ts`.
 
 ## Internal-Only Caveats
 
-- `BaseClient` and `BaseClientOptions` live in `src/clients/base-client.ts`, but they are not re-exported through the public `clients` barrel.
-- `RequestOptions` is public, but it comes from the root `types` export rather than the `clients` barrel.
-- If the task is about a nested module implementation rather than public consumption, inspect the source file directly after identifying the correct parent client here.
+- `BaseClient` and `BaseClientOptions` live in `src/clients/base-client.ts`, but they are not
+  re-exported through the public `clients` barrel.
+- `RequestOptions` is public, but it comes from the root `types` export rather than the `clients`
+  barrel.
+- If the task is about a nested module implementation rather than public consumption, inspect the
+  source file directly after identifying the correct parent client here.

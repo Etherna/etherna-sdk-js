@@ -14,6 +14,7 @@ export default defineConfig({
     "@ffmpeg.wasm/main",
     "@ffmpeg.wasm/core-mt",
     "axios",
+    "jimp",
     "zod",
   ],
 })

@@ -77,7 +77,10 @@ export async function defaultSign(
   const hashedDigest = hashWithEthereumPrefix(
     typeof data === "string" ? new TextEncoder().encode(data) : data,
   )
-  const sigBytes = await signAsync(hashedDigest, privateKey, { prehash: false, format: "recovered" })
+  const sigBytes = await signAsync(hashedDigest, privateKey, {
+    prehash: false,
+    format: "recovered",
+  })
   const recovery = sigBytes[0] ?? 0
   const compact = sigBytes.subarray(1, 65)
   const signature = new Uint8Array(65)

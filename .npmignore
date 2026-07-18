@@ -1,5 +1,7 @@
 .github
 .vscode
+.agents
+.cursor
 node_modules
 src
 test
@@ -10,6 +12,8 @@ test
 .prettier*
 eslint.config.js
 prettier.config.js
+.oxfmt*
+.oxlint*
 env.d.ts
 
 pnpm-lock.yaml

@@ -2,7 +2,8 @@
 
 ## Overview
 
-The `classes` barrel holds the SDK's stateful building blocks and orchestration helpers. Import them from the package root:
+The `classes` barrel holds the SDK's stateful building blocks and orchestration helpers. Import them
+from the package root:
 
 ```ts
 import {
@@ -32,7 +33,8 @@ import {
 
 ### Role
 
-This is the SDK-wide error model. Use it when normalizing unknown failures, checking error codes, or propagating consistent domain-specific failures from network, validation, or media flows.
+This is the SDK-wide error model. Use it when normalizing unknown failures, checking error codes, or
+propagating consistent domain-specific failures from network, validation, or media flows.
 
 ### Basic usage
 
@@ -56,7 +58,8 @@ try {
 
 ### Role
 
-`StampCalculator` tracks postage-bucket collisions for content references. Use it when a task needs to estimate or reason about batch depth requirements and bucket utilization.
+`StampCalculator` tracks postage-bucket collisions for content references. Use it when a task needs
+to estimate or reason about batch depth requirements and bucket utilization.
 
 ### When to use
 
@@ -73,7 +76,8 @@ try {
 
 ### Role
 
-`ChunksUploader` is the chunk-upload orchestrator. It queues chunked files, uploads them through `BeeClient.chunk`, and emits progress, error, and completion events.
+`ChunksUploader` is the chunk-upload orchestrator. It queues chunked files, uploads them through
+`BeeClient.chunk`, and emits progress, error, and completion events.
 
 ### Basic usage
 
@@ -109,7 +113,8 @@ These classes model Swarm epoch feeds.
 ### `EpochFeed`
 
 - High-level Bee-backed epoch-feed reader and writer helper.
-- Use it when the task is about discovering the latest feed chunk, resolving chunks near a point in time, or building the next epoch entry.
+- Use it when the task is about discovering the latest feed chunk, resolving chunks near a point in
+  time, or building the next epoch entry.
 
 ### `EpochFeedChunk`
 
@@ -118,7 +123,8 @@ These classes model Swarm epoch feeds.
 
 ### Caveat
 
-- Importing `EpochFeedChunk` augments global prototypes for `Uint8Array`, `Date`, and `BigInt`. That side effect matters in low-level debugging.
+- Importing `EpochFeedChunk` augments global prototypes for `Uint8Array`, `Date`, and `BigInt`. That
+  side effect matters in low-level debugging.
 
 ## Mantaray Primitives
 
@@ -189,7 +195,8 @@ These helpers build or inspect directory-like Mantaray trees.
 
 ### Role
 
-`Queue` is a small async concurrency primitive used by higher-level upload helpers such as `FolderBuilder`.
+`Queue` is a small async concurrency primitive used by higher-level upload helpers such as
+`FolderBuilder`.
 
 ### When to use
 
@@ -211,7 +218,8 @@ These helpers build or inspect directory-like Mantaray trees.
 
 ### Role
 
-`VideoPublisher` is the highest-level orchestration class in the SDK. It syncs one video manifest to playlist sources and Index sources.
+`VideoPublisher` is the highest-level orchestration class in the SDK. It syncs one video manifest to
+playlist sources and Index sources.
 
 ### Basic usage
 
@@ -240,6 +248,8 @@ const publisher = new VideoPublisher({
 
 ## Common Mistakes
 
-- Treating Mantaray primitives as everyday consumer APIs when a manifest class already solves the task.
-- Re-implementing chunk upload or bucket logic instead of using `ChunksUploader` and `StampCalculator`.
+- Treating Mantaray primitives as everyday consumer APIs when a manifest class already solves the
+  task.
+- Re-implementing chunk upload or bucket logic instead of using `ChunksUploader` and
+  `StampCalculator`.
 - Forgetting that `VideoPublisher` is the bridge between manifest storage and Index publication.

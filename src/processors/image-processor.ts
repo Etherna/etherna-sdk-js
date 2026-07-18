@@ -117,9 +117,6 @@ export class ImageProcessor extends BaseProcessor {
         })()
 
     const inferiorSizes = sizes.filter((size) => size < imageMeta.width)
-    if (inferiorSizes.length < 2 && inferiorSizes[0] !== imageMeta.width) {
-      inferiorSizes.push(imageMeta.width)
-    }
 
     for (const size of inferiorSizes) {
       const blob = await resizeImage(originalImageBlob, size, 95)
@@ -128,10 +125,11 @@ export class ImageProcessor extends BaseProcessor {
 
       this.appendChunkedFile(chunkedFile)
 
-      const type = blob.type.split("/")[1] as string
+      const subtype = blob.type.split("/")[1] || imageMeta.type
+      const type = ImageTypeSchema.parse(subtype)
 
       output.push({
-        type: ImageTypeSchema.parse(type),
+        type,
         width: size,
         filename: parseFilename(size, type),
         entryAddress: getReferenceFromData(data),

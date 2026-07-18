@@ -398,8 +398,8 @@ export class VideoProcessor extends BaseProcessor {
       let width = 0
       let duration = 0
 
-      ffmpeg.setLogger((_, message) => {
-        if (!message || typeof message !== "string") return
+      ffmpeg.setLogger((_level: unknown, message: unknown) => {
+        if (typeof message !== "string" || message.length === 0) return
         // check resolution
         const parsedSize = message.match(/\d{3,}x\d{3,}/)?.[0]
 
