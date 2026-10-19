@@ -52,6 +52,8 @@ export class VideoPublisher {
   private beeClient: BeeClient
   public sources: PublishSource[]
   public results: VideoPublisherSyncResult | undefined
+  /** In-flight sync shared by overlapping callers so create/update runs once. */
+  private ongoingSync?: Promise<VideoPublisherSyncResult>
 
   constructor(options: VideoPublisherOptions) {
     this.video = options.video
@@ -62,11 +64,21 @@ export class VideoPublisher {
   }
 
   async sync(publishTo: PublishSource[], options?: VideoPublisherUploadOptions) {
+    if (this.ongoingSync) {
+      return this.ongoingSync
+    }
+
     const unpublishFrom = this.sources.filter(
       (source) => !publishTo.some((newSource) => this.isEqualSource(source, newSource)),
     )
 
-    return await this.internal_sync(publishTo, unpublishFrom, options)
+    const run = this.internal_sync(publishTo, unpublishFrom, options).finally(() => {
+      if (this.ongoingSync === run) {
+        this.ongoingSync = undefined
+      }
+    })
+    this.ongoingSync = run
+    return run
   }
 
   async retry(options?: VideoPublisherUploadOptions) {
@@ -222,20 +234,34 @@ export class VideoPublisher {
       } as const
     }
 
+    const mergeRetry = (
+      result: PublishResultStatus,
+      retryResult: PromiseSettledResult<{ id: string }> | undefined,
+    ): PublishResultStatus => {
+      if (!retryResult) {
+        throw new EthernaSdkError("SERVER_ERROR", "No retry result found")
+      }
+      if (retryResult.status === "fulfilled") {
+        return {
+          ...result,
+          success: true,
+          error: null,
+          videoId: retryResult.value.id,
+        }
+      }
+      return {
+        ...result,
+        success: false,
+        error: getSdkError(retryResult.reason),
+      }
+    }
+
     if (this.results) {
       this.results.publishResult = this.results.publishResult.map((result) => {
         if (result.success) {
           return result
         } else {
-          const retryResult = publishResult.shift()
-          if (!retryResult) {
-            throw new EthernaSdkError("SERVER_ERROR", "No retry result found")
-          }
-          return {
-            ...result,
-            success: retryResult.status === "fulfilled",
-            error: retryResult.status === "fulfilled" ? null : getSdkError(retryResult.reason),
-          }
+          return mergeRetry(result, publishResult.shift())
         }
       })
 
@@ -243,15 +269,7 @@ export class VideoPublisher {
         if (result.success) {
           return result
         } else {
-          const retryResult = unpublishResult.shift()
-          if (!retryResult) {
-            throw new EthernaSdkError("SERVER_ERROR", "No retry result found")
-          }
-          return {
-            ...result,
-            success: retryResult.status === "fulfilled",
-            error: retryResult.status === "fulfilled" ? null : getSdkError(retryResult.reason),
-          }
+          return mergeRetry(result, unpublishResult.shift())
         }
       })
 

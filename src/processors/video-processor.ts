@@ -297,6 +297,16 @@ export class VideoProcessor extends BaseProcessor {
     for (const file of [masterFile, ...resolutionsPlaylists, ...resolutionsSegments.flat()]) {
       const chunkedFile = makeChunkedFile(file.data)
 
+      // hashing is synchronous; hash the leaf chunks in slices so the page can handle input
+      let sliceStart = performance.now()
+      for (const chunk of chunkedFile.leafChunks()) {
+        chunk.address()
+        if (performance.now() - sliceStart > 12) {
+          await new Promise((resolve) => setTimeout(resolve, 0))
+          sliceStart = performance.now()
+        }
+      }
+
       // append chunked file
       this.appendChunkedFile(chunkedFile)
 

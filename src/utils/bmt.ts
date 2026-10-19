@@ -104,11 +104,10 @@ export function getSpanValue<Length extends number = 8>(span: Span<Length>): num
  * @returns the keccak256 hash in a byte array
  */
 export function bmtHash(chunkContent: Uint8Array): Uint8Array {
-  const span = chunkContent.slice(0, 8)
-  const payload = chunkContent.slice(8)
+  const span = chunkContent.subarray(0, 8)
+  const payload = chunkContent.subarray(8)
   const rootHash = bmtRootHash(payload)
-  const chunkHashInput = new Uint8Array([...span, ...rootHash])
-  const chunkHash = keccak256Hash(chunkHashInput)
+  const chunkHash = keccak256Hash(span, rootHash)
 
   return chunkHash
 }
@@ -141,7 +140,8 @@ export function makeChunk<
   const data = () =>
     serializeBytes(payloadBytes, new Uint8Array(paddingChunkLength)) as ValidChunkData
   const inclusionProof = (segmentIndex: number) => inclusionProofBottomUp(data(), segmentIndex)
-  const address = () => chunkAddress(payloadBytes, spanLength, span())
+  let cachedAddress: ChunkAddress | undefined
+  const address = () => (cachedAddress ??= chunkAddress(payloadBytes, spanLength, span()))
   const bmtFn = () => bmt(data())
 
   return {
@@ -178,17 +178,23 @@ export function makeChunkedFile<
   const spanLength = (options?.spanLength || SPAN_SIZE) as SpanLength
 
   //splitter
+  let cachedLeafChunks: Chunk<MaxChunkPayloadLength, SpanLength>[] | undefined
   const leafChunks = () => {
-    const chunks: Chunk<MaxChunkPayloadLength, SpanLength>[] = []
-    if (payload.length === 0) {
-      chunks.push(makeChunk(new Uint8Array(), options))
-    } else {
-      for (let offset = 0; offset < payload.length; offset += maxPayloadLength) {
-        chunks.push(makeChunk(payload.slice(offset, offset + maxPayloadLength), options))
+    if (!cachedLeafChunks) {
+      cachedLeafChunks = []
+      if (payload.length === 0) {
+        cachedLeafChunks.push(makeChunk(new Uint8Array(), options))
+      } else {
+        for (let offset = 0; offset < payload.length; offset += maxPayloadLength) {
+          cachedLeafChunks.push(
+            makeChunk(payload.slice(offset, offset + maxPayloadLength), options),
+          )
+        }
       }
     }
 
-    return chunks
+    // callers pop the carrier chunk from the returned array
+    return [...cachedLeafChunks]
   }
   const span = () => makeSpan(payload.length, spanLength)
   const address = () => bmtRootChunk(leafChunks()).address()
@@ -215,13 +221,14 @@ export function bmtRootHash(
     throw new Error(`invalid data length ${payload.length}`)
   }
   // create an input buffer padded with zeros
-  let input = new Uint8Array([...payload, ...new Uint8Array(maxPayloadLength - payload.length)])
+  let input = new Uint8Array(maxPayloadLength)
+  input.set(payload)
   while (input.length !== HASH_SIZE) {
     const output = new Uint8Array(input.length / 2)
 
     // in each round we hash the segment pairs together
     for (let offset = 0; offset < input.length; offset += SEGMENT_PAIR_SIZE) {
-      const hashNumbers = keccak256Hash(input.slice(offset, offset + SEGMENT_PAIR_SIZE))
+      const hashNumbers = keccak256Hash(input.subarray(offset, offset + SEGMENT_PAIR_SIZE))
       output.set(hashNumbers, offset / 2)
     }
 
@@ -302,7 +309,8 @@ function bmt(payload: Uint8Array): Uint8Array[] {
   }
 
   // create an input buffer padded with zeros
-  let input = new Uint8Array([...payload, ...new Uint8Array(MAX_PAYLOAD_SIZE - payload.length)])
+  let input = new Uint8Array(MAX_PAYLOAD_SIZE)
+  input.set(payload)
   const tree: Uint8Array[] = []
   while (input.length !== HASH_SIZE) {
     tree.push(input)
@@ -310,7 +318,7 @@ function bmt(payload: Uint8Array): Uint8Array[] {
 
     // in each round we hash the segment pairs together
     for (let offset = 0; offset < input.length; offset += SEGMENT_PAIR_SIZE) {
-      const hashNumbers = keccak256Hash(input.slice(offset, offset + SEGMENT_PAIR_SIZE))
+      const hashNumbers = keccak256Hash(input.subarray(offset, offset + SEGMENT_PAIR_SIZE))
       output.set(hashNumbers, offset / 2)
     }
 
@@ -346,8 +354,7 @@ function chunkAddress<SpanLength extends number = typeof SPAN_SIZE>(
 ): ChunkAddress {
   const span = chunkSpan || makeSpan(payload.length, spanLength)
   const rootHash = bmtRootHash(payload, MAX_PAYLOAD_SIZE)
-  const chunkHashInput = new Uint8Array([...span, ...rootHash])
-  const chunkHash = keccak256Hash(chunkHashInput)
+  const chunkHash = keccak256Hash(span, rootHash)
 
   return chunkHash
 }
